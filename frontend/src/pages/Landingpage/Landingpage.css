@@ -1232,20 +1232,28 @@ button {
 }
 
 .view-all {
-  min-height: 40px;
+  position: relative;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  padding: 0 15px;
-  border: 1px solid rgba(204, 112, 255, 0.58);
-  border-radius: 11px;
-  background: rgba(166, 67, 239, 0.14);
-  color: #e0b0ff;
-
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+  overflow: hidden;
+  border: 1px solid rgba(211, 132, 255, 0.78);
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, rgba(178, 78, 246, 0.22), rgba(113, 39, 183, 0.13));
+  color: #f0ddff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(102, 32, 159, 0.22),
+    0 0 0 1px rgba(160, 66, 225, 0.06),
+    0 5px 18px rgba(110, 38, 175, 0.12);
   font-size: 14px;
-  font-weight: 750;
+  font-weight: 760;
   text-decoration: none;
-
+  isolation: isolate;
   transition:
     color 0.25s ease,
     background 0.25s ease,
@@ -1254,16 +1262,48 @@ button {
     transform 0.25s ease;
 }
 
+
+.view-all::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -35%;
+  width: 28%;
+  height: 220%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transform: rotate(18deg) translateX(-180%);
+  transition: transform 0.65s ease;
+  pointer-events: none;
+}
+
 .view-all:hover {
-  color: white;
-  background: rgba(166, 67, 239, 0.32);
-  border-color: rgba(222, 154, 255, 0.95);
-  box-shadow: 0 0 20px rgba(174, 69, 255, 0.28);
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(190, 91, 255, 0.30), rgba(122, 47, 194, 0.18));
+  border-color: rgba(229, 170, 255, 0.98);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(187, 82, 248, 0.10),
+    0 0 18px rgba(173, 67, 246, 0.25),
+    0 7px 22px rgba(91, 28, 153, 0.16);
   transform: translateY(-2px);
 }
 
+
+.view-all:hover::after {
+  transform: rotate(18deg) translateX(520%);
+}
+
 .view-all span {
-  color: #d789ff;
+  position: relative;
+  z-index: 1;
+  color: #dfadff;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.view-all:hover span {
+  color: #ffffff;
+  transform: translateX(3px);
 }
 
 
@@ -3191,6 +3231,7 @@ footer p {
 
   display: grid;
   place-items: center;
+  align-self: center;
 
   margin-right: 18px;
 
@@ -3316,7 +3357,7 @@ footer p {
 .arcadion-character {
   position: absolute;
 
-  left: 50%;
+  left: 55%;
   bottom: -20px;
 
   z-index: 6;
@@ -3346,11 +3387,17 @@ footer p {
   object-fit: contain;
 
   filter:
-    brightness(0.68)
-    contrast(1.25)
-    saturate(0.9)
+    brightness(0.84)
+    contrast(1.22)
+    saturate(1.02)
     drop-shadow(
-      0 0 18px rgba(149, 45, 255, 0.42)
+      0 0 7px rgba(220, 145, 255, 0.85)
+    )
+    drop-shadow(
+      0 0 18px rgba(176, 70, 255, 0.68)
+    )
+    drop-shadow(
+      0 0 34px rgba(145, 45, 235, 0.42)
     );
 
   z-index: 5;
@@ -3887,6 +3934,62 @@ footer p {
 }
 
 
+@keyframes arcadionCharacterGlow {
+  0%,
+  18%,
+  100% {
+    filter:
+      brightness(0.78)
+      contrast(1.24)
+      saturate(1.02)
+      drop-shadow(0 0 3px rgba(213, 125, 255, 0.35))
+      drop-shadow(0 0 9px rgba(170, 65, 255, 0.24))
+      drop-shadow(0 0 18px rgba(133, 39, 235, 0.12));
+  }
+
+  38% {
+    filter:
+      brightness(0.90)
+      contrast(1.23)
+      saturate(1.06)
+      drop-shadow(0 0 7px rgba(220, 142, 255, 0.70))
+      drop-shadow(0 0 18px rgba(180, 78, 255, 0.52))
+      drop-shadow(0 0 34px rgba(143, 45, 245, 0.30));
+  }
+
+  50% {
+    filter:
+      brightness(1.08)
+      contrast(1.20)
+      saturate(1.10)
+      drop-shadow(0 0 11px rgba(235, 180, 255, 1))
+      drop-shadow(0 0 27px rgba(194, 91, 255, 0.90))
+      drop-shadow(0 0 50px rgba(151, 48, 255, 0.62))
+      drop-shadow(0 0 78px rgba(112, 28, 205, 0.34));
+  }
+
+  62% {
+    filter:
+      brightness(0.94)
+      contrast(1.22)
+      saturate(1.07)
+      drop-shadow(0 0 8px rgba(226, 151, 255, 0.80))
+      drop-shadow(0 0 20px rgba(180, 78, 255, 0.62))
+      drop-shadow(0 0 40px rgba(143, 45, 245, 0.36));
+  }
+
+  78% {
+    filter:
+      brightness(0.82)
+      contrast(1.24)
+      saturate(1.03)
+      drop-shadow(0 0 4px rgba(213, 125, 255, 0.46))
+      drop-shadow(0 0 11px rgba(170, 65, 255, 0.30))
+      drop-shadow(0 0 22px rgba(133, 39, 235, 0.16));
+  }
+}
+
+
 @keyframes arcadionCharacterFloat {
   0%,
   100% {
@@ -4117,7 +4220,7 @@ footer p {
   }
 
   .arcadion-character {
-    left: 62%;
+    left: 67%;
 
     width: 380px;
     height: 300px;
@@ -4184,7 +4287,7 @@ footer p {
   }
 
   .arcadion-character {
-    left: 68%;
+    left: 73%;
 
     width: 330px;
     height: 260px;
@@ -4222,8 +4325,39 @@ footer p {
   .arcadion-character-smoke-back span,
   .arcadion-energy-particle,
   .arcadion-character-energy span,
+  .arcadion-emblem-mark,
   .arcadion-emblem::before,
   .arcadion-scan-line {
     animation: none;
   }
+}
+
+
+/* =========================================================
+   VIEW MORE — FINAL CLEAN HOVER
+   Keeps the existing size; removes the sweep/shimmer overlay.
+   ========================================================= */
+
+.view-all {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.view-all::before,
+.view-all::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.view-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(174, 69, 255, 0.28);
+}
+
+.view-all span {
+  position: relative;
+  z-index: 1;
 }
