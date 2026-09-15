@@ -108,11 +108,7 @@ function Arcadion() {
 						className="arcadion-character-image"
 					/>
 
-					{/* Eye glow overlay */}
-					<div className="arcadion-eyes" aria-hidden="true">
-						<span className="arcadion-eye arcadion-eye-left" />
-						<span className="arcadion-eye arcadion-eye-right" />
-					</div>
+					
 
 					{/* Character energy */}
 					<div className="arcadion-character-energy" aria-hidden="true">

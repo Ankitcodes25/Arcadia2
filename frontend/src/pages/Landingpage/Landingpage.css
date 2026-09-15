@@ -3191,7 +3191,7 @@ footer p {
 
 
 .arcadion-emblem-mark {
-  width: 32px;
+  width: 65px;
   height: auto;
 
   display: block;
@@ -3289,9 +3289,9 @@ footer p {
 .arcadion-copy-text p {
   margin: 8px 0 0;
 
-  color: #806b91;
+  color: #b7a0c9;
 
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.3;
 
   letter-spacing: 0.5px;
@@ -3306,12 +3306,12 @@ footer p {
   position: absolute;
 
   left: 50%;
-  bottom: 40px;
+  bottom: -20px;
 
   z-index: 6;
 
-  width: 310px;
-  height: 235px;
+  width: 620px;
+  height: 480px;
 
   transform:
     translateX(-50%);
@@ -3326,7 +3326,7 @@ footer p {
   left: 50%;
   bottom: 0;
 
-  width: 280px;
+  width: 620px;
   height: auto;
 
   transform:
@@ -3344,11 +3344,11 @@ footer p {
 
   z-index: 5;
 
-  animation:
+  /* animation:
     arcadionCharacterFloat
     4.5s
     ease-in-out
-    infinite;
+    infinite; */
 }
 
 
@@ -3360,10 +3360,10 @@ footer p {
   position: absolute;
 
   left: 50%;
-  bottom: 28px;
+  bottom: 35px;
 
-  width: 220px;
-  height: 175px;
+  width: 340px;
+  height: 260px;
 
   transform:
     translateX(-50%);
@@ -3387,113 +3387,6 @@ footer p {
     infinite;
 
   z-index: 1;
-}
-
-
-/* =========================================================
-   EYES
-   ========================================================= */
-
-.arcadion-eyes {
-  position: absolute;
-
-  left: 50%;
-  top: 63px;
-
-  width: 85px;
-  height: 32px;
-
-  transform:
-    translateX(-50%);
-
-  z-index: 9;
-
-  pointer-events: none;
-}
-
-
-.arcadion-eye {
-  position: absolute;
-
-  top: 9px;
-
-  width: 28px;
-  height: 10px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      #fff 25%,
-      #ff4d4d 65%,
-      transparent
-    );
-
-  clip-path: polygon(
-    0 45%,
-    35% 5%,
-    100% 0,
-    73% 100%,
-    30% 85%
-  );
-
-  filter:
-    drop-shadow(0 0 4px #fff)
-    drop-shadow(0 0 9px #ff3b3b)
-    drop-shadow(0 0 18px #ff0000)
-    drop-shadow(0 0 28px #b30000);
-
-  animation:
-    arcadionEyeGlow
-    3.6s
-    ease-in-out
-    infinite;
-}
-
-
-.arcadion-eye-left {
-  left: 7px;
-
-  transform:
-    rotate(9deg);
-}
-
-
-.arcadion-eye-right {
-  right: 7px;
-
-  transform:
-    scaleX(-1)
-    rotate(9deg);
-}
-
-
-.arcadion-eyes::before {
-  content: "";
-
-  position: absolute;
-
-  left: 50%;
-  top: 2px;
-
-  width: 75px;
-  height: 28px;
-
-  transform:
-    translateX(-50%);
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 45, 45, 0.22);
-
-  filter: blur(14px);
-
-  animation:
-    arcadionEyeAura
-    3.6s
-    ease-in-out
-    infinite;
 }
 
 
@@ -4087,11 +3980,11 @@ footer p {
   }
 
   .arcadion-character {
-    width: 260px;
+    width: 520px;
   }
 
   .arcadion-character-image {
-    width: 240px;
+    width: 530px;
   }
 }
 
@@ -4215,14 +4108,14 @@ footer p {
   .arcadion-character {
     left: 62%;
 
-    width: 190px;
-    height: 155px;
+    width: 380px;
+    height: 300px;
 
-    bottom: -28px;
+    bottom: -12px;
   }
 
   .arcadion-character-image {
-    width: 185px;
+    width: 380px;
   }
 
   .arcadion-eyes {
@@ -4241,8 +4134,8 @@ footer p {
   }
 
   .arcadion-character-aura {
-    width: 170px;
-    height: 125px;
+    width: 260px;
+    height: 190px;
   }
 
   .arcadion-smoke {
@@ -4282,12 +4175,12 @@ footer p {
   .arcadion-character {
     left: 68%;
 
-    width: 165px;
-    height: 140px;
+    width: 330px;
+    height: 260px;
   }
 
   .arcadion-character-image {
-    width: 160px;
+    width: 330px;
   }
 
   .arcadion-eyes {
