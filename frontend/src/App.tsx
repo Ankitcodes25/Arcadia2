@@ -29,10 +29,17 @@ function App() {
     });
   }, [path]);
 
+  const isGamesPage = path.startsWith("/games");
+
   return (
     <>
       <Navbar />
-      {path.startsWith("/games") ? <Allgames /> : <LandingPage />}
+      <div
+        key={isGamesPage ? "games-page" : "home-page"}
+        className="page-transition"
+      >
+        {isGamesPage ? <Allgames /> : <LandingPage />}
+      </div>
     </>
   );
 }
