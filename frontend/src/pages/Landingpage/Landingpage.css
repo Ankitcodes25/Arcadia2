@@ -1,5 +1,19 @@
 
 
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   ARCADIA
+   FULL LANDING PAGE
+========================================================= */
+
 main {
   padding-top: 60px;
 }
@@ -13,7 +27,7 @@ main {
 }
 
 html {
-  scroll-behavior: auto;
+  scroll-behavior: smooth;
 }
 
 html,
@@ -57,6 +71,11 @@ button {
   color: white;
 }
 
+
+/* =========================================================
+   APP
+========================================================= */
+
 .app {
   position: relative;
   min-height: 100vh;
@@ -88,6 +107,11 @@ button {
       #260949 100%
     );
 }
+
+
+/* =========================================================
+   BACKGROUND GLOW
+========================================================= */
 
 .background-glow {
   position: absolute;
@@ -123,6 +147,11 @@ button {
   opacity: 0.10;
 }
 
+
+/* =========================================================
+   HERO
+========================================================= */
+
 .hero {
   position: relative;
   z-index: 2;
@@ -146,6 +175,11 @@ button {
 .hero-content {
   padding: 30px 0;
 }
+
+
+/* =========================================================
+   TYPEWRITER
+========================================================= */
 
 .eyebrow {
   min-height: 20px;
@@ -189,6 +223,11 @@ button {
   }
 }
 
+
+/* =========================================================
+   HERO TITLE
+========================================================= */
+
 .hero h1 {
   margin: 24px 0;
 
@@ -228,6 +267,11 @@ button {
 
   line-height: 1.75;
 }
+
+
+/* =========================================================
+   HERO BUTTONS
+========================================================= */
 
 .hero-buttons {
   display: flex;
@@ -312,6 +356,11 @@ button {
     0 0 25px rgba(157, 55, 255, 0.15);
 }
 
+
+/* =========================================================
+   HERO VISUAL
+========================================================= */
+
 .hero-visual {
   position: relative;
 
@@ -326,6 +375,11 @@ button {
 
   overflow: hidden;
 }
+
+
+/* =========================================================
+   PURPLE LIGHT BEHIND CARDS
+========================================================= */
 
 .hero-visual::before {
   content: "";
@@ -357,6 +411,11 @@ button {
   z-index: 0;
 }
 
+
+/* =========================================================
+   CAROUSEL STAGE
+========================================================= */
+
 .carousel-stage {
   position: relative;
 
@@ -367,6 +426,11 @@ button {
   align-items: center;
   justify-content: center;
 }
+
+
+/* =========================================================
+   COMMON CARD
+========================================================= */
 
 .carousel-card {
   position: absolute;
@@ -394,6 +458,11 @@ button {
   pointer-events: none;
 }
 
+
+/* =========================================================
+   CARD GLOW
+========================================================= */
+
 .carousel-card::before {
   content: "";
 
@@ -414,6 +483,11 @@ button {
 
   pointer-events: none;
 }
+
+
+/* =========================================================
+   FAR RIGHT CARD
+========================================================= */
 
 .far-card {
   transform:
@@ -441,6 +515,11 @@ button {
     0 30px 70px rgba(0, 0, 0, 0.45);
 }
 
+
+/* =========================================================
+   RIGHT BACK CARD
+========================================================= */
+
 .next-card {
   transform:
     translate(12%, -50%)
@@ -467,6 +546,11 @@ button {
     0 30px 80px rgba(0, 0, 0, 0.5),
     0 0 35px rgba(120, 42, 255, 0.15);
 }
+
+
+/* =========================================================
+   LEFT PREVIOUS CARD
+========================================================= */
 
 .previous-card {
   transform:
@@ -497,6 +581,11 @@ button {
     rotate(-10deg)
     scale(0.83);
 }
+
+
+/* =========================================================
+   BACK CARD CONTENT
+========================================================= */
 
 .back-card-content {
   position: absolute;
@@ -550,6 +639,11 @@ button {
   line-height: 1.5;
 }
 
+
+/* =========================================================
+   FRONT CARD
+========================================================= */
+
 .front-card {
   transform:
     translate(-50%, -50%)
@@ -582,6 +676,11 @@ button {
     0 0 110px rgba(157, 52, 255, 0.23);
 }
 
+
+/* =========================================================
+   FRONT CARD LIGHT
+========================================================= */
+
 .front-card::before {
   content: "";
 
@@ -602,6 +701,11 @@ button {
 
   pointer-events: none;
 }
+
+
+/* =========================================================
+   FRONT CARD DIVIDER
+========================================================= */
 
 .front-card::after {
   content: "";
@@ -624,6 +728,11 @@ button {
     );
 }
 
+
+/* =========================================================
+   FRONT ICON
+========================================================= */
+
 .front-card-icon {
   position: relative;
   z-index: 2;
@@ -639,6 +748,11 @@ button {
       0 20px 25px rgba(0, 0, 0, 0.38)
     );
 }
+
+
+/* =========================================================
+   FRONT INFO
+========================================================= */
 
 .front-card-info {
   position: relative;
@@ -679,6 +793,11 @@ button {
 
   line-height: 1.55;
 }
+
+
+/* =========================================================
+   PLAY BUTTON
+========================================================= */
 
 .play-button {
   position: absolute;
@@ -729,6 +848,11 @@ button {
     0 10px 35px rgba(174, 69, 255, 0.35);
 }
 
+
+/* =========================================================
+   FRONT CARD ENTER
+========================================================= */
+
 .front-enter {
   animation:
     frontCardEnter
@@ -773,6 +897,11 @@ button {
   }
 }
 
+
+/* =========================================================
+   EXIT RIGHT
+========================================================= */
+
 .front-exit-right {
   animation:
     exitRight
@@ -810,6 +939,11 @@ button {
   }
 }
 
+
+/* =========================================================
+   EXIT LEFT
+========================================================= */
+
 .front-exit-left {
   animation:
     exitLeft
@@ -846,6 +980,11 @@ button {
       scale(0.78);
   }
 }
+
+
+/* =========================================================
+   CAROUSEL ARROWS
+========================================================= */
 
 .carousel-arrow {
   position: absolute;
@@ -945,6 +1084,11 @@ button {
   cursor: default;
 }
 
+
+/* =========================================================
+   DOTS
+========================================================= */
+
 .carousel-dots {
   position: absolute;
 
@@ -994,6 +1138,11 @@ button {
     0 0 25px rgba(150, 42, 255, 0.75);
 }
 
+
+/* =========================================================
+   QUICK STATS
+========================================================= */
+
 .quick-stats {
   position: relative;
   z-index: 2;
@@ -1034,6 +1183,11 @@ button {
 
   font-size: 12px;
 }
+
+
+/* =========================================================
+   SECTIONS
+========================================================= */
 
 .section {
   position: relative;
@@ -1108,6 +1262,7 @@ button {
     transform 0.25s ease;
 }
 
+
 .view-all::after {
   content: "";
   position: absolute;
@@ -1134,6 +1289,7 @@ button {
   transform: translateY(-2px);
 }
 
+
 .view-all:hover::after {
   transform: rotate(18deg) translateX(520%);
 }
@@ -1149,6 +1305,11 @@ button {
   color: #ffffff;
   transform: translateX(3px);
 }
+
+
+/* =========================================================
+   POPULAR GAMES
+========================================================= */
 
 .featured-games {
   display: grid;
@@ -1268,6 +1429,11 @@ button {
   box-shadow: 0 11px 25px rgba(174, 69, 255, 0.42), inset 0 1px rgba(255, 255, 255, 0.4);
 }
 
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
 .search-box {
   width: 250px;
   height: 44px;
@@ -1313,6 +1479,11 @@ button {
 .search-box input::placeholder {
   color: #81748d;
 }
+
+
+/* =========================================================
+   GAME GRID
+========================================================= */
 
 .game-grid {
   display: grid;
@@ -1436,6 +1607,11 @@ button {
   margin-left: 7px;
 }
 
+
+/* =========================================================
+   BOTTOM CTA
+========================================================= */
+
 .bottom-cta {
   position: relative;
   z-index: 2;
@@ -1488,6 +1664,11 @@ button {
 
   letter-spacing: -1px;
 }
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
 
 footer {
   position: relative;
@@ -1557,6 +1738,11 @@ footer p {
   font-size: 10px;
 }
 
+
+/* =========================================================
+   TABLET
+========================================================= */
+
 @media (max-width: 1100px) {
 
   .navbar,
@@ -1605,6 +1791,11 @@ footer p {
   }
 }
 
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media (max-width: 700px) {
 
   .navbar,
@@ -1616,6 +1807,9 @@ footer p {
     width:
       calc(100% - 32px);
   }
+
+
+  /* NAV */
 
   .navbar {
     height: 64px;
@@ -1654,6 +1848,9 @@ footer p {
 
     border-radius: 13px;
   }
+
+
+  /* HERO */
 
   .hero {
     margin-top: 5px;
@@ -1698,6 +1895,9 @@ footer p {
     margin-top: 25px;
   }
 
+
+  /* CAROUSEL */
+
   .hero-visual {
     min-height: 455px;
 
@@ -1721,6 +1921,9 @@ footer p {
 
     border-radius: 27px;
   }
+
+
+  /* FRONT */
 
   .front-card {
     padding:
@@ -1769,6 +1972,9 @@ footer p {
 
     font-size: 11px;
   }
+
+
+  /* BACK CARDS */
 
   .next-card {
     transform:
@@ -1819,6 +2025,9 @@ footer p {
     font-size: 10px;
   }
 
+
+  /* ARROWS */
+
   .carousel-arrow {
     width: 45px;
     height: 45px;
@@ -1836,9 +2045,15 @@ footer p {
     right: -2px;
   }
 
+
+  /* DOTS */
+
   .carousel-dots {
     bottom: -2px;
   }
+
+
+  /* STATS */
 
   .quick-stats {
     grid-template-columns:
@@ -1853,6 +2068,9 @@ footer p {
     padding:
       20px 10px;
   }
+
+
+  /* SECTIONS */
 
   .section {
     margin-bottom: 75px;
@@ -1874,6 +2092,9 @@ footer p {
     width: 100%;
   }
 
+
+  /* CARDS */
+
   .featured-games,
   .game-grid {
     grid-template-columns:
@@ -1883,6 +2104,9 @@ footer p {
   .big-game-card {
     min-height: 320px;
   }
+
+
+  /* CTA */
 
   .bottom-cta {
     padding: 30px;
@@ -1898,6 +2122,9 @@ footer p {
     font-size: 25px;
   }
 
+
+  /* FOOTER */
+
   footer {
     flex-wrap: wrap;
   }
@@ -1908,6 +2135,11 @@ footer p {
     margin-left: 0;
   }
 }
+
+
+/* =========================================================
+   SMALL PHONE
+========================================================= */
 
 @media (max-width: 430px) {
 
@@ -1982,6 +2214,11 @@ footer p {
   }
 }
 
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
 @media (prefers-reduced-motion: reduce) {
 
   *,
@@ -1993,6 +2230,10 @@ footer p {
     scroll-behavior: auto !important;
   }
 }
+
+/* =========================================================
+   CONTINUE PLAYING
+   ========================================================= */
 
 .continue-playing {
   position: relative;
@@ -2085,6 +2326,7 @@ footer p {
   letter-spacing: 1.5px;
 }
 
+/* RECENTLY PLAYED TAG */
 .continue-game-status {
   position: absolute;
   top: 0;
@@ -2133,6 +2375,7 @@ footer p {
   transform-style: preserve-3d;
 }
 
+/* Use the exact All Games animation keyframes on Continue cards. */
 .continue-game-art .dice-cube {
   animation: weeklyDiceCubeRoll 3s cubic-bezier(0.25, 0.8, 0.3, 1) infinite;
 }
@@ -2302,6 +2545,10 @@ footer p {
   }
 }
 
+/* =========================================================
+   POPULAR — GAME LOGO BOX
+   ========================================================= */
+
 .big-game-icon.unified-game-logo {
   width: 68px;
   height: 68px;
@@ -2417,6 +2664,10 @@ footer p {
     animation: none !important;
   }
 }
+
+/* =========================================================
+   DAILY CHALLENGE
+========================================================= */
 
 .daily-challenge {
   position: relative;
@@ -2576,6 +2827,7 @@ footer p {
   transform-style: preserve-3d;
 }
 
+/* Reuse the exact All Games animation keyframes on the Daily Challenge icon. */
 .daily-challenge-art .dice-cube {
   animation: weeklyDiceCubeRoll 3s cubic-bezier(0.25, 0.8, 0.3, 1) infinite;
 }
@@ -2767,6 +3019,11 @@ footer p {
   }
 }
 
+
+/* =========================================================
+   ARCADION BANNER
+   ========================================================= */
+
 .arcadion-banner {
   position: relative;
 
@@ -2813,6 +3070,13 @@ footer p {
     drop-shadow(0 0 8px rgba(172, 84, 255, 0.45))
     drop-shadow(0 0 22px rgba(142, 52, 224, 0.22));
 }
+
+
+/* =========================================================
+   INNER FILL
+   (the actual dark card -- inset from the glowing edge so
+   the gradient above reads as a thin chamfered border)
+   ========================================================= */
 
 .arcadion-banner-fill {
   position: absolute;
@@ -2870,6 +3134,11 @@ footer p {
     inset 0 0 35px rgba(128, 40, 208, 0.08);
 }
 
+
+/* =========================================================
+   ATMOSPHERE
+   ========================================================= */
+
 .arcadion-atmosphere {
   position: absolute;
   inset: 0;
@@ -2890,6 +3159,7 @@ footer p {
 
   pointer-events: none;
 }
+
 
 .arcadion-noise {
   position: absolute;
@@ -2926,6 +3196,18 @@ footer p {
   pointer-events: none;
 }
 
+
+/* =========================================================
+   FRAME
+   (edge glow now comes from .arcadion-banner + .arcadion-banner-fill
+   chamfer layers above -- no separate corner brackets needed)
+   ========================================================= */
+
+
+/* =========================================================
+   LEFT CONTENT
+   ========================================================= */
+
 .arcadion-copy {
   position: absolute;
 
@@ -2939,6 +3221,7 @@ footer p {
 
   transform: translateY(-50%);
 }
+
 
 .arcadion-emblem {
   position: relative;
@@ -2957,6 +3240,7 @@ footer p {
       0 0 12px rgba(181, 66, 255, 0.55)
     );
 }
+
 
 .arcadion-emblem-mark {
   width: 65px;
@@ -2979,6 +3263,7 @@ footer p {
     infinite;
 }
 
+
 .arcadion-copy-divider {
   width: 1px;
   height: 48px;
@@ -2994,9 +3279,11 @@ footer p {
     );
 }
 
+
 .arcadion-copy-text {
   min-width: 330px;
 }
+
 
 .arcadion-waiting-text {
   position: relative;
@@ -3028,6 +3315,7 @@ footer p {
     infinite;
 }
 
+
 .arcadion-waiting-text::after {
   content: "ARCADION IS WAITING";
 
@@ -3049,6 +3337,7 @@ footer p {
     infinite;
 }
 
+
 .arcadion-copy-text p {
   margin: 8px 0 0;
 
@@ -3059,6 +3348,11 @@ footer p {
 
   letter-spacing: 0.5px;
 }
+
+
+/* =========================================================
+   ARCADION CHARACTER
+   ========================================================= */
 
 .arcadion-character {
   position: absolute;
@@ -3076,6 +3370,7 @@ footer p {
 
   pointer-events: none;
 }
+
 
 .arcadion-character-image {
   position: absolute;
@@ -3107,7 +3402,17 @@ footer p {
 
   z-index: 5;
 
+  /* animation:
+    arcadionCharacterFloat
+    4.5s
+    ease-in-out
+    infinite; */
 }
+
+
+/* =========================================================
+   CHARACTER AURA
+   ========================================================= */
 
 .arcadion-character-aura {
   position: absolute;
@@ -3143,6 +3448,896 @@ footer p {
 }
 
 
+/* =========================================================
+   MOVING SMOKE
+   (positions/sizes are precomputed in TSX and passed as
+   inline styles -- CSS calc() has no modulo operator, so the
+   original "% N" math here never worked)
+   ========================================================= */
+
+.arcadion-smoke {
+  position: absolute;
+
+  left: 50%;
+  bottom: -15px;
+
+  width: 470px;
+  height: 210px;
+
+  transform:
+    translateX(-50%);
+
+  z-index: 3;
+
+  pointer-events: none;
+
+  filter: blur(1px);
+}
+
+
+.arcadion-smoke-particle {
+  position: absolute;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(177, 58, 255, 0.28),
+      rgba(120, 34, 206, 0.13) 48%,
+      transparent 72%
+    );
+
+  filter: blur(10px);
+
+  opacity: 0;
+
+  animation-name: arcadionSmokeRise;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+
+/* Bigger smoke behind character */
+
+.arcadion-character-smoke-back {
+  position: absolute;
+
+  left: 50%;
+  bottom: 30px;
+
+  width: 300px;
+  height: 170px;
+
+  transform:
+    translateX(-50%);
+
+  z-index: 2;
+
+  pointer-events: none;
+
+  filter: blur(9px);
+}
+
+
+.arcadion-character-smoke-back span {
+  position: absolute;
+
+  bottom: 0;
+
+  width: 75px;
+  height: 110px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(153, 44, 255, 0.24),
+      rgba(82, 25, 142, 0.10) 52%,
+      transparent 72%
+    );
+
+  opacity: 0;
+
+  animation:
+    arcadionBackSmoke
+    3.8s
+    ease-in-out
+    infinite;
+}
+
+
+.arcadion-character-smoke-back span:nth-child(1) {
+  left: 20px;
+  --drift: -18px;
+  animation-delay: -0.2s;
+}
+
+
+.arcadion-character-smoke-back span:nth-child(2) {
+  left: 75px;
+  --drift: 8px;
+  animation-delay: -1.1s;
+}
+
+
+.arcadion-character-smoke-back span:nth-child(3) {
+  right: 65px;
+  --drift: -10px;
+  animation-delay: -1.9s;
+}
+
+
+.arcadion-character-smoke-back span:nth-child(4) {
+  right: 10px;
+  --drift: 14px;
+  animation-delay: -2.7s;
+}
+
+
+/* =========================================================
+   FLOATING PARTICLES
+   (positions precomputed in TSX -- see note above)
+   ========================================================= */
+
+.arcadion-particles {
+  position: absolute;
+  inset: 0;
+
+  z-index: 4;
+
+  pointer-events: none;
+}
+
+
+.arcadion-energy-particle {
+  position: absolute;
+
+  border-radius: 50%;
+
+  background: #c56aff;
+
+  box-shadow:
+    0 0 5px #b94dff,
+    0 0 12px rgba(173, 58, 255, 0.8);
+
+  opacity: 0;
+
+  animation-name: arcadionParticleFloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+
+/* =========================================================
+   CHARACTER-LEVEL ENERGY SPARKS
+   ========================================================= */
+
+.arcadion-character-energy {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.arcadion-character-energy span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #e2c1ff;
+  box-shadow: 0 0 6px #c56aff, 0 0 12px rgba(173, 58, 255, 0.75);
+  opacity: 0;
+  animation: arcadionParticleFloat 3.4s ease-in-out infinite;
+}
+
+.arcadion-character-energy span:nth-child(1) { left: 35%; top: 40%; animation-delay: -0.4s; }
+.arcadion-character-energy span:nth-child(2) { left: 55%; top: 55%; animation-delay: -1.6s; }
+.arcadion-character-energy span:nth-child(3) { left: 68%; top: 35%; animation-delay: -2.5s; }
+
+
+/* =========================================================
+   RIGHT BRAND
+   ========================================================= */
+
+.arcadion-brand {
+  position: absolute;
+
+  right: 48px;
+  top: 50%;
+
+  z-index: 12;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  transform:
+    translateY(-50%);
+
+  color: #a95bda;
+}
+
+
+.arcadion-brand-name {
+  color: #b76df0;
+
+  font-size: 17px;
+  font-weight: 900;
+
+  letter-spacing: 5px;
+
+  text-shadow:
+    0 0 10px rgba(176, 72, 255, 0.35);
+}
+
+
+.arcadion-brand-line {
+  width: 35px;
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(184, 76, 255, 0.65)
+    );
+}
+
+
+.arcadion-brand-line:last-child {
+  transform: scaleX(-1);
+}
+
+
+/* =========================================================
+   SCAN LINE
+   ========================================================= */
+
+.arcadion-scan-line {
+  position: absolute;
+
+  left: -20%;
+
+  top: 0;
+
+  width: 20%;
+  height: 100%;
+
+  z-index: 13;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(190, 87, 255, 0.09),
+      transparent
+    );
+
+  transform: skewX(-18deg);
+
+  animation:
+    arcadionScan
+    6s
+    linear
+    infinite;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes arcadionTextFlicker {
+  0%,
+  8%,
+  10%,
+  14%,
+  16%,
+  100% {
+    opacity: 1;
+  }
+
+  9%,
+  15% {
+    opacity: 0.28;
+  }
+
+  54% {
+    opacity: 0.95;
+  }
+
+  55% {
+    opacity: 0.45;
+  }
+
+  56% {
+    opacity: 1;
+  }
+}
+
+
+@keyframes arcadionTextGlitch {
+  0%,
+  72%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  73% {
+    opacity: 0.8;
+    transform: translateX(-4px);
+  }
+
+  74% {
+    opacity: 0;
+    transform: translateX(5px);
+  }
+
+  75% {
+    opacity: 0.55;
+    transform: translateX(-2px);
+  }
+
+  76% {
+    opacity: 0;
+  }
+}
+
+
+@keyframes arcadionEyeGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+
+    filter:
+      drop-shadow(0 0 3px rgba(255, 255, 255, 0.6))
+      drop-shadow(0 0 6px #ff3b3b)
+      drop-shadow(0 0 10px #b30000);
+  }
+
+  10% {
+    opacity: 1;
+
+    filter:
+      drop-shadow(0 0 7px #fff)
+      drop-shadow(0 0 17px #ff4d4d)
+      drop-shadow(0 0 34px #ff0000)
+      drop-shadow(0 0 55px #c40000);
+  }
+
+  55% {
+    opacity: 0.6;
+
+    filter:
+      drop-shadow(0 0 4px #fff)
+      drop-shadow(0 0 10px #ff3b3b)
+      drop-shadow(0 0 20px #d40000);
+  }
+}
+
+
+@keyframes arcadionEyeAura {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform:
+      translateX(-50%)
+      scale(0.85);
+  }
+
+  10% {
+    opacity: 0.85;
+    transform:
+      translateX(-50%)
+      scale(1.15);
+  }
+
+  55% {
+    opacity: 0.4;
+    transform:
+      translateX(-50%)
+      scale(1);
+  }
+}
+
+
+@keyframes arcadionSmokeRise {
+  0% {
+    opacity: 0;
+    transform:
+      translate3d(0, 20px, 0)
+      scale(0.65);
+  }
+
+  25% {
+    opacity: 0.8;
+  }
+
+  55% {
+    opacity: 0.45;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate3d(
+        var(--drift, 0px),
+        -105px,
+        0
+      )
+      scale(1.7);
+  }
+}
+
+
+@keyframes arcadionBackSmoke {
+  0% {
+    opacity: 0;
+
+    transform:
+      translateY(25px)
+      scale(0.65);
+  }
+
+  25% {
+    opacity: 0.75;
+  }
+
+  60% {
+    opacity: 0.38;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(
+        var(--drift, 0px),
+        -85px
+      )
+      scale(1.5);
+  }
+}
+
+
+@keyframes arcadionParticleFloat {
+  0% {
+    opacity: 0;
+
+    transform:
+      translateY(20px)
+      scale(0.4);
+  }
+
+  25% {
+    opacity: 0.85;
+  }
+
+  70% {
+    opacity: 0.35;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translateY(-70px)
+      translateX(var(--drift, 0px))
+      scale(1.15);
+  }
+}
+
+
+@keyframes arcadionCharacterGlow {
+  0%,
+  18%,
+  100% {
+    filter:
+      brightness(0.78)
+      contrast(1.24)
+      saturate(1.02)
+      drop-shadow(0 0 3px rgba(213, 125, 255, 0.35))
+      drop-shadow(0 0 9px rgba(170, 65, 255, 0.24))
+      drop-shadow(0 0 18px rgba(133, 39, 235, 0.12));
+  }
+
+  38% {
+    filter:
+      brightness(0.90)
+      contrast(1.23)
+      saturate(1.06)
+      drop-shadow(0 0 7px rgba(220, 142, 255, 0.70))
+      drop-shadow(0 0 18px rgba(180, 78, 255, 0.52))
+      drop-shadow(0 0 34px rgba(143, 45, 245, 0.30));
+  }
+
+  50% {
+    filter:
+      brightness(1.08)
+      contrast(1.20)
+      saturate(1.10)
+      drop-shadow(0 0 11px rgba(235, 180, 255, 1))
+      drop-shadow(0 0 27px rgba(194, 91, 255, 0.90))
+      drop-shadow(0 0 50px rgba(151, 48, 255, 0.62))
+      drop-shadow(0 0 78px rgba(112, 28, 205, 0.34));
+  }
+
+  62% {
+    filter:
+      brightness(0.94)
+      contrast(1.22)
+      saturate(1.07)
+      drop-shadow(0 0 8px rgba(226, 151, 255, 0.80))
+      drop-shadow(0 0 20px rgba(180, 78, 255, 0.62))
+      drop-shadow(0 0 40px rgba(143, 45, 245, 0.36));
+  }
+
+  78% {
+    filter:
+      brightness(0.82)
+      contrast(1.24)
+      saturate(1.03)
+      drop-shadow(0 0 4px rgba(213, 125, 255, 0.46))
+      drop-shadow(0 0 11px rgba(170, 65, 255, 0.30))
+      drop-shadow(0 0 22px rgba(133, 39, 235, 0.16));
+  }
+}
+
+
+@keyframes arcadionCharacterFloat {
+  0%,
+  100% {
+    transform:
+      translateX(-50%)
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateX(-50%)
+      translateY(-5px);
+  }
+}
+
+
+@keyframes arcadionAuraPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+
+    transform:
+      translateX(-50%)
+      scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+
+    transform:
+      translateX(-50%)
+      scale(1.08);
+  }
+}
+
+
+@keyframes arcadionEmblemPulse {
+  0%,
+  100% {
+    filter:
+      brightness(0.9)
+      drop-shadow(0 0 5px rgba(177, 64, 255, 0.4));
+  }
+
+  50% {
+    filter:
+      brightness(1.2)
+      drop-shadow(0 0 12px rgba(189, 70, 255, 0.8));
+  }
+}
+
+
+@keyframes arcadionScan {
+  0% {
+    left: -25%;
+  }
+
+  100% {
+    left: 125%;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1000px) {
+  .arcadion-banner {
+    width: calc(100% - 48px);
+    height: 145px;
+  }
+
+  .arcadion-copy {
+    left: 30px;
+  }
+
+  .arcadion-copy-text {
+    min-width: 260px;
+  }
+
+  .arcadion-waiting-text {
+    font-size: 15px;
+    letter-spacing: 3px;
+  }
+
+  .arcadion-copy-text p {
+    font-size: 10px;
+  }
+
+  .arcadion-brand {
+    right: 30px;
+  }
+
+  .arcadion-brand-name {
+    font-size: 13px;
+    letter-spacing: 4px;
+  }
+
+  .arcadion-brand-line {
+    width: 22px;
+  }
+
+  .arcadion-character {
+    width: 520px;
+  }
+
+  .arcadion-character-image {
+    width: 530px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .arcadion-banner {
+    width: calc(100% - 28px);
+
+    height: 125px;
+
+    margin: 55px auto;
+
+    clip-path: polygon(
+      14px 0,
+      23px 0,
+      23px 2.5px,
+      29px 2.5px,
+      29px 0,
+      calc(100% - 29px) 0,
+      calc(100% - 29px) 2.5px,
+      calc(100% - 23px) 2.5px,
+      calc(100% - 23px) 0,
+      calc(100% - 14px) 0,
+      100% 14px,
+      100% calc(100% - 14px),
+      calc(100% - 14px) 100%,
+      calc(100% - 23px) 100%,
+      calc(100% - 23px) calc(100% - 2.5px),
+      calc(100% - 29px) calc(100% - 2.5px),
+      calc(100% - 29px) 100%,
+      29px 100%,
+      29px calc(100% - 2.5px),
+      23px calc(100% - 2.5px),
+      23px 100%,
+      14px 100%,
+      0 calc(100% - 14px),
+      0 14px
+    );
+  }
+
+  .arcadion-banner-fill {
+    clip-path: polygon(
+      12.5px 0,
+      20.5px 0,
+      20.5px 2px,
+      25.5px 2px,
+      25.5px 0,
+      calc(100% - 25.5px) 0,
+      calc(100% - 25.5px) 2px,
+      calc(100% - 20.5px) 2px,
+      calc(100% - 20.5px) 0,
+      calc(100% - 12.5px) 0,
+      100% 12.5px,
+      100% calc(100% - 12.5px),
+      calc(100% - 12.5px) 100%,
+      calc(100% - 20.5px) 100%,
+      calc(100% - 20.5px) calc(100% - 2px),
+      calc(100% - 25.5px) calc(100% - 2px),
+      calc(100% - 25.5px) 100%,
+      25.5px 100%,
+      25.5px calc(100% - 2px),
+      20.5px calc(100% - 2px),
+      20.5px 100%,
+      12.5px 100%,
+      0 calc(100% - 12.5px),
+      0 12.5px
+    );
+  }
+
+  .arcadion-copy {
+    left: 18px;
+  }
+
+  .arcadion-emblem {
+    width: 32px;
+    height: 45px;
+
+    margin-right: 10px;
+  }
+
+  .arcadion-emblem::before {
+    width: 21px;
+    height: 30px;
+  }
+
+  .arcadion-emblem-eye {
+    top: 18px;
+
+    width: 7px;
+    height: 4px;
+  }
+
+  .arcadion-copy-divider {
+    height: 38px;
+
+    margin-right: 12px;
+  }
+
+  .arcadion-copy-text {
+    min-width: 0;
+  }
+
+  .arcadion-waiting-text {
+    font-size: 10px;
+
+    letter-spacing: 1.8px;
+  }
+
+  .arcadion-copy-text p {
+    margin-top: 6px;
+
+    max-width: 170px;
+
+    font-size: 8px;
+  }
+
+  .arcadion-character {
+    left: 67%;
+
+    width: 380px;
+    height: 300px;
+
+    bottom: -12px;
+  }
+
+  .arcadion-character-image {
+    width: 380px;
+  }
+
+  .arcadion-eyes {
+    top: 43px;
+
+    width: 60px;
+  }
+
+  .arcadion-eye {
+    width: 20px;
+    height: 7px;
+  }
+
+  .arcadion-brand {
+    display: none;
+  }
+
+  .arcadion-character-aura {
+    width: 260px;
+    height: 190px;
+  }
+
+  .arcadion-smoke {
+    width: 300px;
+  }
+
+  .arcadion-particles {
+    opacity: 0.65;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 430px) {
+  .arcadion-banner {
+    height: 112px;
+  }
+
+  .arcadion-copy {
+    left: 13px;
+  }
+
+  .arcadion-waiting-text {
+    font-size: 8.5px;
+    letter-spacing: 1.4px;
+  }
+
+  .arcadion-copy-text p {
+    max-width: 140px;
+
+    font-size: 7px;
+  }
+
+  .arcadion-character {
+    left: 73%;
+
+    width: 330px;
+    height: 260px;
+  }
+
+  .arcadion-character-image {
+    width: 330px;
+  }
+
+  .arcadion-eyes {
+    top: 39px;
+
+    width: 52px;
+  }
+
+  .arcadion-eye {
+    width: 17px;
+    height: 6px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .arcadion-waiting-text span,
+  .arcadion-waiting-text::after,
+  .arcadion-eye,
+  .arcadion-eyes::before,
+  .arcadion-character-image,
+  .arcadion-character-aura,
+  .arcadion-smoke-particle,
+  .arcadion-character-smoke-back span,
+  .arcadion-energy-particle,
+  .arcadion-character-energy span,
+  .arcadion-emblem-mark,
+  .arcadion-emblem::before,
+  .arcadion-scan-line {
+    animation: none;
+  }
+}
+
+
+/* =========================================================
+   VIEW MORE — FINAL CLEAN HOVER
+   Keeps the existing size; removes the sweep/shimmer overlay.
+   ========================================================= */
+
 .view-all {
   position: relative;
   overflow: hidden;
@@ -3165,29 +4360,4 @@ footer p {
 .view-all span {
   position: relative;
   z-index: 1;
-}
-
-.arcadion-character-aura,
-.arcadion-smoke-particle,
-.arcadion-character-smoke-back span,
-.arcadion-energy-particle,
-.arcadion-character-energy span,
-.arcadion-scan-line {
-  will-change: transform, opacity;
-}
-
-.carousel-card {
-  contain: paint;
-}
-
-.continue-game-card,
-.big-game-card,
-.game-card {
-  contain: paint;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
 }

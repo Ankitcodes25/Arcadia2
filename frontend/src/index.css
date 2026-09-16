@@ -27,3 +27,21 @@ body {
   min-width: 320px;
   background: #0b0315;
 }
+
+.page-transition {
+  width: 100%;
+  animation: pageFadeSlide 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+@keyframes pageFadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
