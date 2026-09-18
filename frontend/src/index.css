@@ -30,14 +30,14 @@ body {
 
 .page-transition {
   width: 100%;
-  animation: pageFadeSlide 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
+  animation: pageEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 
-@keyframes pageFadeSlide {
+@keyframes pageEnter {
   0% {
-    opacity: 0;
-    transform: translateY(18px) scale(0.985);
+    opacity: 1;
+    transform: translateY(14px) scale(0.992);
   }
 
   100% {

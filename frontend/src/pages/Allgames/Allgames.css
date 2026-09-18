@@ -1708,7 +1708,7 @@
 .carousel-card:hover .rps-emoji-logo > span,
 .carousel-card:focus-within .rps-emoji-logo > span,
 .carousel-card:active .rps-emoji-logo > span {
-  animation-duration: 3s;
+  animation-duration: 4s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
@@ -1914,22 +1914,22 @@
 .library-card .tic-tac-logo-x1,
 .big-game-card .tic-tac-logo-x1,
 .carousel-card .tic-tac-logo-x1 {
-  animation: ticTacX1 7s ease-in-out infinite;
+  animation: ticTacX1 5s ease-in-out infinite;
 }/* X2 */
 .library-card .tic-tac-logo-x2,
 .big-game-card .tic-tac-logo-x2,
 .carousel-card .tic-tac-logo-x2 {
-  animation: ticTacX2 7s ease-in-out infinite;
+  animation: ticTacX2 5s ease-in-out infinite;
 }/* X3 */
 .library-card .tic-tac-logo-x3,
 .big-game-card .tic-tac-logo-x3,
 .carousel-card .tic-tac-logo-x3 {
-  animation: ticTacX3 7s ease-in-out infinite;
+  animation: ticTacX3 5s ease-in-out infinite;
 }/* Winning line */
 .library-card .tic-tac-logo-winline,
 .big-game-card .tic-tac-logo-winline,
 .carousel-card .tic-tac-logo-winline {
-  animation: ticTacWin 7s ease-in-out infinite;
+  animation: ticTacWin 5s ease-in-out infinite;
 }/* Weekly Trending — carousel swaps card every 3s, so this needs its
    own faster cycle (2.8s) that finishes with room to spare, instead
    of the slower 7s cycle used by the static grid cards above. */
@@ -2169,7 +2169,7 @@
 .library-card .rps-emoji-logo > span,
 .big-game-card .rps-emoji-logo > span,
 .carousel-card .rps-emoji-logo > span {
-  animation-duration: 3s;
+  animation-duration: 4s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }/* Weekly Trending — carousel swaps card every 3s, so the fist/paper/
@@ -2579,7 +2579,7 @@
 .carousel-card:focus-within .rps-emoji-logo > span,
 .carousel-card:active .rps-emoji-logo > span,
 .weekly-game-card.is-active .rps-emoji-logo > span {
-  animation-duration: 3s;
+  animation-duration: 4s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
@@ -2624,21 +2624,22 @@
 }
 
 @keyframes rpsFistSlot {
-  0%, 18% { opacity: 1; transform: scale(1) rotate(0deg); }
-  24%, 30% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
-  31%, 100% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
+  0%, 21% { opacity: 1; transform: scale(1) rotate(0deg); }
+  33% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
+  34%, 87% { opacity: 0; transform: translateX(8px) scale(0.72) rotate(12deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
 @keyframes rpsPaperSlot {
-  0%, 29% { opacity: 0; transform: translateX(8px) scale(0.72) rotate(12deg); }
-  35%, 52% { opacity: 1; transform: translateX(0) scale(1.05) rotate(3deg); }
-  58%, 64% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
-  65%, 100% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
+  0%, 21% { opacity: 0; transform: translateX(8px) scale(0.72) rotate(12deg); }
+  33%, 54% { opacity: 1; transform: translateX(0) scale(1.05) rotate(3deg); }
+  66%, 100% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
 }
 
 @keyframes rpsScissorsSlot {
-  0%, 63% { opacity: 0; transform: translateX(8px) scale(0.72) rotate(12deg); }
-  69%, 100% { opacity: 1; transform: translateX(0) scale(1.05) rotate(-3deg); }
+  0%, 54% { opacity: 0; transform: translateX(8px) scale(0.72) rotate(12deg); }
+  66%, 87% { opacity: 1; transform: translateX(0) scale(1.05) rotate(-3deg); }
+  100% { opacity: 0; transform: translateX(-8px) scale(0.72) rotate(-12deg); }
 }
 
 .library-card:hover .dice-cube,
@@ -2650,7 +2651,7 @@
 .carousel-card:hover .dice-cube,
 .carousel-card:focus-within .dice-cube,
 .carousel-card:active .dice-cube {
-  animation: weeklyDiceCubeRoll 1.7s cubic-bezier(0.25, 0.8, 0.3, 1) both;
+  animation-play-state: running;
 }
 
 .library-card:hover .snake-segment,
@@ -2665,7 +2666,7 @@
 .big-game-card:focus-within .snake-head,
 .carousel-card:focus-within .snake-segment,
 .carousel-card:focus-within .snake-head {
-  animation: weeklySnakeBodyWave 1.15s ease-in-out infinite;
+  animation-play-state: running;
 }
 
 .library-card:hover .tic-tac-logo-x,
@@ -2675,7 +2676,7 @@
 .big-game-card:focus-within .tic-tac-logo-x,
 .carousel-card:focus-within .tic-tac-logo-x {
   stroke-dasharray: 1;
-  animation: weeklyStrokeDraw 0.45s ease-out both;
+  animation-play-state: running;
 }
 
 .library-card:hover .ladder-coil-3d,
@@ -2684,7 +2685,7 @@
 .library-card:focus-within .ladder-coil-3d,
 .big-game-card:focus-within .ladder-coil-3d,
 .carousel-card:focus-within .ladder-coil-3d {
-  animation: weeklySnakeHeadTurn 1.35s ease-in-out infinite;
+  animation-play-state: running;
 }
 
 .library-card:hover .memory-card-flip,
@@ -2693,5 +2694,56 @@
 .library-card:focus-within .memory-card-flip,
 .big-game-card:focus-within .memory-card-flip,
 .carousel-card:focus-within .memory-card-flip {
-  animation: weeklyMemoryFlip3D 2.4s cubic-bezier(0.3, 0.7, 0.3, 1) infinite;
+  animation-play-state: running;
+}
+
+.library-card .rps-air-hand,
+.big-game-card .rps-air-hand,
+.library-card .rps-gesture-hand,
+.big-game-card .rps-gesture-hand {
+  animation-duration: 3.8s;
+  animation-timing-function: cubic-bezier(0.22, 0.8, 0.25, 1);
+  animation-iteration-count: infinite;
+  animation-play-state: running !important;
+}
+
+.library-card .rps-gesture-hand,
+.big-game-card .rps-gesture-hand {
+  animation-duration: 4.2s;
+  animation-timing-function: ease-in-out;
+}
+
+.library-card .rps-emoji-logo > span,
+.big-game-card .rps-emoji-logo > span {
+  animation-duration: 4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-play-state: running !important;
+}
+
+.library-card .dice-cube,
+.big-game-card .dice-cube {
+  animation-duration: 3s;
+  animation-timing-function: cubic-bezier(0.25, 0.8, 0.3, 1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: none;
+  animation-play-state: running !important;
+}
+
+.library-card .tic-tac-logo-x1,
+.big-game-card .tic-tac-logo-x1,
+.library-card .tic-tac-logo-x2,
+.big-game-card .tic-tac-logo-x2,
+.library-card .tic-tac-logo-x3,
+.big-game-card .tic-tac-logo-x3,
+.library-card .tic-tac-logo-winline,
+.big-game-card .tic-tac-logo-winline,
+.library-card .ladder-coil-3d,
+.big-game-card .ladder-coil-3d,
+.library-card .memory-card-flip,
+.big-game-card .memory-card-flip,
+.library-card .unified-game-logo > *,
+.big-game-card .unified-game-logo > * {
+  animation-iteration-count: infinite;
+  animation-play-state: running !important;
 }
