@@ -1,187 +1,214 @@
-import { useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Crown,
-  Flame,
-  Gamepad2,
-  Sparkles,
-  Star,
-  Trophy,
-} from "lucide-react";
-
-type LeaderboardMode = "score" | "streak" | "games";
+import { useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Crown, Star } from "lucide-react";
 
 type Player = {
   name: string;
   avatar: string;
   score: number;
-  streak: number;
-  games: number;
 };
 
 const PLAYERS: Player[] = [
-  { name: "PlayerOne", avatar: "🧑🏻‍🎮", score: 12840, streak: 7, games: 86 },
-  { name: "ShadowX", avatar: "🥷", score: 11920, streak: 5, games: 74 },
-  { name: "Nova", avatar: "🐱‍👤", score: 10740, streak: 4, games: 68 },
-  { name: "PixelRush", avatar: "👾", score: 9860, streak: 3, games: 61 },
-  { name: "Void", avatar: "🧙🏻‍♀️", score: 9120, streak: 3, games: 57 },
-  { name: "Arcadion", avatar: "🤖", score: 8940, streak: 2, games: 53 },
-  { name: "GhostByte", avatar: "🐺", score: 8760, streak: 1, games: 49 },
-  { name: "NeonFox", avatar: "😈", score: 8210, streak: 1, games: 44 },
-  { name: "Drift", avatar: "😎", score: 7860, streak: 1, games: 39 },
-  { name: "Zyro", avatar: "😵‍💫", score: 7420, streak: 1, games: 35 },
-];
-
-const MODES: {
-  id: LeaderboardMode;
-  label: string;
-  icon: typeof Trophy;
-}[] = [
-  { id: "score", label: "Top by Score", icon: Trophy },
-  { id: "streak", label: "Longest Streaks", icon: Flame },
-  { id: "games", label: "Games Played", icon: Gamepad2 },
+  {
+    name: "PlayerOne",
+    avatar: "🧑🏻‍🎮",
+    score: 12840,
+  },
+  {
+    name: "ShadowX",
+    avatar: "🥷",
+    score: 11920,
+  },
+  {
+    name: "Nova",
+    avatar: "🐱‍👤",
+    score: 10740,
+  },
+  {
+    name: "PixelRush",
+    avatar: "👾",
+    score: 9860,
+  },
+  {
+    name: "Void",
+    avatar: "🧙🏻‍♀️",
+    score: 9120,
+  },
+  {
+    name: "Arcadion",
+    avatar: "🤖",
+    score: 8940,
+  },
+  {
+    name: "GhostByte",
+    avatar: "🐺",
+    score: 8760,
+  },
+  {
+    name: "NeonFox",
+    avatar: "😈",
+    score: 8210,
+  },
+  {
+    name: "Drift",
+    avatar: "😎",
+    score: 7860,
+  },
+  {
+    name: "Zyro",
+    avatar: "😵‍💫",
+    score: 7420,
+  },
 ];
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+function getRankClass(rank: number) {
+  if (rank === 1) return "is-first";
+  if (rank === 2) return "is-second";
+  if (rank === 3) return "is-third";
+
+  return "";
+}
+
 export default function LeaderboardHome() {
-  const [mode, setMode] = useState<LeaderboardMode>("score");
+  const gridRef = useRef<HTMLDivElement>(null);
 
-  const rankedPlayers = useMemo(() => {
-    return [...PLAYERS].sort((a, b) => {
-      if (mode === "streak") return b.streak - a.streak || b.score - a.score;
-      if (mode === "games") return b.games - a.games || b.score - a.score;
-      return b.score - a.score;
+  const [canGoPrevious, setCanGoPrevious] = useState(false);
+  const [canGoNext, setCanGoNext] = useState(true);
+
+  const updateArrowState = () => {
+    const grid = gridRef.current;
+
+    if (!grid) return;
+
+    const maxScrollLeft = grid.scrollWidth - grid.clientWidth;
+
+    setCanGoPrevious(grid.scrollLeft > 5);
+    setCanGoNext(grid.scrollLeft < maxScrollLeft - 5);
+  };
+
+  const scrollCards = (direction: "previous" | "next") => {
+    const grid = gridRef.current;
+
+    if (!grid) return;
+
+    const card = grid.querySelector<HTMLElement>(
+      ".leaderboard-home-card"
+    );
+
+    if (!card) return;
+
+    const cardWidth = card.getBoundingClientRect().width;
+
+    const styles = window.getComputedStyle(grid);
+    const gap = parseFloat(styles.columnGap || styles.gap || "0");
+
+    const scrollAmount = cardWidth + gap;
+
+    grid.scrollBy({
+      left: direction === "next" ? scrollAmount : -scrollAmount,
+      behavior: "smooth",
     });
-  }, [mode]);
 
-  const metricLabel = mode === "score" ? "Score" : mode === "streak" ? "day streak" : "games";
+    window.setTimeout(updateArrowState, 350);
+  };
 
   return (
-    <section className="leaderboard-home" aria-labelledby="leaderboard-home-title">
+    <section
+      className="leaderboard-home"
+      aria-labelledby="leaderboard-home-title"
+    >
       <div className="leaderboard-home-header">
         <div className="leaderboard-home-copy">
-          <div className="leaderboard-home-kicker">
-            <Crown aria-hidden="true" />
-            <span>MAIN CHARACTER BOARD</span>
-          </div>
-
-          <h2 id="leaderboard-home-title" className="leaderboard-home-title">
-            Top 10 <span>Players</span>
+          <h2
+            id="leaderboard-home-title"
+            className="leaderboard-home-title"
+          >
+            Top 10 Players
           </h2>
 
           <p className="leaderboard-home-subtitle">
-            See who&apos;s ruling Arcadia right now. Scores, streaks and pure
-            main-character energy.
+            See who&apos;s ruling Arcadia right now. Rack up the score and
+            take your place at the top.
           </p>
-
-          <div className="leaderboard-home-tabs" role="tablist" aria-label="Leaderboard category">
-            {MODES.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={mode === id}
-                className={`leaderboard-home-tab ${
-                  mode === id ? "is-active" : ""
-                }`}
-                onClick={() => setMode(id)}
-              >
-                <Icon aria-hidden="true" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="leaderboard-home-visual" aria-hidden="true">
-          <div className="leaderboard-home-orbit" />
-
-          <Sparkles className="leaderboard-home-spark leaderboard-home-spark-one" />
-          <Sparkles className="leaderboard-home-spark leaderboard-home-spark-two" />
-          <Sparkles className="leaderboard-home-spark leaderboard-home-spark-three" />
-
-          <div className="leaderboard-home-crown">
-            <Crown />
-          </div>
-
-          <div className="leaderboard-home-visual-copy">
-            Play
-            <br />
-            Compete
-            <br />
-            Be Legendary
-          </div>
         </div>
       </div>
 
       <div className="leaderboard-home-board">
-        <div className="leaderboard-home-grid">
-          {rankedPlayers.slice(0, 10).map((player, index) => {
-            const rank = index + 1;
-            const isFirst = rank === 1;
+        <div className="leaderboard-home-carousel">
+          <button
+            type="button"
+            className="leaderboard-home-arrow leaderboard-home-arrow-left"
+            onClick={() => scrollCards("previous")}
+            disabled={!canGoPrevious}
+            aria-label="Previous players"
+          >
+            <ArrowLeft aria-hidden="true" />
+          </button>
 
-            const metricValue =
-              mode === "score"
-                ? formatNumber(player.score)
-                : mode === "streak"
-                  ? `${player.streak} day`
-                  : `${player.games}`;
+          <div
+            ref={gridRef}
+            className="leaderboard-home-grid"
+            aria-label="Top 10 Arcadia players"
+            onScroll={updateArrowState}
+          >
+            {PLAYERS.map((player, index) => {
+              const rank = index + 1;
 
-            const streakText =
-              player.streak === 1
-                ? "1 day streak"
-                : `${player.streak} day streak`;
-
-            return (
-              <article
-                className={`leaderboard-home-card ${
-                  isFirst ? "is-first" : ""
-                }`}
-                key={player.name}
-              >
-                <span className="leaderboard-home-rank">
-                  {String(rank).padStart(2, "0")}
-                </span>
-
-                <div className="leaderboard-home-avatar" aria-hidden="true">
-                  {player.avatar}
-                </div>
-
-                <div className="leaderboard-home-player">{player.name}</div>
-
-                <div className="leaderboard-home-score" title={metricLabel}>
-                  {mode === "score" ? (
-                    <>
-                      <Star aria-hidden="true" />
-                      {metricValue}
-                    </>
-                  ) : mode === "streak" ? (
-                    <>
-                      <Flame aria-hidden="true" />
-                      {metricValue}
-                    </>
-                  ) : (
-                    <>
-                      <Gamepad2 aria-hidden="true" />
-                      {metricValue}
-                    </>
+              return (
+                <article
+                  key={player.name}
+                  className={`leaderboard-home-card ${getRankClass(rank)}`}
+                >
+                  {rank <= 3 && (
+                    <Crown
+                      className="leaderboard-home-medal"
+                      aria-hidden="true"
+                    />
                   )}
-                </div>
 
-                <div className="leaderboard-home-streak">
-                  <Flame aria-hidden="true" />
-                  <span>{streakText}</span>
-                </div>
-              </article>
-            );
-          })}
+                  <span className="leaderboard-home-rank">
+                    #{rank}
+                  </span>
+
+                  <div
+                    className="leaderboard-home-avatar"
+                    aria-hidden="true"
+                  >
+                    {player.avatar}
+                  </div>
+
+                  <div className="leaderboard-home-player">
+                    {player.name}
+                  </div>
+
+                  <div className="leaderboard-home-score">
+                    <Star aria-hidden="true" />
+                    <span>{formatNumber(player.score)}</span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            className="leaderboard-home-arrow leaderboard-home-arrow-right"
+            onClick={() => scrollCards("next")}
+            disabled={!canGoNext}
+            aria-label="Next players"
+          >
+            <ArrowRight aria-hidden="true" />
+          </button>
         </div>
 
         <div className="leaderboard-home-footer">
-          <a className="leaderboard-home-link" href="/leaderboard">
+          <a
+            href="/leaderboard"
+            className="leaderboard-home-link"
+          >
             <span>View full leaderboard</span>
             <ArrowRight aria-hidden="true" />
           </a>
