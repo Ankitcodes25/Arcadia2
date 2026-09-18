@@ -2,6 +2,19 @@ import type { MouseEvent } from "react";
 
 const NAVIGATION_EVENT = "arcadia:navigate";
 
+function scrollToSection(targetId: string) {
+  const targetElement = document.getElementById(targetId);
+  if (!targetElement) return;
+
+  const navbarHeight = document.querySelector<HTMLElement>(".navbar")?.offsetHeight ?? 60;
+  const targetTop = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight - 12;
+
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth",
+  });
+}
+
 export function navigateTo(
   path: string,
   event?: MouseEvent<HTMLAnchorElement>
@@ -26,14 +39,7 @@ export function navigateTo(
     url.hash
   ) {
     const targetId = url.hash.substring(1);
-    const targetElement = document.getElementById(targetId);
-
-    if (targetElement) {
-      targetElement.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    scrollToSection(targetId);
 
     return;
   }
@@ -66,20 +72,23 @@ export function navigateTo(
         document.getElementById(targetId);
 
       if (!targetElement) return;
-
-      targetElement.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      scrollToSection(targetId);
     });
   } else {
     /* -----------------------------------------
        Home / normal page navigation
     ----------------------------------------- */
 
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+
     requestAnimationFrame(() => {
       window.scrollTo({
         top: 0,
+        left: 0,
         behavior: "smooth",
       });
     });
