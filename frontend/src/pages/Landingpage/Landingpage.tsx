@@ -7,6 +7,7 @@ import BottomCta from "./Sections/BottomCta";
 import ContinuePlaying from "./Sections/ContinuePlaying";
 import DailyChallenge from "./Sections/DailyChallenge";
 import Arcadion from "./Sections/Arcadion";
+import LeaderboardHome from "./Sections/LeaderboardHome";
 
 function LandingPage() {
   return (
@@ -14,15 +15,25 @@ function LandingPage() {
       <div className="background-glow glow-one" />
       <div className="background-glow glow-two" />
       <div className="background-glow glow-three" />
+
       <main>
         <HeroSection games={games} />
+
         <PopularGames games={games} />
+
         {/* <AllGames games={games} /> */}
+
         <ContinuePlaying />
+
         <Arcadion />
+
         <DailyChallenge games={games} />
+
+        <LeaderboardHome />
+
         <BottomCta />
       </main>
+
       <Footer />
     </div>
   );
