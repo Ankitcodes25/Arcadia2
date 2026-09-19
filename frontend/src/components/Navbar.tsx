@@ -1,5 +1,5 @@
 import "./Navbar.css";
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import logo from "../assets/ArcadialogoA.png";
 import { navigateTo } from "../lib/navigation";
 import LoginSignupModal from "./LoginSignupModal";
@@ -43,6 +43,13 @@ function Navbar() {
   const navbarNavRef = useRef<HTMLElement>(null);
 
   const isGamesPage = window.location.pathname === "/games";
+
+  const goHome = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    window.history.pushState({}, "", "/");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.dispatchEvent(new Event("arcadia:navigate"));
+  };
 
   /* -------------------------------------------------------
      ACTIVE NAVIGATION
@@ -217,9 +224,7 @@ function Navbar() {
           href="/"
           className="navbar-brand"
           aria-label="Arcadia Home"
-          onClick={(event) =>
-            navigateTo("/", event)
-          }
+          onClick={goHome}
         >
           <div className="brand-logo">
             <span className="brand-ray"></span>
@@ -254,9 +259,7 @@ function Navbar() {
             }
             data-nav-item="home"
             href="/"
-            onClick={(event) =>
-              navigateTo("/", event)
-            }
+            onClick={goHome}
           >
             Home
           </a>

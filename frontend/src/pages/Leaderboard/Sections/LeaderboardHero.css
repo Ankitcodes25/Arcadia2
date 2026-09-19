@@ -1,0 +1,848 @@
+/* =========================================================
+   ARCADIA — LEADERBOARD HERO
+   ========================================================= */
+
+/* .leaderboard-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 620px;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 95px 7vw 80px;
+  background:
+    radial-gradient(
+      circle at 78% 48%,
+      rgba(126, 39, 210, 0.24),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 28% 50%,
+      rgba(96, 25, 168, 0.12),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #09020f 0%,
+      #12051f 48%,
+      #1a0730 100%
+    );
+} */
+
+/* =========================================================
+   BACKGROUND
+   ========================================================= */
+
+/* .leaderboard-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 75% 52%,
+      rgba(169, 70, 255, 0.13),
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(109, 32, 189, 0.12),
+      transparent 45%
+    );
+}
+
+.leaderboard-hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(
+      rgba(193, 106, 255, 0.09) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(193, 106, 255, 0.09) 1px,
+      transparent 1px
+    );
+  background-size: 70px 70px;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 45%,
+    black 100%
+  );
+}
+
+.leaderboard-hero-glow {
+  position: absolute;
+  z-index: -3;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(75px);
+}
+
+.leaderboard-hero-glow-left {
+  width: 330px;
+  height: 330px;
+  left: -180px;
+  top: 20%;
+  background: rgba(117, 38, 205, 0.18);
+}
+
+.leaderboard-hero-glow-right {
+  width: 500px;
+  height: 500px;
+  right: 3%;
+  top: 8%;
+  background: rgba(131, 40, 232, 0.18);
+} */
+
+/* =========================================================
+   PARTICLES
+   ========================================================= */
+
+/* .leaderboard-particle {
+  position: absolute;
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c56aff;
+  box-shadow:
+    0 0 8px rgba(197, 106, 255, 0.9),
+    0 0 18px rgba(168, 64, 255, 0.55);
+  opacity: 0.7;
+  animation: leaderboardParticleFloat 5s ease-in-out infinite;
+}
+
+.leaderboard-particle-1 {
+  left: 54%;
+  top: 24%;
+}
+
+.leaderboard-particle-2 {
+  left: 66%;
+  top: 16%;
+  width: 3px;
+  height: 3px;
+  animation-delay: -1.5s;
+}
+
+.leaderboard-particle-3 {
+  left: 84%;
+  top: 34%;
+  width: 5px;
+  height: 5px;
+  animation-delay: -2.4s;
+}
+
+.leaderboard-particle-4 {
+  left: 72%;
+  top: 76%;
+  width: 3px;
+  height: 3px;
+  animation-delay: -3.2s;
+}
+
+.leaderboard-particle-5 {
+  left: 92%;
+  top: 64%;
+  width: 4px;
+  height: 4px;
+  animation-delay: -0.8s;
+}
+
+@keyframes leaderboardParticleFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: translate3d(0, -13px, 0);
+    opacity: 0.9;
+  }
+} */
+
+/* =========================================================
+   LEFT CONTENT
+   ========================================================= */
+
+/* .leaderboard-hero-content {
+  position: relative;
+  z-index: 5;
+  width: min(540px, 48%);
+}
+
+.leaderboard-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #c16aff;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.leaderboard-hero-eyebrow::before {
+  content: "";
+  width: 24px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #bd5cff
+  );
+}
+
+.leaderboard-hero-content h1 {
+  margin: 15px 0 18px;
+  color: #ffffff;
+  font-size: clamp(58px, 6vw, 88px);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -4px;
+  text-transform: uppercase;
+}
+
+.leaderboard-hero-content h1 span {
+  color: #b74cff;
+  text-shadow:
+    0 0 12px rgba(184, 76, 255, 0.8),
+    0 0 35px rgba(142, 48, 255, 0.45);
+}
+
+.leaderboard-hero-description {
+  width: min(440px, 100%);
+  margin: 0;
+  color: #a798b7;
+  font-size: 14px;
+  line-height: 1.7;
+} */
+
+/* =========================================================
+   SEASON CARD
+   ========================================================= */
+/* 
+.leaderboard-season {
+  width: min(450px, 100%);
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 28px;
+  padding: 12px 17px;
+  border: 1px solid rgba(207, 143, 255, 0.16);
+  border-radius: 17px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(82, 27, 124, 0.35),
+      rgba(27, 8, 52, 0.42)
+    );
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    0 15px 40px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+.leaderboard-season-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(204, 121, 255, 0.34);
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(174, 66, 255, 0.34),
+      rgba(72, 21, 116, 0.38)
+    );
+  box-shadow:
+    0 0 22px rgba(153, 54, 255, 0.14),
+    inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.leaderboard-season-icon span {
+  color: #e1b7ff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.leaderboard-season-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.leaderboard-season-label {
+  color: #786a86;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+}
+
+.leaderboard-season-info strong {
+  color: #eee5f5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.leaderboard-season-end strong {
+  color: #bd67ff;
+}
+
+.leaderboard-season-divider {
+  width: 1px;
+  height: 31px;
+  margin: 0 6px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================================
+   HERO BUTTON
+   ========================================================= */
+/* 
+.leaderboard-hero-button {
+  min-height: 45px;
+  display: inline-flex;
+  align-items: center;
+  gap: 17px;
+  margin-top: 27px;
+  padding: 0 20px 0 21px;
+  border: 1px solid rgba(224, 172, 255, 0.62);
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    #b95cff,
+    #7631d5
+  );
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.2px;
+  box-shadow:
+    0 10px 25px rgba(132, 42, 226, 0.27),
+    inset 0 1px rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    filter 0.22s ease;
+}
+
+.leaderboard-hero-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 14px 32px rgba(151, 52, 245, 0.38),
+    inset 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.leaderboard-button-arrow {
+  font-size: 16px;
+  line-height: 1;
+} */ 
+
+/* =========================================================
+   RIGHT VISUAL
+   ========================================================= */
+
+/* .leaderboard-hero-visual {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 3.5%;
+  width: 54%;
+  height: 100%;
+  pointer-events: none;
+} */
+
+/* =========================================================
+   RANKING CARDS
+   ========================================================= */
+/* 
+.leaderboard-rank-card {
+  position: absolute;
+  width: 215px;
+  height: 290px;
+  overflow: hidden;
+  border: 1px solid rgba(202, 127, 255, 0.18);
+  border-radius: 25px;
+  background: rgba(62, 17, 95, 0.3);
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.3),
+    0 0 35px rgba(139, 48, 238, 0.08);
+  backdrop-filter: blur(5px);
+} */
+
+/* .leaderboard-rank-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.leaderboard-rank-card-three {
+  right: 2%;
+  top: 25%;
+  opacity: 0.38;
+  transform:
+    perspective(900px)
+    rotateY(-16deg)
+    rotateZ(8deg)
+    scale(0.9);
+}
+
+.leaderboard-rank-card-two {
+  right: 17%;
+  top: 17%;
+  opacity: 0.58;
+  transform:
+    perspective(900px)
+    rotateY(-9deg)
+    rotateZ(4deg)
+    scale(0.96);
+}
+
+.leaderboard-rank-card-one {
+  right: 29%;
+  top: 11%;
+  z-index: 3;
+  opacity: 0.86;
+  transform:
+    perspective(900px)
+    rotateY(-3deg)
+    rotateZ(-2deg);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.38),
+    0 0 45px rgba(158, 57, 255, 0.17);
+} */
+
+/* =========================================================
+   ARCADION
+   ========================================================= */
+
+/* .leaderboard-arcadion {
+  position: absolute;
+  z-index: 8;
+  right: 5%;
+  bottom: -7%;
+  width: min(520px, 68%);
+  height: 93%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.leaderboard-arcadion img {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center bottom;
+  filter:
+    drop-shadow(0 0 18px rgba(157, 52, 255, 0.28))
+    drop-shadow(0 25px 50px rgba(0, 0, 0, 0.45));
+  animation: leaderboardArcadionFloat 5s ease-in-out infinite;
+}
+
+.leaderboard-arcadion-aura {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 4%;
+  width: 78%;
+  height: 65%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(165, 56, 255, 0.3),
+      rgba(111, 29, 192, 0.1) 45%,
+      transparent 72%
+    );
+  filter: blur(25px);
+  animation: leaderboardAuraPulse 4s ease-in-out infinite;
+}
+
+@keyframes leaderboardArcadionFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes leaderboardAuraPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(0.96);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: translateX(-50%) scale(1.04);
+  }
+} */
+
+/* =========================================================
+   ORBITS
+   ========================================================= */
+/* 
+.leaderboard-orbit {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid rgba(190, 82, 255, 0.14);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.leaderboard-orbit-one {
+  width: 520px;
+  height: 210px;
+  right: 6%;
+  bottom: 7%;
+  transform: rotate(-12deg);
+}
+
+.leaderboard-orbit-two {
+  width: 450px;
+  height: 170px;
+  right: 10%;
+  bottom: 14%;
+  transform: rotate(18deg);
+  border-color: rgba(190, 82, 255, 0.09);
+} */
+
+/* =========================================================
+   FLOATING RANK LABELS
+   ========================================================= */
+/* 
+.leaderboard-floating-rank {
+  position: absolute;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border: 1px solid rgba(219, 153, 255, 0.42);
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(107, 31, 163, 0.75),
+      rgba(33, 8, 59, 0.85)
+    );
+  color: #e3bcff;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow:
+    0 0 22px rgba(156, 51, 255, 0.2),
+    inset 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.leaderboard-floating-rank-one {
+  top: 15%;
+  right: 20%;
+  box-shadow:
+    0 0 28px rgba(201, 88, 255, 0.34),
+    inset 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-floating-rank-two {
+  top: 34%;
+  right: 4%;
+  opacity: 0.78;
+}
+
+.leaderboard-floating-rank-three {
+  top: 57%;
+  right: 13%;
+  opacity: 0.66;
+} */
+
+/* =========================================================
+   BOTTOM FADE
+   ========================================================= */
+/* 
+.leaderboard-hero-bottom-fade {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    #0c0315
+  );
+} */
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+/* 
+@media (max-width: 1100px) {
+  .leaderboard-hero {
+    min-height: 600px;
+    padding-left: 5vw;
+    padding-right: 4vw;
+  }
+
+  .leaderboard-hero-content {
+    width: 49%;
+  }
+
+  .leaderboard-hero-visual {
+    right: -3%;
+    width: 58%;
+  }
+
+  .leaderboard-rank-card {
+    width: 180px;
+    height: 250px;
+  }
+
+  .leaderboard-arcadion {
+    width: 500px;
+  }
+
+  .leaderboard-floating-rank-one {
+    right: 23%;
+  }
+}
+
+@media (max-width: 800px) {
+  .leaderboard-hero {
+    min-height: 850px;
+    display: block;
+    padding: 105px 24px 60px;
+  }
+
+  .leaderboard-hero-content {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .leaderboard-hero-content h1 {
+    font-size: clamp(52px, 14vw, 78px);
+    letter-spacing: -3px;
+  }
+
+  .leaderboard-hero-description {
+    max-width: 480px;
+  }
+
+  .leaderboard-season {
+    max-width: 450px;
+  }
+
+  .leaderboard-hero-visual {
+    position: absolute;
+    top: 390px;
+    right: 0;
+    width: 100%;
+    height: 470px;
+  }
+
+  .leaderboard-rank-card {
+    width: 145px;
+    height: 205px;
+    border-radius: 19px;
+  }
+
+  .leaderboard-rank-card-three {
+    right: -2%;
+    top: 12%;
+  }
+
+  .leaderboard-rank-card-two {
+    right: 12%;
+    top: 7%;
+  }
+
+  .leaderboard-rank-card-one {
+    right: 24%;
+    top: 3%;
+  }
+
+  .leaderboard-arcadion {
+    right: 3%;
+    bottom: -10%;
+    width: 410px;
+    height: 470px;
+  }
+
+  .leaderboard-orbit-one {
+    width: 390px;
+    height: 150px;
+    right: 8%;
+    bottom: 3%;
+  }
+
+  .leaderboard-orbit-two {
+    width: 340px;
+    height: 130px;
+    right: 12%;
+    bottom: 9%;
+  }
+
+  .leaderboard-floating-rank {
+    width: 37px;
+    height: 37px;
+    border-radius: 10px;
+  }
+
+  .leaderboard-floating-rank-one {
+    top: 6%;
+    right: 20%;
+  }
+
+  .leaderboard-floating-rank-two {
+    top: 25%;
+    right: 3%;
+  }
+
+  .leaderboard-floating-rank-three {
+    top: 49%;
+    right: 10%;
+  }
+}
+
+@media (max-width: 520px) {
+  .leaderboard-hero {
+    min-height: 790px;
+    padding: 92px 20px 45px;
+  }
+
+  .leaderboard-hero-eyebrow {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .leaderboard-hero-content h1 {
+    margin-top: 13px;
+    font-size: 50px;
+    letter-spacing: -2.5px;
+  }
+
+  .leaderboard-hero-description {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .leaderboard-season {
+    min-height: 68px;
+    gap: 10px;
+    padding: 9px 11px;
+    border-radius: 14px;
+  }
+
+  .leaderboard-season-icon {
+    width: 41px;
+    height: 41px;
+    flex-basis: 41px;
+  }
+
+  .leaderboard-season-divider {
+    margin: 0 2px;
+  }
+
+  .leaderboard-season-label {
+    font-size: 7px;
+  }
+
+  .leaderboard-season-info strong {
+    font-size: 10px;
+  }
+
+  .leaderboard-hero-button {
+    min-height: 42px;
+    margin-top: 22px;
+  }
+
+  .leaderboard-hero-visual {
+    top: 360px;
+    height: 425px;
+  }
+
+  .leaderboard-rank-card {
+    width: 112px;
+    height: 165px;
+    border-radius: 16px;
+  }
+
+  .leaderboard-rank-card-three {
+    right: -3%;
+  }
+
+  .leaderboard-rank-card-two {
+    right: 13%;
+  }
+
+  .leaderboard-rank-card-one {
+    right: 28%;
+  }
+
+  .leaderboard-arcadion {
+    right: -1%;
+    width: 330px;
+    height: 405px;
+  }
+
+  .leaderboard-floating-rank {
+    width: 33px;
+    height: 33px;
+    font-size: 9px;
+  }
+
+  .leaderboard-floating-rank-one {
+    right: 22%;
+  }
+
+  .leaderboard-floating-rank-two {
+    right: 2%;
+  }
+
+  .leaderboard-floating-rank-three {
+    right: 12%;
+  }
+
+  .leaderboard-orbit-one {
+    width: 315px;
+    height: 120px;
+  }
+
+  .leaderboard-orbit-two {
+    width: 275px;
+    height: 105px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-particle,
+  .leaderboard-arcadion img,
+  .leaderboard-arcadion-aura {
+    animation: none;
+  }
+} */

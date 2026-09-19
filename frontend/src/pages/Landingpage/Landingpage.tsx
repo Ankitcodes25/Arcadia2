@@ -8,6 +8,7 @@ import ContinuePlaying from "./Sections/ContinuePlaying";
 import DailyChallenge from "./Sections/DailyChallenge";
 import Arcadion from "./Sections/Arcadion";
 import LeaderboardHome from "./Sections/LeaderboardHome";
+import TimeArcadionBanner from "./Sections/TimeArcadionBanner";
 
 function LandingPage() {
   return (
@@ -18,19 +19,13 @@ function LandingPage() {
 
       <main>
         <HeroSection games={games} />
-
         <PopularGames games={games} />
-
         {/* <AllGames games={games} /> */}
-
         <ContinuePlaying />
-
-        <Arcadion />
-
+        <TimeArcadionBanner />
         <DailyChallenge games={games} />
-
         <LeaderboardHome />
-
+        <Arcadion />
         <BottomCta />
       </main>
 
