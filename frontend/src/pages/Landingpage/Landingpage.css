@@ -3476,703 +3476,805 @@ footer p {
   z-index: 1;
 }
 /* =========================================================
-   LEADERBOARD HOME
+   LEADERBOARD HOME  (redesigned)
+   - header: kicker + title + subtitle on the left, shared
+     ".view-all" button on the right
+   - carousel: [arrow] [cards] [arrow]  -> arrows never overlap
+   - top 3: gold / silver / bronze cards with a light travelling
+     around the edge (same trick as the logo + START button)
    ========================================================= */
 
+@property --lb-ring-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .leaderboard-home {
+  --lb-visible: 6;       /* cards visible at once (changes per breakpoint) */
+  --lb-gap: 16px;        /* space between cards */
+  --lb-radius: 22px;     /* card corner radius */
+  --lb-arrow: 44px;      /* arrow button size (same height as the View all button) */
+  --lb-bleed: 16px;      /* side room for glow (<= gap so next card never peeks in) */
+  --lb-bleed-y: 40px;    /* top/bottom room for glow + card shadows */
+  --lb-glow: 24px;
+
   position: relative;
   z-index: 2;
-  width: min(1400px, calc(100% - 52px));
-  margin: 58px auto 70px;
+
+  width: min(1400px, calc(100% - 96px));
+  margin: 70px auto 70px; /* top == bottom */
 }
 
-.leaderboard-home-header {
+/* the section above gives up its bottom margin so the gap above the
+   leaderboard is exactly the same as the gap below it */
+:has(+ .leaderboard-home) {
+  margin-bottom: 70px;
+}
+
+/* ---------- ambient background (soft aurora glow only) ---------- */
+
+.leaderboard-home-ambient {
+  position: absolute;
+  inset: -30px -48px -24px;
+  z-index: -1;
+
+  overflow: hidden;
+  pointer-events: none;
+
+  /* fade to nothing on all four sides -> no visible box edge */
+  -webkit-mask-image:
+    linear-gradient(180deg, transparent, #000 22%, #000 74%, transparent),
+    linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(180deg, transparent, #000 22%, #000 74%, transparent),
+    linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+
+.leaderboard-home-ambient::before {
+  content: none;
+  display: none;
+}
+
+@keyframes lbAurora {
+  from { transform: translate3d(-2%, 0, 0) scale(1); }
+  to   { transform: translate3d(2%, -2%, 0) scale(1.08); }
+}
+
+/* ---------- header (kicker / title / subtitle live in the shared heading block) ---------- */
+
+.leaderboard-home .leaderboard-home-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px 28px;
+
+  margin-bottom: 40px;
+}
+
+.leaderboard-home .leaderboard-home-copy {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.leaderboard-home .leaderboard-home-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+.leaderboard-home .leaderboard-home-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leaderboard-home .leaderboard-home-viewall {
   position: relative;
-  margin-bottom: 24px;
+  z-index: 4;
+  flex: none;
+  white-space: nowrap;
 }
 
-.leaderboard-home-copy {
-  width: 100%;
-}
-
-/* remove old header elements completely (kicker is now the heading label) */
-.leaderboard-home-tabs,
-.leaderboard-home-visual {
-  display: none !important;
-}
+/* ---------- carousel: cards only (arrows live in the header) ---------- */
 
 .leaderboard-home-board {
+  position: relative;
   width: 100%;
 }
 
 .leaderboard-home-carousel {
   position: relative;
-  width: 100%;
 }
 
 .leaderboard-home-arrow {
-  position: absolute;
+  position: relative;
+  z-index: 3;
 
-  top: 50%;
-  z-index: 20;
+  width: var(--lb-arrow);
+  height: var(--lb-arrow);
 
-  width: 42px;
-  height: 42px;
+  display: grid;
+  place-items: center;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 1px solid rgba(211, 132, 255, 0.62);
+  border-radius: 13px;
 
-  border: 1px solid rgba(187, 101, 255, 0.55);
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(154, 51, 255, 0.32),
-      rgba(39, 13, 70, 0.94)
-    );
-
-  color: #d7a1ff;
+  background: linear-gradient(135deg, rgba(178, 78, 246, 0.26), rgba(96, 34, 170, 0.16));
+  color: #f0ddff;
 
   cursor: pointer;
 
-  transform: translateY(-50%);
-
   box-shadow:
-    0 0 16px rgba(151, 48, 255, 0.25),
-    0 8px 22px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 0 18px rgba(150, 60, 255, 0.28),
+    0 8px 20px rgba(0, 0, 0, 0.32);
 
   transition:
     transform 0.22s ease,
-    border-color 0.22s ease,
     color 0.22s ease,
+    border-color 0.22s ease,
     box-shadow 0.22s ease,
     opacity 0.22s ease;
 }
 
 .leaderboard-home-arrow svg {
-  width: 19px;
-  height: 19px;
+  width: 21px;
+  height: 21px;
 }
 
-.leaderboard-home-arrow-left {
-  left: -21px;
-}
-
-.leaderboard-home-arrow-right {
-  right: -21px;
-}
+.leaderboard-home-arrow-left:not(:disabled) svg  { animation: lbNudgeLeft 1.9s ease-in-out infinite; }
+.leaderboard-home-arrow-right:not(:disabled) svg { animation: lbNudgeRight 1.9s ease-in-out infinite; }
 
 .leaderboard-home-arrow:hover:not(:disabled) {
   color: #ffffff;
-
-  border-color: rgba(215, 139, 255, 0.9);
+  border-color: rgba(235, 182, 255, 0.98);
 
   box-shadow:
-    0 0 22px rgba(176, 65, 255, 0.48),
-    0 8px 25px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 28px rgba(176, 65, 255, 0.6),
+    0 8px 22px rgba(0, 0, 0, 0.36);
 }
 
-.leaderboard-home-arrow-left:hover:not(:disabled) {
-  transform: translate(-3px, -50%);
+.leaderboard-home-arrow-left:hover:not(:disabled)  { transform: translateX(-3px); }
+.leaderboard-home-arrow-right:hover:not(:disabled) { transform: translateX(3px); }
+
+.leaderboard-home-arrow:active:not(:disabled) {
+  transform: scale(0.94);
 }
 
-.leaderboard-home-arrow-right:hover:not(:disabled) {
-  transform: translate(3px, -50%);
+.leaderboard-home-arrow:focus-visible {
+  outline: 2px solid #d58aff;
+  outline-offset: 3px;
 }
 
 .leaderboard-home-arrow:disabled {
-  opacity: 0.2;
+  opacity: 0.28;
   cursor: default;
-  pointer-events: none;
+  box-shadow: none;
 }
 
+@keyframes lbNudgeLeft {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(-3px); }
+}
+
+@keyframes lbNudgeRight {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(3px); }
+}
+
+/* scroller: padding gives glow/hover room, negative margin keeps layout tight */
 .leaderboard-home-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 84px) / 8);
+  display: flex;
+  gap: var(--lb-gap);
 
-  gap: 12px;
-
-  width: 100%;
+  margin: calc(var(--lb-bleed-y) * -1) calc(var(--lb-bleed) * -1);
+  padding: var(--lb-bleed-y) var(--lb-bleed);
 
   overflow-x: auto;
-  overflow-y: visible;
-
-  padding: 8px 3px 18px;
+  overflow-y: hidden;
 
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--lb-bleed);
+  overscroll-behavior-x: contain;
 
   scrollbar-width: none;
+
+  /* edges fade out -> glow / half-visible cards never end in a hard cut */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--lb-bleed), #000 calc(100% - var(--lb-bleed)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--lb-bleed), #000 calc(100% - var(--lb-bleed)), transparent);
 }
 
 .leaderboard-home-grid::-webkit-scrollbar {
   display: none;
 }
 
-.leaderboard-home-card {
-  scroll-snap-align: start;
+.leaderboard-home-grid:focus-visible {
+  outline: 2px solid rgba(213, 138, 255, 0.7);
+  outline-offset: -6px;
+  border-radius: 30px;
 }
 
-/* =========================================================
-   PLAYER CARD
-   ========================================================= */
+/* ---------- player card ---------- */
 
 .leaderboard-home-card {
-  --rank-color: #b86cff;
+  --tier: #b986ff;
+  --tier-bright: #e7cbff;
+  --tier-deep: #6a2fc2;
+  --tier-ink: #f6ecff;
+  --tier-soft: rgba(150, 80, 255, 0.16);
+  --tier-fill: rgba(190, 130, 255, 0.22);
+  --tier-line: rgba(160, 92, 255, 0.36);
+  --tier-glow: rgba(150, 70, 255, 0.4);
+  --tier-ring: rgba(190, 120, 255, 0.95);
+  --tier-core: #ffffff;
+  --card-top: rgba(40, 15, 76, 0.92);
+  --card-bottom: rgba(15, 6, 32, 0.97);
 
   position: relative;
+  isolation: isolate;
 
-  width: 100%;
-  height: 230px;
+  flex: 0 0 calc((100% - (var(--lb-visible) - 1) * var(--lb-gap)) / var(--lb-visible));
+  min-width: 0;
 
-  padding: 12px 10px;
+  container-type: inline-size;
 
   display: flex;
   flex-direction: column;
   align-items: center;
 
-  overflow: hidden;
+  padding: 16px 14px 16px;
 
-  border: 1px solid rgba(145, 72, 226, 0.28);
-  border-radius: 18px;
+  border: 1px solid var(--tier-line);
+  border-radius: var(--lb-radius);
 
   background:
-    radial-gradient(
-      circle at 50% 28%,
-      rgba(135, 48, 255, 0.16),
-      transparent 48%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(40, 15, 76, 0.88),
-      rgba(17, 7, 36, 0.96)
-    );
+    radial-gradient(120% 62% at 50% 0%, var(--tier-soft), transparent 64%),
+    linear-gradient(180deg, var(--card-top), var(--card-bottom));
 
   box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.04),
-    0 12px 30px rgba(0, 0, 0, 0.3);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(0, 0, 0, 0.32);
 
   scroll-snap-align: start;
 
   transition:
-    transform 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+    transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .leaderboard-home-card:hover {
-  transform: translateY(-5px);
-
-  border-color: rgba(190, 103, 255, 0.55);
+  transform: translateY(-8px);
+  border-color: rgba(214, 150, 255, 0.7);
 
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.38),
-    0 0 22px rgba(145, 47, 255, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 16px 28px rgba(0, 0, 0, 0.4),
+    0 0 26px rgba(150, 70, 255, 0.3);
 }
 
-/* =========================================================
-   TOP 3
-   ========================================================= */
+/* ---------- top 3 tiers ---------- */
 
 .leaderboard-home-card.is-first {
-  --rank-color: #ffd45c;
-
-  border-color: rgba(255, 207, 82, 0.8);
-
-  background:
-    radial-gradient(
-      circle at 50% 25%,
-      rgba(255, 197, 55, 0.22),
-      transparent 48%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(73, 47, 13, 0.9),
-      rgba(25, 12, 34, 0.98)
-    );
-
-  box-shadow:
-    0 18px 38px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(255, 201, 64, 0.55),
-    0 0 42px rgba(255, 169, 30, 0.22);
-}
-
-.leaderboard-home-card.is-first:hover {
-  transform: translateY(-8px);
-
-  box-shadow:
-    0 24px 44px rgba(0, 0, 0, 0.45),
-    0 0 28px rgba(255, 205, 78, 0.7),
-    0 0 52px rgba(255, 165, 28, 0.3);
-}
-
-.leaderboard-home-card.is-third {
-  --rank-color: #dce4ef;
-
-  border-color: rgba(201, 214, 233, 0.52);
-
-  background:
-    radial-gradient(
-      circle at 50% 25%,
-      rgba(203, 218, 240, 0.14),
-      transparent 48%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(48, 56, 76, 0.78),
-      rgba(17, 12, 32, 0.98)
-    );
-
-  box-shadow:
-    0 15px 34px rgba(0, 0, 0, 0.34),
-    0 0 19px rgba(195, 212, 237, 0.24);
+  --tier: #ffd45c;
+  --tier-bright: #fff3bd;
+  --tier-deep: #b57a12;
+  --tier-ink: #3a2200;
+  --tier-soft: rgba(255, 200, 70, 0.2);
+  --tier-fill: rgba(255, 212, 92, 0.3);
+  --tier-line: rgba(255, 207, 82, 0.55);
+  --tier-glow: rgba(255, 190, 50, 0.6);
+  --tier-ring: rgba(255, 196, 60, 0.95);
+  --tier-core: #fff6d0;
+  --card-top: rgba(74, 47, 12, 0.94);
+  --card-bottom: rgba(24, 11, 32, 0.98);
 }
 
 .leaderboard-home-card.is-second {
-  --rank-color: #dc9963;
-
-  border-color: rgba(216, 143, 88, 0.55);
-
-  background:
-    radial-gradient(
-      circle at 50% 25%,
-      rgba(214, 137, 82, 0.16),
-      transparent 48%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(66, 37, 27, 0.76),
-      rgba(18, 10, 30, 0.98)
-    );
-
-  box-shadow:
-    0 14px 32px rgba(0, 0, 0, 0.33),
-    0 0 18px rgba(213, 133, 78, 0.25);
+  --tier: #dfe7f5;
+  --tier-bright: #ffffff;
+  --tier-deep: #8391a8;
+  --tier-ink: #1c2436;
+  --tier-soft: rgba(205, 220, 245, 0.16);
+  --tier-fill: rgba(210, 222, 245, 0.26);
+  --tier-line: rgba(205, 218, 240, 0.5);
+  --tier-glow: rgba(200, 215, 240, 0.45);
+  --tier-ring: rgba(190, 206, 235, 0.95);
+  --tier-core: #ffffff;
+  --card-top: rgba(46, 52, 74, 0.94);
+  --card-bottom: rgba(17, 12, 34, 0.98);
 }
 
-/* =========================================================
-   RANK
-   ========================================================= */
+.leaderboard-home-card.is-third {
+  --tier: #ec9a5f;
+  --tier-bright: #ffd3ab;
+  --tier-deep: #9c5525;
+  --tier-ink: #3a1a08;
+  --tier-soft: rgba(232, 150, 90, 0.18);
+  --tier-fill: rgba(236, 154, 95, 0.28);
+  --tier-line: rgba(232, 150, 90, 0.5);
+  --tier-glow: rgba(224, 130, 60, 0.5);
+  --tier-ring: rgba(236, 140, 70, 0.95);
+  --tier-core: #ffe3c8;
+  --card-top: rgba(66, 33, 19, 0.94);
+  --card-bottom: rgba(24, 11, 28, 0.98);
+}
 
-.leaderboard-home-rank {
+/* soft outer glow (behind the card) */
+.leaderboard-home-card.is-first::after,
+.leaderboard-home-card.is-second::after,
+.leaderboard-home-card.is-third::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  border-radius: inherit;
+  pointer-events: none;
+
+  box-shadow: 0 0 var(--lb-glow) var(--tier-glow);
+  opacity: 0.6;
+}
+
+.leaderboard-home-card.is-first::after {
+  animation: lbGoldGlow 2.8s ease-in-out infinite alternate;
+}
+
+/* light travelling around the edge */
+.leaderboard-home-card.is-first::before,
+.leaderboard-home-card.is-second::before,
+.leaderboard-home-card.is-third::before {
+  content: "";
+
+  position: absolute;
+  inset: -1px;
+
+  padding: 2px;
+  border-radius: calc(var(--lb-radius) + 1px);
+  pointer-events: none;
+
+  background: conic-gradient(
+    from var(--lb-ring-angle),
+    transparent 0deg 200deg,
+    var(--tier-ring) 285deg,
+    var(--tier-core) 335deg,
+    var(--tier-ring) 350deg,
+    transparent 360deg
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+
+  filter: drop-shadow(0 0 7px var(--tier-glow));
+
+  animation: lbRingSpin 4.2s linear infinite;
+}
+
+/* gold: two comets, faster */
+.leaderboard-home-card.is-first::before {
+  background: conic-gradient(
+    from var(--lb-ring-angle),
+    transparent 0deg 20deg,
+    var(--tier-ring) 70deg,
+    var(--tier-core) 100deg,
+    var(--tier-ring) 112deg,
+    transparent 125deg 200deg,
+    var(--tier-ring) 250deg,
+    var(--tier-core) 280deg,
+    var(--tier-ring) 292deg,
+    transparent 305deg 360deg
+  );
+
+  animation-duration: 3.2s;
+}
+
+.leaderboard-home-card.is-third::before {
+  animation-duration: 4.8s;
+  animation-delay: -2.4s;
+}
+
+.leaderboard-home-card.is-second::before {
+  animation-delay: -1.2s;
+}
+
+@keyframes lbRingSpin {
+  to { --lb-ring-angle: 360deg; }
+}
+
+@keyframes lbGoldGlow {
+  from { opacity: 0.45; }
+  to   { opacity: 1; }
+}
+
+/* ---------- crown + avatar + rank ---------- */
+
+.leaderboard-home-badge {
   position: relative;
-  z-index: 3;
+  margin-top: 34px;
+}
 
-  align-self: flex-start;
+.leaderboard-home-crown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% - 18px);
+  z-index: 2;
 
-  min-width: 36px;
-  height: 28px;
+  width: clamp(38px, 32cqw, 54px);
+  height: auto;
+  margin-inline: auto;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--tier);
+  fill: var(--tier-fill);
+  stroke-width: 1.8;
 
-  padding: 0 7px;
+  filter:
+    drop-shadow(0 0 8px var(--tier-glow))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 
-  border: 1px solid rgba(166, 91, 255, 0.45);
-  border-radius: 8px;
+  animation: lbCrownBob 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.7s);
+}
 
-  background: rgba(20, 9, 43, 0.8);
+.leaderboard-home-card.is-first .leaderboard-home-crown {
+  width: clamp(46px, 38cqw, 64px);
+}
 
-  color: var(--rank-color);
+@keyframes lbCrownBob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-4px) rotate(4deg); }
+}
 
-  font-size: 12px;
-  font-weight: 900;
+.leaderboard-home-avatar {
+  position: relative;
+
+  width: clamp(80px, 66cqw, 116px);
+  aspect-ratio: 1;
+
+  display: grid;
+  place-items: center;
+
+  border: 2px solid var(--tier-line);
+  border-radius: 50%;
+
+  background:
+    radial-gradient(circle at 34% 26%, rgba(196, 128, 255, 0.5), rgba(76, 26, 146, 0.92) 62%, rgba(30, 10, 64, 1));
 
   box-shadow:
-    0 0 10px rgba(155, 61, 255, 0.2),
-    inset 0 1px rgba(255, 255, 255, 0.07);
+    inset 0 0 18px rgba(0, 0, 0, 0.38),
+    0 0 22px var(--tier-glow);
+
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: clamp(38px, 32cqw, 58px);
+  line-height: 1;
+
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+}
+
+/* dashed orbit ring */
+.leaderboard-home-avatar::before {
+  content: "";
+
+  position: absolute;
+  inset: -8px;
+
+  border: 1.5px dashed var(--tier);
+  border-radius: 50%;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.3s ease;
+  animation: lbOrbit 16s linear infinite;
+}
+
+.leaderboard-home-card.is-first .leaderboard-home-avatar::before,
+.leaderboard-home-card.is-second .leaderboard-home-avatar::before,
+.leaderboard-home-card.is-third .leaderboard-home-avatar::before {
+  opacity: 0.7;
+}
+
+.leaderboard-home-card:hover .leaderboard-home-avatar {
+  transform: scale(1.06);
+}
+
+.leaderboard-home-card:hover .leaderboard-home-avatar::before {
+  opacity: 0.85;
+  animation-duration: 6s;
+}
+
+@keyframes lbOrbit {
+  to { transform: rotate(360deg); }
+}
+
+.leaderboard-home-rank {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -15px;
+  z-index: 2;
+
+  width: fit-content;
+  min-width: 56px;
+  height: 30px;
+  margin-inline: auto;
+  padding: 0 12px;
+
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+
+  border: 1px solid rgba(206, 150, 255, 0.65);
+  border-radius: 10px;
+
+  background: linear-gradient(180deg, rgba(126, 54, 226, 0.96), rgba(62, 20, 132, 0.98));
+  color: #f6ecff;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 14px rgba(150, 70, 255, 0.55),
+    0 6px 12px rgba(0, 0, 0, 0.42);
+
+  font: 900 15px/1 "Orbitron", Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.5px;
 }
 
 .leaderboard-home-card.is-first .leaderboard-home-rank,
 .leaderboard-home-card.is-second .leaderboard-home-rank,
 .leaderboard-home-card.is-third .leaderboard-home-rank {
-  text-shadow:
-    0 0 7px var(--rank-color),
-    0 0 16px var(--rank-color);
+  min-width: 60px;
+  height: 32px;
+
+  border-color: var(--tier-bright);
+  background: linear-gradient(135deg, var(--tier-bright), var(--tier) 48%, var(--tier-deep));
+  color: var(--tier-ink);
 
   box-shadow:
-    0 0 12px color-mix(
-      in srgb,
-      var(--rank-color) 45%,
-      transparent
-    );
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 0 16px var(--tier-glow),
+    0 6px 12px rgba(0, 0, 0, 0.45);
+
+  font-size: 17px;
 }
 
-/* =========================================================
-   CROWN
-   ========================================================= */
+.leaderboard-home-card.is-first .leaderboard-home-rank::after,
+.leaderboard-home-card.is-second .leaderboard-home-rank::after,
+.leaderboard-home-card.is-third .leaderboard-home-rank::after {
+  content: "";
 
-.leaderboard-home-medal {
   position: absolute;
-  z-index: 4;
+  inset: 0;
 
-  top: 4px;
-  left: 50%;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-130%);
 
-  width: 22px;
-  height: 22px;
-
-  transform: translateX(-50%);
-
-  filter: drop-shadow(0 0 8px currentColor);
+  animation: lbSheen 3.8s ease-in-out infinite;
 }
 
-.leaderboard-home-card.is-first .leaderboard-home-medal {
-  color: #ffd45c;
-}
-
-.leaderboard-home-card.is-second .leaderboard-home-medal {
-  color: #dce4ef;
-}
-
-.leaderboard-home-card.is-third .leaderboard-home-medal {
-  color: #dc9963;
-}
-
-/* =========================================================
-   AVATAR
-   ========================================================= */
-
-.leaderboard-home-avatar {
-  position: relative;
-  z-index: 2;
-
-  width: 62px;
-  height: 62px;
-
-  margin: 11px 0 9px;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid rgba(174, 91, 255, 0.45);
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle at 35% 25%,
-      rgba(255, 255, 255, 0.14),
-      transparent 28%
-    ),
-    linear-gradient(
-      145deg,
-      rgba(89, 37, 170, 0.92),
-      rgba(27, 8, 61, 0.98)
-    );
-
-  font-size: 20px;
-
-  box-shadow:
-    0 0 0 4px rgba(126, 48, 221, 0.07),
-    0 0 16px rgba(139, 51, 255, 0.38);
-}
-
-.leaderboard-home-card.is-first .leaderboard-home-avatar {
-  width: 68px;
-  height: 68px;
-
-  margin-top: 8px;
-
-  border-color: rgba(255, 211, 105, 0.82);
-
-  box-shadow:
-    0 0 0 4px rgba(255, 194, 53, 0.1),
-    0 0 20px rgba(255, 201, 70, 0.62),
-    0 0 34px rgba(255, 169, 35, 0.24);
-}
-
-.leaderboard-home-card.is-second .leaderboard-home-avatar {
-  border-color: rgba(204, 218, 239, 0.62);
-
-  box-shadow:
-    0 0 0 4px rgba(203, 217, 239, 0.06),
-    0 0 17px rgba(198, 215, 239, 0.34);
-}
-
-.leaderboard-home-card.is-third .leaderboard-home-avatar {
-  border-color: rgba(218, 147, 91, 0.62);
-
-  box-shadow:
-    0 0 0 4px rgba(216, 143, 88, 0.06),
-    0 0 17px rgba(216, 143, 88, 0.32);
-}
-
-/* =========================================================
-   PLAYER NAME
-   ========================================================= */
+/* ---------- name + points ---------- */
 
 .leaderboard-home-player {
-  position: relative;
-  z-index: 3;
-
-  width: 100%;
+  max-width: 100%;
+  margin-top: 26px;
 
   overflow: hidden;
 
   color: #ffffff;
 
-  font-size: 12px;
-  font-weight: 850;
-
-  line-height: 1.2;
-
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
 
-/* =========================================================
-   SCORE
-   ========================================================= */
+  text-shadow: 0 0 14px var(--tier-glow);
+}
 
 .leaderboard-home-score {
   position: relative;
-  z-index: 3;
 
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  margin-top: 8px;
-
-  color: #d9c8e9;
-
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.leaderboard-home-score svg {
-  width: 14px;
-  height: 14px;
-
-  color: #d18aff;
-
-  filter:
-    drop-shadow(0 0 6px rgba(204, 116, 255, 0.65));
-}
-
-.leaderboard-home-card.is-first .leaderboard-home-score {
-  color: #ffe8aa;
-}
-
-.leaderboard-home-card.is-first .leaderboard-home-score svg {
-  color: #ffd45c;
-
-  filter:
-    drop-shadow(0 0 8px rgba(255, 203, 75, 0.85));
-}
-
-/* =========================================================
-   END ARROW
-   ========================================================= */
-
-.leaderboard-home-end {
-  flex: 0 0 58px;
-
-  height: 230px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 12px;
+  padding: 8px 10px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
 
-  border: 1px solid rgba(183, 93, 255, 0.5);
-  border-radius: 18px;
+  overflow: hidden;
 
-  background:
-    radial-gradient(
-      circle,
-      rgba(155, 53, 255, 0.18),
-      rgba(57, 18, 106, 0.32)
-    );
-
-  color: #d9a4ff;
-
-  text-decoration: none;
-
-  box-shadow:
-    0 0 18px rgba(153, 50, 255, 0.18);
-
-  transition:
-    transform 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.leaderboard-home-end:hover {
-  transform: translateX(4px);
-
-  border-color: rgba(218, 139, 255, 0.85);
-
-  color: #ffffff;
-
-  box-shadow:
-    0 0 25px rgba(176, 65, 255, 0.45);
-}
-
-.leaderboard-home-end svg {
-  width: 24px;
-  height: 24px;
-}
-
-/* =========================================================
-   VIEW FULL LEADERBOARD
-   ========================================================= */
-
-.leaderboard-home-footer {
-  display: flex;
-  justify-content: flex-end;
-
-  margin-top: 10px;
-}
-
-.leaderboard-home-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-
-  min-height: 44px;
-  padding: 0 17px;
-
-  border: 1px solid rgba(187, 101, 255, 0.65);
+  border: 1px solid var(--tier-line);
   border-radius: 14px;
 
-  background: rgba(38, 12, 70, 0.45);
-
-  color: #c98cff;
-
-  font-size: 12px;
-  font-weight: 850;
-
-  text-decoration: none;
+  background: linear-gradient(180deg, var(--tier-soft), rgba(10, 4, 24, 0.55));
 
   box-shadow:
-    0 0 14px rgba(155, 50, 255, 0.12);
-
-  transition:
-    color 0.22s ease,
-    border-color 0.22s ease,
-    background 0.22s ease,
-    transform 0.22s ease,
-    box-shadow 0.22s ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 18px var(--tier-soft),
+    0 0 16px rgba(0, 0, 0, 0.25);
 }
 
-.leaderboard-home-link svg {
+.leaderboard-home-score svg {
+  flex: none;
+
   width: 17px;
   height: 17px;
 
-  transition: transform 0.22s ease;
+  color: var(--tier);
+  fill: var(--tier-fill);
+
+  filter: drop-shadow(0 0 6px var(--tier-glow));
 }
 
-.leaderboard-home-link:hover {
+.leaderboard-home-count {
+  display: inline-grid;
+
   color: #ffffff;
 
-  border-color: rgba(215, 139, 255, 0.9);
+  font: 900 clamp(14px, 10cqw, 17px)/1 "Orbitron", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
 
-  background: rgba(72, 22, 116, 0.55);
-
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 0 20px rgba(176, 65, 255, 0.28);
+  text-shadow: 0 0 12px var(--tier-glow);
 }
 
-.leaderboard-home-link:hover svg {
-  transform: translateX(4px);
+.leaderboard-home-count > span {
+  grid-area: 1 / 1;
 }
 
-/* =========================================================
-   TABLET
-   ========================================================= */
+.leaderboard-home-count-ghost {
+  visibility: hidden;
+}
+
+.leaderboard-home-count-live {
+  text-align: right;
+}
+
+.leaderboard-home-score em {
+  color: var(--tier-bright);
+  opacity: 0.85;
+
+  font: 800 10px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  letter-spacing: 2px;
+}
+
+@container (max-width: 150px) {
+  .leaderboard-home-score em {
+    display: none;
+  }
+}
+
+.leaderboard-home-card.is-first .leaderboard-home-score::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%);
+  transform: translateX(-130%);
+
+  animation: lbSheen 3.8s ease-in-out 1.2s infinite;
+}
+
+@keyframes lbSheen {
+  0%, 30%   { transform: translateX(-130%); }
+  65%, 100% { transform: translateX(130%); }
+}
+
+.leaderboard-home-sr {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+
+  border: 0;
+}
+
+/* ---------- reveal on scroll ---------- */
+
+.leaderboard-home[data-reveal="armed"] .leaderboard-home-card {
+  opacity: 0;
+}
+
+.leaderboard-home[data-reveal="shown"] .leaderboard-home-card {
+  animation: lbCardIn 0.75s cubic-bezier(0.2, 0.85, 0.25, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes lbCardIn {
+  from { opacity: 0; transform: translateY(36px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1439px) {
+  .leaderboard-home { --lb-visible: 5; }
+}
+
+@media (max-width: 1199px) {
+  .leaderboard-home { --lb-visible: 4; }
+}
 
 @media (max-width: 1100px) {
-  .leaderboard-home {
-    width: calc(100% - 48px);
-  }
-
-  .leaderboard-home-grid {
-    grid-auto-columns: calc((100% - 60px) / 6);
-  }
+  .leaderboard-home { width: calc(100% - 48px); }
 }
 
-/* =========================================================
-   MOBILE
-   ========================================================= */
+@media (max-width: 899px) {
+  .leaderboard-home { --lb-visible: 3; }
+}
 
 @media (max-width: 760px) {
   .leaderboard-home {
     width: calc(100% - 32px);
-    margin-top: 52px;
+    margin-top: 60px;
     margin-bottom: 60px;
   }
 
-  .leaderboard-home-grid {
-    grid-auto-columns: 160px;
-    gap: 10px;
+  :has(+ .leaderboard-home) {
+    margin-bottom: 60px;
+  }
+}
+
+/* phones: fixed card width, swipe or use the arrows */
+@media (max-width: 700px) {
+  .leaderboard-home {
+    --lb-bleed: 16px;
+    --lb-gap: 12px;
+    --lb-glow: 14px;
   }
 
   .leaderboard-home-card {
-    height: 185px;
+    flex-basis: 158px;
   }
 
-  .leaderboard-home-end {
-    height: 185px;
-    flex-basis: 56px;
+  .leaderboard-home-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-home-ambient::before,
+  .leaderboard-home-arrow svg,
+  .leaderboard-home-card::before,
+  .leaderboard-home-card::after,
+  .leaderboard-home-card .leaderboard-home-score::after,
+  .leaderboard-home-card .leaderboard-home-rank::after,
+  .leaderboard-home-avatar::before,
+  .leaderboard-home-crown {
+    animation: none !important;
   }
 
-  .leaderboard-home-footer {
-    justify-content: flex-start;
-  }
-
-  .leaderboard-home-arrow-left {
-  left: 6px;
-}
-
-.leaderboard-home-arrow-right {
-  right: 6px;
-}
-
-.leaderboard-home-arrow {
-  width: 38px;
-  height: 38px;
-}
-
-.leaderboard-home-grid {
-  grid-auto-columns: 160px;
-}
-
-.leaderboard-home-footer {
-  justify-content: flex-end;
-}
-
-}
-
-@media (max-width: 430px) {
   .leaderboard-home-grid {
-    grid-auto-columns: 148px;
-  }
-
-  .leaderboard-home-card {
-    height: 180px;
-  }
-
-  .leaderboard-home-end {
-    height: 180px;
-  }
-
-  .leaderboard-home-avatar {
-    width: 58px;
-    height: 58px;
-  }
-
-  .leaderboard-home-card.is-first .leaderboard-home-avatar {
-    width: 63px;
-    height: 63px;
+    scroll-behavior: auto;
   }
 }
+
 /* =========================================================
    TIME ARCADION BANNER
    Added at the very end.
