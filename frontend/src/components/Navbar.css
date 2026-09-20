@@ -54,16 +54,30 @@
   user-select: none;
 }
 
+/* button jaisi ghoomti roshni: gradient ka angle animate hota hai,
+   isliye roshni edge ke saath chalti hai (box rotate nahi hota) */
+@property --logo-ray-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .brand-ray {
   position: absolute;
-  inset: -4px;
-  border-radius: 14px;
+  inset: -2px; /* ring logo ke edge se chipka hua (padding 2px = ring ki motai) */
+  border-radius: 14px; /* logo radius 12px + 2px */
   z-index: 2;
   pointer-events: none;
-  background: conic-gradient(from 0deg, transparent 0deg 42deg, rgba(177, 76, 255, 0.25) 48deg, rgba(255, 255, 255, 1) 55deg, rgba(90, 220, 255, 1) 63deg, rgba(177, 76, 255, 0.65) 72deg, transparent 82deg 360deg);
+  background: conic-gradient(
+    from var(--logo-ray-angle),
+    transparent 0deg,
+    transparent 210deg,
+    rgba(190, 120, 255, 0.9) 290deg,
+    #ffffff 330deg,
+    rgba(190, 120, 255, 0.9) 345deg,
+    transparent 360deg
+  );
   animation: logoRay 2.4s linear infinite;
-  transform-origin: center;
-  will-change: transform;
   filter: drop-shadow(0 0 5px rgba(190, 85, 255, 0.95)) drop-shadow(0 0 12px rgba(129, 65, 255, 0.65));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -72,8 +86,7 @@
 }
 
 @keyframes logoRay {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to { --logo-ray-angle: 360deg; }
 }
 
 
@@ -297,7 +310,7 @@
   }
 
   .brand-ray {
-    border-radius: 15px;
+    border-radius: 14px;
   }
 
   .brand-name {
@@ -342,7 +355,7 @@
   }
 
   .brand-ray {
-    border-radius: 17px;
+    border-radius: 14px;
     padding: 2px;
   }
 

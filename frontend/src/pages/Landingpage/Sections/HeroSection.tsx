@@ -1,3 +1,4 @@
+import { useEffect, useState, type CSSProperties } from "react";
 import type { Game } from "../../../types/game";
 import { navigateTo } from "../../../lib/navigation";
 
@@ -9,28 +10,73 @@ type HeroSectionProps = {
   games: Game[];
 };
 
-/* Small horned-mask emblem (bottom-left label).
-   Swap with your own logo <img> if you have one. */
-function ArcadionEmblem() {
+const TITLE = "ARCADIA";
+
+/* Typewriter: W se type → 3s blink → wapas W tak erase → W par ruko → repeat */
+type TypewriterProps = {
+  text: string;
+  typeSpeed?: number;    // ms per character while typing
+  deleteSpeed?: number;  // ms per character while erasing
+  holdMs?: number;       // full text visible for this long
+  restartMs?: number;    // pause after fully erased
+};
+
+function TypewriterText({
+  text,
+  typeSpeed = 110,
+  deleteSpeed = 60,
+  holdMs = 3000,
+  restartMs = 700,
+}: TypewriterProps) {
+  // "W" par hi ruk kar wahin se dobara type hota hai (poora nahi mitta)
+  const [count, setCount] = useState(1);
+  const [deleting, setDeleting] = useState(true);
+  const [reduceMotion] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    let delay: number;
+    if (!deleting) {
+      delay = count < text.length ? typeSpeed : holdMs;
+    } else {
+      delay = count > 1 ? deleteSpeed : restartMs;
+    }
+
+    const id = window.setTimeout(() => {
+      if (!deleting) {
+        if (count < text.length) setCount((c) => c + 1);
+        else setDeleting(true);
+      } else if (count > 1) {
+        setCount((c) => c - 1);
+      } else {
+        setDeleting(false);
+      }
+    }, delay);
+
+    return () => window.clearTimeout(id);
+  }, [count, deleting, text, typeSpeed, deleteSpeed, holdMs, restartMs, reduceMotion]);
+
+  if (reduceMotion) return <span>{text}</span>;
+
+  const busy = deleting ? count > 1 : count < text.length;
+
   return (
-    <svg
-      className="arcadia-emblem"
-      viewBox="0 0 48 52"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M4 3 L15 13 L24 9 L33 13 L44 3 L41 24 L30 38 L24 49 L18 38 L7 24 Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
+    <>
+      <span className="arcadia-sr-only">{text}</span>
+      <span className="arcadia-typewriter-text" aria-hidden="true">
+        {text.slice(0, count)}
+      </span>
+      <span
+        className="arcadia-typewriter-cursor"
+        data-busy={busy}
+        aria-hidden="true"
       />
-      <path
-        d="M15 20 L24 26 L33 20 L29 32 L24 38 L19 32 Z"
-        fill="currentColor"
-        opacity="0.85"
-      />
-    </svg>
+    </>
   );
 }
 
@@ -117,15 +163,29 @@ function HeroSection({ games: _games }: HeroSectionProps) {
 
       {/* Left content */}
       <div className="arcadia-hero-content">
-        <span className="arcadia-hero-eyebrow">WELCOME TO</span>
+        <span className="arcadia-hero-eyebrow">
+          <TypewriterText text="WELCOME TO" />
+        </span>
 
-        <h1 className="arcadia-hero-title">ARCADIA</h1>
+        <h1 className="arcadia-hero-title" aria-label={TITLE} data-text={TITLE}>
+          <span className="arcadia-title-aura" aria-hidden="true" />
+          {TITLE.split("").map((letter, i) => (
+            <span
+              key={i}
+              className="arcadia-title-letter"
+              style={{ "--i": i } as CSSProperties}
+              aria-hidden="true"
+            >
+              {letter}
+            </span>
+          ))}
+        </h1>
 
         <div className="arcadia-hero-tagline">
           <span>PLAY</span>
-          <i>•</i>
+          <i aria-hidden="true" />
           <span>CHALLENGE</span>
-          <i>•</i>
+          <i aria-hidden="true" />
           <span>CONQUER</span>
         </div>
 
@@ -151,18 +211,6 @@ function HeroSection({ games: _games }: HeroSectionProps) {
         <span>ARE JUST</span>
         <span>THE BEGINNING</span>
         <i />
-      </div>
-
-      {/* Bottom-left label */}
-      <div className="arcadia-hero-master" aria-hidden="true">
-        <ArcadionEmblem />
-
-        <div className="arcadia-hero-master-text">
-          <strong>ARCADION</strong>
-          <span>THE GAME MASTER</span>
-        </div>
-
-        <i className="arcadia-hero-master-line" />
       </div>
     </section>
   );
