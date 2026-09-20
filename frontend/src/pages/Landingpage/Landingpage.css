@@ -2,6 +2,7 @@
    ARCADIA
    FULL LANDING PAGE
 ========================================================= */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&display=swap");
 
 main {
   padding-top: 60px;
@@ -137,140 +138,11 @@ button {
   opacity: 0.10;
 }
 
-
 /* =========================================================
-   HERO
+   SHARED BUTTONS
+   (kept from the old hero — generic names, remove only if
+   no other page/component uses .primary-button/.secondary-button)
 ========================================================= */
-
-.hero {
-  position: relative;
-  z-index: 2;
-
-  width: min(1400px, calc(100% - 96px));
-
-  min-height: 570px;
-
-  margin: 20px auto 0;
-
-  display: grid;
-
-  grid-template-columns:
-    0.92fr 1.08fr;
-
-  align-items: center;
-
-  gap: 25px;
-}
-
-.hero-content {
-  padding: 30px 0;
-}
-
-
-/* =========================================================
-   TYPEWRITER
-========================================================= */
-
-.eyebrow {
-  min-height: 20px;
-
-  display: flex;
-  align-items: center;
-
-  color: #c86aff;
-
-  font-size: 13px;
-  font-weight: 850;
-
-  letter-spacing: 3px;
-}
-
-.typewriter {
-  white-space: nowrap;
-}
-
-.cursor {
-  margin-left: 3px;
-
-  color: #d66cff;
-
-  animation:
-    cursorBlink 0.7s steps(1) infinite;
-
-  text-shadow:
-    0 0 10px rgba(205, 87, 255, 0.9);
-}
-
-@keyframes cursorBlink {
-  0%,
-  45% {
-    opacity: 1;
-  }
-
-  46%,
-  100% {
-    opacity: 0;
-  }
-}
-
-
-/* =========================================================
-   HERO TITLE
-========================================================= */
-
-.hero h1 {
-  margin: 24px 0;
-
-  font-size:
-    clamp(55px, 6vw, 86px);
-
-  line-height: 0.98;
-
-  letter-spacing: -5px;
-
-  font-weight: 850;
-}
-
-.hero h1 span {
-  background:
-    linear-gradient(
-      90deg,
-      #ffffff 5%,
-      #e3c8ff 55%,
-      #b25aff 100%
-    );
-
-  -webkit-background-clip: text;
-  background-clip: text;
-
-  color: transparent;
-}
-
-.hero p {
-  max-width: 590px;
-
-  margin: 0;
-
-  color: #afa0c0;
-
-  font-size: 17px;
-
-  line-height: 1.75;
-}
-
-
-/* =========================================================
-   HERO BUTTONS
-========================================================= */
-
-.hero-buttons {
-  display: flex;
-  align-items: center;
-
-  gap: 15px;
-
-  margin-top: 34px;
-}
 
 .primary-button,
 .secondary-button {
@@ -348,788 +220,6 @@ button {
 
 
 /* =========================================================
-   HERO VISUAL
-========================================================= */
-
-.hero-visual {
-  position: relative;
-
-  width: 100%;
-  min-height: 540px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  perspective: 1600px;
-
-  overflow: hidden;
-}
-
-
-/* =========================================================
-   PURPLE LIGHT BEHIND CARDS
-========================================================= */
-
-.hero-visual::before {
-  content: "";
-
-  position: absolute;
-
-  width: 680px;
-  height: 500px;
-
-  left: 58%;
-  top: 50%;
-
-  transform:
-    translate(-50%, -50%);
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(123, 32, 255, 0.5) 0%,
-      rgba(94, 24, 214, 0.3) 28%,
-      rgba(60, 12, 130, 0.13) 52%,
-      transparent 73%
-    );
-
-  filter: blur(32px);
-
-  pointer-events: none;
-
-  z-index: 0;
-}
-
-
-/* =========================================================
-   CAROUSEL STAGE
-========================================================= */
-
-.carousel-stage {
-  position: relative;
-
-  width: 100%;
-  height: 520px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-/* =========================================================
-   COMMON CARD
-========================================================= */
-
-.carousel-card {
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  width: 350px;
-  height: 420px;
-
-  border-radius: 25px;
-
-  overflow: hidden;
-
-  transform-origin: center;
-
-  will-change:
-    transform,
-    opacity;
-
-  transition:
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-
-  pointer-events: none;
-}
-
-
-/* =========================================================
-   CARD GLOW
-========================================================= */
-
-.carousel-card::before {
-  content: "";
-
-  position: absolute;
-
-  width: 330px;
-  height: 330px;
-
-  right: -130px;
-  top: -130px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(225, 80, 255, 0.28);
-
-  filter: blur(40px);
-
-  pointer-events: none;
-}
-
-
-/* =========================================================
-   FAR RIGHT CARD
-========================================================= */
-
-.far-card {
-  transform:
-    translate(48%, -50%)
-    rotate(13deg)
-    scale(0.72);
-
-  transform-origin: center;
-
-  z-index: 1;
-
-  opacity: 0.38;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(62, 19, 112, 0.92),
-      rgba(24, 7, 48, 0.96)
-    );
-
-  border:
-    1px solid rgba(180, 87, 255, 0.20);
-
-  box-shadow:
-    0 30px 70px rgba(0, 0, 0, 0.45);
-}
-
-
-/* =========================================================
-   RIGHT BACK CARD
-========================================================= */
-
-.next-card {
-  transform:
-    translate(12%, -50%)
-    rotate(10deg)
-    scale(0.85);
-
-  transform-origin: center;
-
-  z-index: 2;
-
-  opacity: 0.64;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(83, 27, 151, 0.95),
-      rgba(35, 10, 69, 0.97)
-    );
-
-  border:
-    1px solid rgba(190, 94, 255, 0.28);
-
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.5),
-    0 0 35px rgba(120, 42, 255, 0.15);
-}
-
-
-/* =========================================================
-   LEFT PREVIOUS CARD
-========================================================= */
-
-.previous-card {
-  transform:
-    translate(-115%, -50%)
-    rotate(-10deg)
-    scale(0.82);
-
-  z-index: 1;
-
-  opacity: 0;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(83, 27, 151, 0.95),
-      rgba(35, 10, 69, 0.97)
-    );
-
-  border:
-    1px solid rgba(190, 94, 255, 0.28);
-}
-
-.previous-card-active {
-  opacity: 0.75;
-
-  transform:
-    translate(-72%, -50%)
-    rotate(-10deg)
-    scale(0.83);
-}
-
-
-/* =========================================================
-   BACK CARD CONTENT
-========================================================= */
-
-.back-card-content {
-  position: absolute;
-
-  left: 30px;
-  top: 34px;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 10px;
-
-  max-width: 260px;
-}
-
-.back-card-content > span {
-  color: #c18bdb;
-
-  font-size: 10px;
-  font-weight: 850;
-
-  letter-spacing: 2.4px;
-}
-
-.back-card-icon {
-  margin: 8px 0 5px;
-
-  font-size: 54px;
-
-  filter:
-    drop-shadow(
-      0 12px 20px rgba(0, 0, 0, 0.45)
-    );
-}
-
-.back-card-content strong {
-  color: #e0c9ea;
-
-  font-size: 24px;
-
-  font-weight: 750;
-}
-
-.back-card-content p {
-  margin: 0;
-
-  color: #a892b8;
-
-  font-size: 12px;
-
-  line-height: 1.5;
-}
-
-
-/* =========================================================
-   FRONT CARD
-========================================================= */
-
-.front-card {
-  transform:
-    translate(-50%, -50%)
-    rotate(-14deg)
-    scale(1);
-
-  z-index: 5;
-
-  padding: 36px 34px;
-
-  background:
-    radial-gradient(
-      circle at 87% 4%,
-      rgba(225, 78, 255, 0.65),
-      transparent 36%
-    ),
-    linear-gradient(
-      145deg,
-      #6828c4 0%,
-      #48168d 46%,
-      #291054 100%
-    );
-
-  border:
-    1px solid rgba(255, 255, 255, 0.20);
-
-  box-shadow:
-    0 42px 90px rgba(0, 0, 0, 0.58),
-    0 0 50px rgba(116, 37, 255, 0.45),
-    0 0 110px rgba(157, 52, 255, 0.23);
-}
-
-
-/* =========================================================
-   FRONT CARD LIGHT
-========================================================= */
-
-.front-card::before {
-  content: "";
-
-  position: absolute;
-
-  width: 370px;
-  height: 370px;
-
-  right: -140px;
-  top: -150px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(228, 77, 255, 0.27);
-
-  filter: blur(38px);
-
-  pointer-events: none;
-}
-
-
-/* =========================================================
-   FRONT CARD DIVIDER
-========================================================= */
-
-.front-card::after {
-  content: "";
-
-  position: absolute;
-
-  left: 34px;
-  right: 34px;
-
-  bottom: 82px;
-
-  height: 1px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.22),
-      transparent
-    );
-}
-
-
-/* =========================================================
-   FRONT ICON
-========================================================= */
-
-.front-card-icon {
-  position: relative;
-  z-index: 2;
-
-  font-size: 84px;
-
-  line-height: 1;
-
-  margin-bottom: 22px;
-
-  filter:
-    drop-shadow(
-      0 20px 25px rgba(0, 0, 0, 0.38)
-    );
-}
-
-
-/* =========================================================
-   FRONT INFO
-========================================================= */
-
-.front-card-info {
-  position: relative;
-
-  z-index: 2;
-}
-
-.front-card-info > span {
-  color: #e2b8ff;
-
-  font-size: 10px;
-
-  font-weight: 850;
-
-  letter-spacing: 2.8px;
-}
-
-.front-card-info h2 {
-  margin: 9px 0 8px;
-
-  color: white;
-
-  font-size: 38px;
-
-  line-height: 1;
-
-  letter-spacing: -1.7px;
-}
-
-.front-card-info p {
-  margin: 0;
-
-  max-width: 245px;
-
-  color: #d0b9df;
-
-  font-size: 13px;
-
-  line-height: 1.55;
-}
-
-
-/* =========================================================
-   PLAY BUTTON
-========================================================= */
-
-.play-button {
-  position: absolute;
-
-  right: 22px;
-  bottom: 22px;
-
-  z-index: 10;
-
-  min-height: 46px;
-
-  padding: 0 17px;
-
-  border-radius: 13px;
-
-  color: white;
-
-  background:
-    rgba(255, 255, 255, 0.12);
-
-  border:
-    1px solid rgba(255, 255, 255, 0.14);
-
-  backdrop-filter: blur(15px);
-
-  font-weight: 700;
-
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.20);
-
-  transition:
-    transform 0.25s ease,
-    background 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.play-button span {
-  margin-left: 8px;
-}
-
-.play-button:hover {
-  transform: translateY(-3px);
-
-  background:
-    rgba(255, 255, 255, 0.20);
-
-  box-shadow:
-    0 10px 35px rgba(174, 69, 255, 0.35);
-}
-
-
-/* =========================================================
-   FRONT CARD ENTER
-========================================================= */
-
-.front-enter {
-  animation:
-    frontCardEnter
-    0.7s
-    cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes frontCardEnter {
-
-  0% {
-    opacity: 0.65;
-
-    transform:
-      translate(12%, -50%)
-      rotate(10deg)
-      scale(0.85);
-  }
-
-  45% {
-    opacity: 1;
-
-    transform:
-      translate(-52%, -55%)
-      rotate(-14deg)
-      scale(1.05);
-  }
-
-  72% {
-    transform:
-      translate(-49%, -48%)
-      rotate(-14deg)
-      scale(0.98);
-  }
-
-  100% {
-    opacity: 1;
-
-    transform:
-      translate(-50%, -50%)
-      rotate(-14deg)
-      scale(1);
-  }
-}
-
-
-/* =========================================================
-   EXIT RIGHT
-========================================================= */
-
-.front-exit-right {
-  animation:
-    exitRight
-    0.7s
-    cubic-bezier(0.65, 0, 0.35, 1);
-
-  z-index: 10;
-}
-
-@keyframes exitRight {
-
-  0% {
-    opacity: 1;
-
-    transform:
-      translate(-50%, -50%)
-      rotate(-14deg)
-      scale(1);
-  }
-
-  22% {
-    transform:
-      translate(-42%, -58%)
-      rotate(-14deg)
-      scale(1.035);
-  }
-
-  100% {
-    opacity: 0;
-
-    transform:
-      translate(70%, -155%)
-      rotate(-14deg)
-      scale(0.72);
-  }
-}
-
-
-/* =========================================================
-   EXIT LEFT
-========================================================= */
-
-.front-exit-left {
-  animation:
-    exitLeft
-    0.7s
-    cubic-bezier(0.65, 0, 0.35, 1);
-
-  z-index: 10;
-}
-
-@keyframes exitLeft {
-
-  0% {
-    opacity: 1;
-
-    transform:
-      translate(-50%, -50%)
-      rotate(-14deg)
-      scale(1);
-  }
-
-  22% {
-    transform:
-      translate(-56%, -56%)
-      rotate(-14deg)
-      scale(1.035);
-  }
-
-  100% {
-    opacity: 0;
-
-    transform:
-      translate(-165%, -145%)
-      rotate(-14deg)
-      scale(0.78);
-  }
-}
-
-
-/* =========================================================
-   CAROUSEL ARROWS
-========================================================= */
-
-.carousel-arrow {
-  position: absolute;
-
-  top: 50%;
-
-  width: 58px;
-  height: 58px;
-
-  display: grid;
-  place-items: center;
-
-  z-index: 30;
-
-  transform:
-    translateY(-50%);
-
-  border-radius: 50%;
-
-  color: white;
-
-  background:
-    rgba(22, 5, 47, 0.72);
-
-  border:
-    1px solid rgba(194, 85, 255, 0.70);
-
-  backdrop-filter: blur(15px);
-
-  box-shadow:
-    0 0 15px rgba(157, 55, 255, 0.50),
-    inset 0 0 15px rgba(171, 70, 255, 0.10);
-
-  transition:
-    transform 0.25s ease,
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.carousel-arrow span {
-  margin-top: -5px;
-
-  font-size: 40px;
-
-  font-weight: 300;
-
-  line-height: 1;
-
-  color: #f0caff;
-
-  text-shadow:
-    0 0 8px rgba(210, 112, 255, 1),
-    0 0 22px rgba(155, 45, 255, 0.9);
-}
-
-.carousel-arrow-left {
-  left: 0;
-}
-
-.carousel-arrow-right {
-  right: 0;
-}
-
-.carousel-arrow:hover {
-  background:
-    rgba(76, 22, 118, 0.85);
-
-  border-color:
-    rgba(224, 137, 255, 1);
-
-  box-shadow:
-    0 0 20px rgba(190, 68, 255, 0.85),
-    0 0 45px rgba(144, 39, 255, 0.42);
-}
-
-.carousel-arrow-left:hover {
-  transform:
-    translateY(-50%)
-    translateX(-5px);
-}
-
-.carousel-arrow-right:hover {
-  transform:
-    translateY(-50%)
-    translateX(5px);
-}
-
-.carousel-arrow:active {
-  transform:
-    translateY(-50%)
-    scale(0.9);
-}
-
-.carousel-arrow:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-
-/* =========================================================
-   DOTS
-========================================================= */
-
-.carousel-dots {
-  position: absolute;
-
-  left: 50%;
-  bottom: 14px;
-
-  z-index: 35;
-
-  transform:
-    translateX(-50%);
-
-  display: flex;
-  align-items: center;
-
-  gap: 9px;
-}
-
-.carousel-dots button {
-  width: 8px;
-  height: 8px;
-
-  padding: 0;
-
-  border: none;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 255, 255, 0.25);
-
-  transition:
-    width 0.3s ease,
-    background 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.carousel-dots button.active {
-  width: 27px;
-
-  border-radius: 20px;
-
-  background:
-    #ca69ff;
-
-  box-shadow:
-    0 0 9px rgba(207, 102, 255, 1),
-    0 0 25px rgba(150, 42, 255, 0.75);
-}
-
-
-/* =========================================================
    QUICK STATS
 ========================================================= */
 
@@ -1173,7 +263,6 @@ button {
 
   font-size: 12px;
 }
-
 
 /* =========================================================
    SECTIONS
@@ -1252,7 +341,6 @@ button {
     transform 0.25s ease;
 }
 
-
 .view-all::after {
   content: "";
   position: absolute;
@@ -1279,7 +367,6 @@ button {
   transform: translateY(-2px);
 }
 
-
 .view-all:hover::after {
   transform: rotate(18deg) translateX(520%);
 }
@@ -1295,7 +382,6 @@ button {
   color: #ffffff;
   transform: translateX(3px);
 }
-
 
 /* =========================================================
    POPULAR GAMES
@@ -1419,7 +505,6 @@ button {
   box-shadow: 0 11px 25px rgba(174, 69, 255, 0.42), inset 0 1px rgba(255, 255, 255, 0.4);
 }
 
-
 /* =========================================================
    SEARCH
 ========================================================= */
@@ -1469,7 +554,6 @@ button {
 .search-box input::placeholder {
   color: #81748d;
 }
-
 
 /* =========================================================
    GAME GRID
@@ -1597,7 +681,6 @@ button {
   margin-left: 7px;
 }
 
-
 /* =========================================================
    FOOTER
 ========================================================= */
@@ -1670,7 +753,6 @@ footer p {
   font-size: 10px;
 }
 
-
 /* =========================================================
    TABLET
 ========================================================= */
@@ -1678,41 +760,10 @@ footer p {
 @media (max-width: 1100px) {
 
   .navbar,
-  .hero,
   .section,
   footer {
     width:
       calc(100% - 56px);
-  }
-
-  .hero {
-    grid-template-columns: 1fr;
-
-    gap: 0;
-
-    padding-top: 20px;
-  }
-
-  .hero-content {
-    text-align: center;
-
-    padding-bottom: 0;
-  }
-
-  .hero p {
-    margin: auto;
-  }
-
-  .hero-buttons {
-    justify-content: center;
-  }
-
-  .hero-visual {
-    min-height: 570px;
-  }
-
-  .carousel-stage {
-    height: 550px;
   }
 
   .featured-games,
@@ -1722,7 +773,6 @@ footer p {
   }
 }
 
-
 /* =========================================================
    MOBILE
 ========================================================= */
@@ -1730,14 +780,12 @@ footer p {
 @media (max-width: 700px) {
 
   .navbar,
-  .hero,
   .section,
   .quick-stats,
   footer {
     width:
       calc(100% - 32px);
   }
-
 
   /* NAV */
 
@@ -1780,208 +828,14 @@ footer p {
   }
 
 
-  /* HERO */
-
-  .hero {
-    margin-top: 5px;
-
-    min-height: auto;
-
-    padding-top: 20px;
-  }
-
-  .hero-content {
-    padding:
-      15px 0 0;
-
-    text-align: left;
-  }
-
-  .eyebrow {
-    font-size: 10px;
-
-    letter-spacing: 2.2px;
-  }
-
-  .hero h1 {
-    margin: 20px 0;
-
-    font-size: 48px;
-
-    letter-spacing: -3.5px;
-  }
-
-  .hero p {
-    font-size: 14px;
-
-    line-height: 1.65;
-  }
-
-  .hero-buttons {
-    justify-content: flex-start;
-
-    flex-wrap: wrap;
-
-    margin-top: 25px;
-  }
-
-
-  /* CAROUSEL */
-
-  .hero-visual {
-    min-height: 455px;
-
-    margin-top: 15px;
-  }
-
-  .carousel-stage {
-    height: 440px;
-  }
-
-  .hero-visual::before {
-    width: 430px;
-    height: 350px;
-
-    left: 50%;
-  }
-
-  .carousel-card {
-    width: 300px;
-    height: 350px;
-
-    border-radius: 27px;
-  }
-
 
   /* FRONT */
 
-  .front-card {
-    padding:
-      32px 28px;
-  }
-
-  .front-card-icon {
-    font-size: 72px;
-
-    margin-bottom: 22px;
-  }
-
-  .front-card-info > span {
-    font-size: 9px;
-
-    letter-spacing: 2px;
-  }
-
-  .front-card-info h2 {
-    font-size: 31px;
-  }
-
-  .front-card-info p {
-    max-width: 210px;
-
-    font-size: 11px;
-  }
-
-  .front-card::after {
-    left: 28px;
-    right: 28px;
-
-    bottom: 75px;
-  }
-
-  .play-button {
-    right: 18px;
-    bottom: 18px;
-
-    min-height: 42px;
-
-    padding:
-      0 14px;
-
-    border-radius: 13px;
-
-    font-size: 11px;
-  }
-
-
   /* BACK CARDS */
-
-  .next-card {
-    transform:
-      translate(-30%, -60%)
-      rotate(-14deg)
-      scale(0.73);
-
-    opacity: 0.55;
-  }
-
-  .far-card {
-    transform:
-      translate(-14%, -68%)
-      rotate(-14deg)
-      scale(0.62);
-
-    opacity: 0.30;
-  }
-
-  .previous-card {
-    transform:
-      translate(-120%, -50%)
-      rotate(-14deg)
-      scale(0.72);
-  }
-
-  .previous-card-active {
-    transform:
-      translate(-76%, -50%)
-      rotate(-14deg)
-      scale(0.73);
-  }
-
-  .back-card-content {
-    left: 28px;
-    top: 30px;
-  }
-
-  .back-card-icon {
-    font-size: 50px;
-  }
-
-  .back-card-content strong {
-    font-size: 21px;
-  }
-
-  .back-card-content p {
-    font-size: 10px;
-  }
-
 
   /* ARROWS */
 
-  .carousel-arrow {
-    width: 45px;
-    height: 45px;
-  }
-
-  .carousel-arrow span {
-    font-size: 31px;
-  }
-
-  .carousel-arrow-left {
-    left: -2px;
-  }
-
-  .carousel-arrow-right {
-    right: -2px;
-  }
-
-
   /* DOTS */
-
-  .carousel-dots {
-    bottom: -2px;
-  }
-
 
   /* STATS */
 
@@ -1998,7 +852,6 @@ footer p {
     padding:
       20px 10px;
   }
-
 
   /* SECTIONS */
 
@@ -2022,7 +875,6 @@ footer p {
     width: 100%;
   }
 
-
   /* CARDS */
 
   .featured-games,
@@ -2034,7 +886,6 @@ footer p {
   .big-game-card {
     min-height: 320px;
   }
-
 
   /* FOOTER */
 
@@ -2049,7 +900,6 @@ footer p {
   }
 }
 
-
 /* =========================================================
    SMALL PHONE
 ========================================================= */
@@ -2062,71 +912,7 @@ footer p {
     letter-spacing: 2.5px;
   }
 
-  .hero h1 {
-    font-size: 43px;
-
-    letter-spacing: -3px;
-  }
-
-  .hero-visual {
-    min-height: 400px;
-  }
-
-  .carousel-stage {
-    height: 390px;
-  }
-
-  .carousel-card {
-    width: 270px;
-    height: 315px;
-  }
-
-  .front-card {
-    padding: 26px 23px;
-  }
-
-  .front-card-icon {
-    font-size: 62px;
-  }
-
-  .front-card-info h2 {
-    font-size: 27px;
-  }
-
-  .front-card-info p {
-    font-size: 10px;
-  }
-
-  .play-button {
-    right: 15px;
-    bottom: 15px;
-
-    min-height: 39px;
-
-    padding:
-      0 11px;
-
-    font-size: 10px;
-  }
-
-  .carousel-arrow {
-    width: 40px;
-    height: 40px;
-  }
-
-  .carousel-arrow span {
-    font-size: 28px;
-  }
-
-  .carousel-arrow-left {
-    left: -3px;
-  }
-
-  .carousel-arrow-right {
-    right: -3px;
-  }
 }
-
 
 /* =========================================================
    REDUCED MOTION
@@ -2842,7 +1628,6 @@ footer p {
   }
 }
 
-
 /* =========================================================
    ARCADION BANNER
    ========================================================= */
@@ -2893,7 +1678,6 @@ footer p {
     drop-shadow(0 0 8px rgba(172, 84, 255, 0.45))
     drop-shadow(0 0 22px rgba(142, 52, 224, 0.22));
 }
-
 
 /* =========================================================
    INNER FILL
@@ -2957,7 +1741,6 @@ footer p {
     inset 0 0 35px rgba(128, 40, 208, 0.08);
 }
 
-
 /* =========================================================
    ATMOSPHERE
    ========================================================= */
@@ -2982,7 +1765,6 @@ footer p {
 
   pointer-events: none;
 }
-
 
 .arcadion-noise {
   position: absolute;
@@ -3019,13 +1801,11 @@ footer p {
   pointer-events: none;
 }
 
-
 /* =========================================================
    FRAME
    (edge glow now comes from .arcadion-banner + .arcadion-banner-fill
    chamfer layers above -- no separate corner brackets needed)
    ========================================================= */
-
 
 /* =========================================================
    LEFT CONTENT
@@ -3045,7 +1825,6 @@ footer p {
   transform: translateY(-50%);
 }
 
-
 .arcadion-emblem {
   position: relative;
 
@@ -3063,7 +1842,6 @@ footer p {
       0 0 12px rgba(181, 66, 255, 0.55)
     );
 }
-
 
 .arcadion-emblem-mark {
   width: 65px;
@@ -3086,7 +1864,6 @@ footer p {
     infinite;
 }
 
-
 .arcadion-copy-divider {
   width: 1px;
   height: 48px;
@@ -3102,11 +1879,9 @@ footer p {
     );
 }
 
-
 .arcadion-copy-text {
   min-width: 330px;
 }
-
 
 .arcadion-waiting-text {
   position: relative;
@@ -3138,6 +1913,559 @@ footer p {
     infinite;
 }
 
+.arcadion-waiting-text::after {
+  content: "ARCADION IS WAITING";
+
+  position: absolute;
+
+  left: 2px;
+  top: 0;
+
+  color: #8b3eff;
+
+  opacity: 0;
+
+  clip-path: inset(0 0 48% 0);
+
+  animation:
+    arcadionTextGlitch
+    3.7s
+    steps(1)
+    infinite;
+}
+
+.arcadion-copy-text p {
+  margin: 8px 0 0;
+
+  color: #b7a0c9;
+
+  font-size: 12px;
+  line-height: 1.3;
+
+  letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   ARCADION CHARACTER
+   Box keeps a fixed aspect ratio, so the cube always stays
+   locked to the hand at any screen size.
+   ========================================================= */
+
+.arcadia-hero-character {
+  position: absolute;
+
+  right: var(--arc-char-right);
+  bottom: var(--arc-char-bottom);
+
+  height: var(--arc-char-h);
+  aspect-ratio: 820 / 677;
+
+  z-index: 6;
+}
+
+/* big violet aura behind the whole figure — breathes */
+.arcadia-character-glow {
+  position: absolute;
+
+  left: 20%;
+  top: 8%;
+
+  width: 62%;
+  height: 90%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(157, 51, 255, 0.46) 0%,
+      rgba(119, 35, 220, 0.24) 38%,
+      transparent 72%
+    );
+
+  filter: blur(56px);
+
+  animation:
+    arcadiaAura 4.2s ease-in-out infinite alternate;
+
+  z-index: -1;
+}
+
+@keyframes arcadiaAura {
+  from {
+    opacity: 0.55;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+}
+
+/* the figure gently "breathes" (halo + image together) */
+.arcadia-character-body {
+  position: absolute;
+  inset: 0;
+
+  transform-origin: 55% 100%;
+
+  animation:
+    arcadiaBreathe 6s ease-in-out infinite;
+}
+
+@keyframes arcadiaBreathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.007);
+  }
+}
+
+/*
+  Halo = blurred copy of the figure behind it. Only the lit
+  parts (rim light, emblem, shards) bloom, and the opacity
+  pulses → the silhouette glows and "lives".
+*/
+.arcadia-character-halo {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  filter:
+    blur(20px)
+    brightness(1.9)
+    saturate(1.5);
+
+  mix-blend-mode: screen;
+
+  opacity: 0.5;
+
+  animation:
+    arcadiaHalo 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes arcadiaHalo {
+  from {
+    opacity: 0.28;
+  }
+
+  to {
+    opacity: 0.85;
+  }
+}
+
+.arcadia-character-image {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  /* static rim light (animating filter is expensive, so it stays still) */
+  filter:
+    drop-shadow(0 0 5px rgba(196, 92, 255, 0.72))
+    drop-shadow(0 0 20px rgba(140, 40, 255, 0.46))
+    drop-shadow(0 0 46px rgba(105, 28, 255, 0.24));
+}
+
+/* =========================================================
+   FLOATING CUBE (right above the open hand)
+   ========================================================= */
+
+.arcadia-cube-wrap {
+  position: absolute;
+
+  right: var(--arc-cube-right);
+  top: var(--arc-cube-top);
+
+  width: var(--arc-cube-size);
+  aspect-ratio: 1;
+
+  z-index: 12;
+
+  display: grid;
+  place-items: center;
+
+  animation:
+    arcadiaCubeFloat 3.8s ease-in-out infinite;
+}
+
+/* light the cube throws — also lights up the hand below it */
+.arcadia-cube-glow {
+  position: absolute;
+  inset: -38%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(190, 65, 255, 0.70) 0%,
+      rgba(137, 35, 255, 0.34) 30%,
+      transparent 68%
+    );
+
+  filter: blur(26px);
+
+  animation:
+    arcadiaCubeGlow 2s ease-in-out infinite alternate;
+}
+
+.arcadia-cube {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 0 5px rgba(225, 139, 255, 1))
+    drop-shadow(0 0 16px rgba(175, 64, 255, 0.9))
+    drop-shadow(0 0 34px rgba(132, 37, 255, 0.6));
+
+  animation:
+    arcadiaCubeSway 5.5s ease-in-out infinite;
+}
+
+@keyframes arcadiaCubeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+@keyframes arcadiaCubeSway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes arcadiaCubeGlow {
+  from {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+
+/* =========================================================
+   CUBE SPARKLES (4-point stars twinkling around the cube)
+   ========================================================= */
+
+.arcadia-cube-sparkles {
+  position: absolute;
+  inset: -30%;
+
+  pointer-events: none;
+}
+
+.arcadia-cube-sparkles span {
+  position: absolute;
+
+  left: var(--x);
+  top: var(--y);
+
+  width: calc(var(--s, 4%) * 1.35);
+  aspect-ratio: 1;
+
+  opacity: 0;
+
+  filter:
+    drop-shadow(0 0 4px #f1d6ff)
+    drop-shadow(0 0 10px rgba(184, 88, 255, 0.95));
+
+  animation:
+    arcadiaSparkle
+    var(--d, 2.6s)
+    ease-in-out
+    var(--delay, 0s)
+    infinite;
+}
+
+.arcadia-cube-sparkles span::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle,
+      #ffffff 0%,
+      #f1d6ff 35%,
+      #c78bff 100%
+    );
+
+  clip-path:
+    polygon(
+      50% 0%,
+      61% 39%,
+      100% 50%,
+      61% 61%,
+      50% 100%,
+      39% 61%,
+      0% 50%,
+      39% 39%
+    );
+}
+
+.arcadia-cube-sparkles span:nth-child(1)  { --x: 6%;  --y: 18%; --s: 4.4%; --d: 2.4s; --delay: 0s; }
+.arcadia-cube-sparkles span:nth-child(2)  { --x: 80%; --y: 8%;  --s: 3.4%; --d: 3.1s; --delay: 0.5s; }
+.arcadia-cube-sparkles span:nth-child(3)  { --x: 92%; --y: 46%; --s: 5%;   --d: 2.8s; --delay: 1.1s; }
+.arcadia-cube-sparkles span:nth-child(4)  { --x: 70%; --y: 88%; --s: 3.4%; --d: 2.6s; --delay: 0.3s; }
+.arcadia-cube-sparkles span:nth-child(5)  { --x: 18%; --y: 82%; --s: 4%;   --d: 3.3s; --delay: 1.6s; }
+.arcadia-cube-sparkles span:nth-child(6)  { --x: 2%;  --y: 52%; --s: 3%;   --d: 2.2s; --delay: 0.9s; }
+.arcadia-cube-sparkles span:nth-child(7)  { --x: 48%; --y: 0%;  --s: 5.4%; --d: 3.6s; --delay: 1.9s; }
+.arcadia-cube-sparkles span:nth-child(8)  { --x: 50%; --y: 44%; --s: 4%;   --d: 2.9s; --delay: 0.7s; }
+.arcadia-cube-sparkles span:nth-child(9)  { --x: 32%; --y: 28%; --s: 3%;   --d: 2.5s; --delay: 2.2s; }
+.arcadia-cube-sparkles span:nth-child(10) { --x: 76%; --y: 68%; --s: 3%;   --d: 3s;   --delay: 1.4s; }
+
+@keyframes arcadiaSparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+
+  35% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+
+  70% {
+    opacity: 0.55;
+    transform: scale(0.55) rotate(90deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(135deg);
+  }
+}
+
+
+/* =========================================================
+   AMBIENT PARTICLES
+   1-8 twinkle, 9-14 are small embers drifting upward
+   ========================================================= */
+
+.arcadia-hero-particles {
+  position: absolute;
+  inset: 0;
+
+  z-index: 7;
+
+  overflow: hidden;
+}
+
+.arcadia-hero-particles span {
+  position: absolute;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: #d989ff;
+
+  box-shadow:
+    0 0 7px #c45cff,
+    0 0 16px rgba(166, 62, 255, 0.8);
+
+  animation:
+    arcadiaParticleFloat
+    var(--particle-duration, 5s)
+    ease-in-out
+    infinite;
+}
+
+.arcadia-hero-particles span:nth-child(n + 9) {
+  width: 3px;
+  height: 3px;
+
+  opacity: 0;
+
+  animation-name: arcadiaEmber;
+  animation-timing-function: ease-out;
+}
+
+.arcadia-hero-particles span:nth-child(1)  { left: 44%; top: 30%; --particle-duration: 4.4s; }
+.arcadia-hero-particles span:nth-child(2)  { left: 60%; top: 18%; --particle-duration: 5.5s; }
+.arcadia-hero-particles span:nth-child(3)  { left: 76%; top: 56%; --particle-duration: 4.8s; }
+.arcadia-hero-particles span:nth-child(4)  { left: 82%; top: 30%; --particle-duration: 6s; }
+.arcadia-hero-particles span:nth-child(5)  { left: 56%; top: 68%; --particle-duration: 5.2s; }
+.arcadia-hero-particles span:nth-child(6)  { left: 92%; top: 62%; --particle-duration: 4.5s; }
+.arcadia-hero-particles span:nth-child(7)  { left: 38%; top: 62%; --particle-duration: 5.8s; }
+.arcadia-hero-particles span:nth-child(8)  { left: 70%; top: 78%; --particle-duration: 4.9s; }
+
+.arcadia-hero-particles span:nth-child(9)  { left: 50%; top: 82%; --particle-duration: 7s;   animation-delay: 0s; }
+.arcadia-hero-particles span:nth-child(10) { left: 66%; top: 90%; --particle-duration: 8.5s; animation-delay: 1.5s; }
+.arcadia-hero-particles span:nth-child(11) { left: 86%; top: 84%; --particle-duration: 7.5s; animation-delay: 3s; }
+.arcadia-hero-particles span:nth-child(12) { left: 74%; top: 92%; --particle-duration: 9s;   animation-delay: 0.8s; }
+.arcadia-hero-particles span:nth-child(13) { left: 60%; top: 76%; --particle-duration: 8s;   animation-delay: 2.4s; }
+.arcadia-hero-particles span:nth-child(14) { left: 90%; top: 72%; --particle-duration: 9.5s; animation-delay: 4s; }
+
+@keyframes arcadiaParticleFloat {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translate3d(0, 10px, 0) scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate3d(5px, -18px, 0) scale(1.2);
+  }
+}
+
+@keyframes arcadiaEmber {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale(1);
+  }
+
+  20% {
+    opacity: 0.95;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(14px, -110px, 0) scale(0.4);
+  }
+}
+
+
+/* =========================================================
+   LEFT CONTENT
+   ========================================================= */
+
+.arcadion-copy {
+  position: absolute;
+
+  left: 42px;
+  top: 50%;
+
+  z-index: 12;
+
+  display: flex;
+  align-items: center;
+
+  transform: translateY(-50%);
+}
+
+.arcadion-emblem {
+  position: relative;
+
+  width: 47px;
+  height: 58px;
+
+  display: grid;
+  place-items: center;
+  align-self: center;
+
+  margin-right: 18px;
+
+  filter:
+    drop-shadow(
+      0 0 12px rgba(181, 66, 255, 0.55)
+    );
+}
+
+.arcadion-emblem-mark {
+  width: 65px;
+  height: auto;
+
+  display: block;
+
+  filter:
+    drop-shadow(
+      0 0 7px rgba(182, 68, 255, 0.85)
+    )
+    drop-shadow(
+      0 0 16px rgba(150, 50, 230, 0.5)
+    );
+
+  animation:
+    arcadionEmblemPulse
+    3s
+    ease-in-out
+    infinite;
+}
+
+.arcadion-copy-divider {
+  width: 1px;
+  height: 48px;
+
+  margin-right: 24px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      transparent,
+      rgba(192, 91, 255, 0.75),
+      transparent
+    );
+}
+
+.arcadion-copy-text {
+  min-width: 330px;
+}
+
+.arcadion-waiting-text {
+  position: relative;
+
+  margin: 0;
+
+  color: #d08bff;
+
+  font-size: 18px;
+  font-weight: 900;
+
+  line-height: 1;
+
+  letter-spacing: 4px;
+
+  text-transform: uppercase;
+
+  text-shadow:
+    0 0 8px rgba(191, 75, 255, 0.55),
+    0 0 20px rgba(159, 43, 255, 0.28);
+}
+
+.arcadion-waiting-text span {
+  display: inline-block;
+  animation:
+    arcadionTextFlicker
+    4.5s
+    steps(1)
+    infinite;
+}
 
 .arcadion-waiting-text::after {
   content: "ARCADION IS WAITING";
@@ -3160,7 +2488,6 @@ footer p {
     infinite;
 }
 
-
 .arcadion-copy-text p {
   margin: 8px 0 0;
 
@@ -3171,7 +2498,6 @@ footer p {
 
   letter-spacing: 0.5px;
 }
-
 
 /* =========================================================
    ARCADION CHARACTER
@@ -3193,7 +2519,6 @@ footer p {
 
   pointer-events: none;
 }
-
 
 .arcadion-character-image {
   position: absolute;
@@ -3232,7 +2557,6 @@ footer p {
     infinite; */
 }
 
-
 /* =========================================================
    CHARACTER AURA
    ========================================================= */
@@ -3270,7 +2594,6 @@ footer p {
   z-index: 1;
 }
 
-
 /* =========================================================
    MOVING SMOKE
    (positions/sizes are precomputed in TSX and passed as
@@ -3297,7 +2620,6 @@ footer p {
   filter: blur(1px);
 }
 
-
 .arcadion-smoke-particle {
   position: absolute;
 
@@ -3320,7 +2642,6 @@ footer p {
   animation-iteration-count: infinite;
 }
 
-
 /* Bigger smoke behind character */
 
 .arcadion-character-smoke-back {
@@ -3341,7 +2662,6 @@ footer p {
 
   filter: blur(9px);
 }
-
 
 .arcadion-character-smoke-back span {
   position: absolute;
@@ -3370,13 +2690,11 @@ footer p {
     infinite;
 }
 
-
 .arcadion-character-smoke-back span:nth-child(1) {
   left: 20px;
   --drift: -18px;
   animation-delay: -0.2s;
 }
-
 
 .arcadion-character-smoke-back span:nth-child(2) {
   left: 75px;
@@ -3384,20 +2702,17 @@ footer p {
   animation-delay: -1.1s;
 }
 
-
 .arcadion-character-smoke-back span:nth-child(3) {
   right: 65px;
   --drift: -10px;
   animation-delay: -1.9s;
 }
 
-
 .arcadion-character-smoke-back span:nth-child(4) {
   right: 10px;
   --drift: 14px;
   animation-delay: -2.7s;
 }
-
 
 /* =========================================================
    FLOATING PARTICLES
@@ -3412,7 +2727,6 @@ footer p {
 
   pointer-events: none;
 }
-
 
 .arcadion-energy-particle {
   position: absolute;
@@ -3431,7 +2745,6 @@ footer p {
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
-
 
 /* =========================================================
    CHARACTER-LEVEL ENERGY SPARKS
@@ -3459,7 +2772,6 @@ footer p {
 .arcadion-character-energy span:nth-child(2) { left: 55%; top: 55%; animation-delay: -1.6s; }
 .arcadion-character-energy span:nth-child(3) { left: 68%; top: 35%; animation-delay: -2.5s; }
 
-
 /* =========================================================
    RIGHT BRAND
    ========================================================= */
@@ -3482,7 +2794,6 @@ footer p {
   color: #a95bda;
 }
 
-
 .arcadion-brand-name {
   color: #b76df0;
 
@@ -3494,7 +2805,6 @@ footer p {
   text-shadow:
     0 0 10px rgba(176, 72, 255, 0.35);
 }
-
 
 .arcadion-brand-line {
   width: 35px;
@@ -3508,11 +2818,9 @@ footer p {
     );
 }
 
-
 .arcadion-brand-line:last-child {
   transform: scaleX(-1);
 }
-
 
 /* =========================================================
    SCAN LINE
@@ -3549,7 +2857,6 @@ footer p {
   pointer-events: none;
 }
 
-
 /* =========================================================
    ANIMATIONS
    ========================================================= */
@@ -3582,7 +2889,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionTextGlitch {
   0%,
   72%,
@@ -3610,7 +2916,6 @@ footer p {
     opacity: 0;
   }
 }
-
 
 @keyframes arcadionEyeGlow {
   0%,
@@ -3643,7 +2948,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionEyeAura {
   0%,
   100% {
@@ -3667,7 +2971,6 @@ footer p {
       scale(1);
   }
 }
-
 
 @keyframes arcadionSmokeRise {
   0% {
@@ -3698,7 +3001,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionBackSmoke {
   0% {
     opacity: 0;
@@ -3728,7 +3030,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionParticleFloat {
   0% {
     opacity: 0;
@@ -3755,7 +3056,6 @@ footer p {
       scale(1.15);
   }
 }
-
 
 @keyframes arcadionCharacterGlow {
   0%,
@@ -3812,7 +3112,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionCharacterFloat {
   0%,
   100% {
@@ -3827,7 +3126,6 @@ footer p {
       translateY(-5px);
   }
 }
-
 
 @keyframes arcadionAuraPulse {
   0%,
@@ -3848,7 +3146,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionEmblemPulse {
   0%,
   100% {
@@ -3864,7 +3161,6 @@ footer p {
   }
 }
 
-
 @keyframes arcadionScan {
   0% {
     left: -25%;
@@ -3874,7 +3170,6 @@ footer p {
     left: 125%;
   }
 }
-
 
 /* =========================================================
    TABLET
@@ -3924,7 +3219,6 @@ footer p {
     width: 530px;
   }
 }
-
 
 /* =========================================================
    MOBILE
@@ -4084,7 +3378,6 @@ footer p {
   }
 }
 
-
 /* =========================================================
    SMALL MOBILE
    ========================================================= */
@@ -4132,7 +3425,6 @@ footer p {
   }
 }
 
-
 /* =========================================================
    REDUCED MOTION
    ========================================================= */
@@ -4154,7 +3446,6 @@ footer p {
     animation: none;
   }
 }
-
 
 /* =========================================================
    VIEW MORE — FINAL CLEAN HOVER
@@ -5324,7 +4615,6 @@ footer p {
   animation-delay: var(--delay);
 }
 
-
 /* =========================================================
    SPARK DISTRIBUTION
 ========================================================= */
@@ -5400,7 +4690,6 @@ footer p {
   --drift: 12px;
   --rise: -168px;
 }
-
 
 /* =========================================================
    SMOOTH CONTINUOUS MOVEMENT
@@ -5481,7 +4770,6 @@ footer p {
   }
 }
 
-
 /* =========================================================
    THINNER BANNER
 ========================================================= */
@@ -5496,7 +4784,6 @@ footer p {
   padding-bottom: 30px;
 }
 
-
 /* =========================================================
    REMOVE PERIOD BADGE
 ========================================================= */
@@ -5504,7 +4791,6 @@ footer p {
 .time-arcadion-banner-period {
   display: none !important;
 }
-
 
 /* =========================================================
    MOBILE
@@ -5796,7 +5082,6 @@ footer p {
   --rise: -242px;
 }
 
-
 /* =========================================================
    SLIGHTLY WIDER / TALLER PARTICLE AREA
 ========================================================= */
@@ -5808,7 +5093,6 @@ footer p {
     right: 5%;
   }
 }
-
 
 @media (max-width: 700px) {
   .arcadion-spark-field {
@@ -7547,22 +6831,6 @@ footer p {
 }
 
 
-/* =========================================================
-   SECTION HEADINGS  (Arcadion style, left aligned)
-
-   Same look as "CHALLENGE ARCADION": tracked label with a
-   glowing line and a bold uppercase title, white first part
-   + neon purple last word.
-
-   Applies to: Popular games, Continue playing, Daily
-   Challenges and Top 10 Players.
-   Not touched: hero, the two banners, Challenge Arcadion.
-
-   For a pixel-perfect split, wrap the last word of a title
-   in <span data-text="WORD">WORD</span> (also adds the glitch
-   flicker). Without a span the split uses --title-split.
-========================================================= */
-
 :root {
   --section-title-size: 34px;
 }
@@ -7811,5 +7079,2216 @@ footer p {
   .daily-challenge-heading h2 span::after,
   .leaderboard-home-title span::after {
     animation: none;
+  }
+}
+
+
+/* =========================================================
+   ARCADIA HERO — CINEMATIC (matches design mockup)
+   ========================================================= */
+
+.arcadia-hero {
+  --arc-nav-h: 60px; /* = main { padding-top } */
+  --arc-hero-h: max(440px, calc(100vh - var(--arc-nav-h)));
+  --arc-pad-x: max(36px, 5.6vw);
+
+  /* Arcadion: image bottom sits ON the hero bottom → whole figure visible */
+  --arc-char-scale: 1.36;
+  --arc-char-h: min(calc(var(--arc-hero-h) * var(--arc-char-scale)), 72vw);
+  --arc-char-right: 2.3vw; /* bigger = further LEFT */
+  --arc-char-bottom: calc(var(--arc-hero-h) * -0.03);
+
+  /* cube: floats right above the open hand */
+  --arc-cube-right: 10%;
+  --arc-cube-top: 41%;
+  --arc-cube-size: 18.9%;
+
+  --arc-fade: calc(var(--arc-hero-h) * 0.09);
+  --arc-top-fade: calc(var(--arc-hero-h) * 0.026);
+
+  position: relative;
+  isolation: isolate;
+
+  width: 100%;
+  height: var(--arc-hero-h);
+
+  margin: 0;
+  padding: 0;
+
+  overflow: hidden;
+
+  /* No own colour → the page background shows through */
+  background: transparent;
+}
+
+@supports (height: 100svh) {
+  .arcadia-hero {
+    --arc-hero-h: max(440px, calc(100svh - var(--arc-nav-h)));
+  }
+}
+
+
+/* =========================================================
+   STAGE
+   Holds every visual layer. The mask fades its top and bottom
+   edge to transparent, so the hero dissolves into whatever the
+   real site background is (no colour matching, no seam).
+   ========================================================= */
+
+.arcadia-hero-stage {
+  --arc-mask:
+    linear-gradient(
+      180deg,
+      transparent 0,
+      #000 var(--arc-top-fade),
+      #000 calc(100% - var(--arc-fade)),
+      rgba(0, 0, 0, 0.82) calc(100% - var(--arc-fade) * 0.78),
+      rgba(0, 0, 0, 0.56) calc(100% - var(--arc-fade) * 0.55),
+      rgba(0, 0, 0, 0.29) calc(100% - var(--arc-fade) * 0.32),
+      rgba(0, 0, 0, 0.09) calc(100% - var(--arc-fade) * 0.13),
+      transparent 100%
+    );
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 0;
+
+  pointer-events: none;
+
+  -webkit-mask-image: var(--arc-mask);
+  mask-image: var(--arc-mask);
+}
+
+
+/* =========================================================
+   BACKGROUND (HeroBg.webp)
+   ========================================================= */
+
+.arcadia-hero-background {
+  position: absolute;
+  inset: 0;
+
+  z-index: 0;
+
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+
+  transform: scale(1.02);
+}
+
+
+/* =========================================================
+   ATMOSPHERE
+   left side darker for text, violet halo behind Arcadion
+   ========================================================= */
+
+.arcadia-hero-atmosphere {
+  position: absolute;
+  inset: 0;
+
+  z-index: 1;
+
+  background:
+    radial-gradient(
+      ellipse 46% 64% at 72% 46%,
+      rgba(112, 40, 235, 0.30) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(6, 1, 14, 0.80) 0%,
+      rgba(8, 2, 20, 0.44) 30%,
+      rgba(10, 3, 26, 0.06) 60%,
+      rgba(10, 3, 26, 0.14) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(5, 1, 11, 0.40) 0%,
+      transparent 22%
+    );
+}
+
+
+/* =========================================================
+   ARCADION CHARACTER
+   Box keeps a fixed aspect ratio, so the cube always stays
+   locked to the hand at any screen size.
+   ========================================================= */
+
+.arcadia-hero-character {
+  position: absolute;
+
+  right: var(--arc-char-right);
+  bottom: var(--arc-char-bottom);
+
+  height: var(--arc-char-h);
+  aspect-ratio: 820 / 677;
+
+  z-index: 6;
+}
+
+.arcadia-character-glow {
+  position: absolute;
+
+  left: 24%;
+  top: 23%;
+
+  width: 55%;
+  height: 62%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(157, 51, 255, 0.40) 0%,
+      rgba(119, 35, 220, 0.20) 35%,
+      transparent 72%
+    );
+
+  filter: blur(52px);
+
+  animation:
+    arcadiaCharacterGlow 3.6s ease-in-out infinite alternate;
+
+  z-index: -1;
+}
+
+.arcadia-character-image {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  /* static rim light — only the glow layer animates (cheap) */
+  filter:
+    drop-shadow(0 0 5px rgba(196, 92, 255, 0.72))
+    drop-shadow(0 0 20px rgba(140, 40, 255, 0.46))
+    drop-shadow(0 0 46px rgba(105, 28, 255, 0.24));
+}
+
+@keyframes arcadiaCharacterGlow {
+  from {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+}
+
+
+/* =========================================================
+   FLOATING CUBE
+   ========================================================= */
+
+.arcadia-cube-wrap {
+  position: absolute;
+
+  right: var(--arc-cube-right);
+  top: var(--arc-cube-top);
+
+  width: var(--arc-cube-size);
+  aspect-ratio: 1;
+
+  z-index: 12;
+
+  display: grid;
+  place-items: center;
+
+  animation:
+    arcadiaCubeFloat 3.6s ease-in-out infinite;
+}
+
+.arcadia-cube-glow {
+  position: absolute;
+  inset: -22%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(190, 65, 255, 0.72) 0%,
+      rgba(137, 35, 255, 0.35) 30%,
+      transparent 70%
+    );
+
+  filter: blur(24px);
+
+  animation:
+    arcadiaCubeGlow 2s ease-in-out infinite alternate;
+}
+
+.arcadia-cube {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 0 5px rgba(225, 139, 255, 1))
+    drop-shadow(0 0 16px rgba(175, 64, 255, 0.9))
+    drop-shadow(0 0 34px rgba(132, 37, 255, 0.6));
+
+  animation:
+    arcadiaCubeSway 5.5s ease-in-out infinite;
+}
+
+@keyframes arcadiaCubeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes arcadiaCubeSway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes arcadiaCubeGlow {
+  from {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+
+/* =========================================================
+   PARTICLES
+   ========================================================= */
+
+.arcadia-hero-particles {
+  position: absolute;
+  inset: 0;
+
+  z-index: 7;
+
+  overflow: hidden;
+}
+
+.arcadia-hero-particles span {
+  position: absolute;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: #d989ff;
+
+  box-shadow:
+    0 0 7px #c45cff,
+    0 0 16px rgba(166, 62, 255, 0.8);
+
+  animation:
+    arcadiaParticleFloat
+    var(--particle-duration, 5s)
+    ease-in-out
+    infinite;
+}
+
+.arcadia-hero-particles span:nth-child(1) {
+  left: 44%;
+  top: 30%;
+  --particle-duration: 4.4s;
+}
+
+.arcadia-hero-particles span:nth-child(2) {
+  left: 60%;
+  top: 18%;
+  --particle-duration: 5.5s;
+}
+
+.arcadia-hero-particles span:nth-child(3) {
+  left: 76%;
+  top: 56%;
+  --particle-duration: 4.8s;
+}
+
+.arcadia-hero-particles span:nth-child(4) {
+  left: 82%;
+  top: 30%;
+  --particle-duration: 6s;
+}
+
+.arcadia-hero-particles span:nth-child(5) {
+  left: 56%;
+  top: 68%;
+  --particle-duration: 5.2s;
+}
+
+.arcadia-hero-particles span:nth-child(6) {
+  left: 92%;
+  top: 62%;
+  --particle-duration: 4.5s;
+}
+
+.arcadia-hero-particles span:nth-child(7) {
+  left: 38%;
+  top: 62%;
+  --particle-duration: 5.8s;
+}
+
+.arcadia-hero-particles span:nth-child(8) {
+  left: 70%;
+  top: 78%;
+  --particle-duration: 4.9s;
+}
+
+@keyframes arcadiaParticleFloat {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translate3d(0, 10px, 0) scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate3d(5px, -18px, 0) scale(1.2);
+  }
+}
+
+
+/* =========================================================
+   LEFT CONTENT
+   ========================================================= */
+
+.arcadia-hero-content {
+  position: absolute;
+
+  left: var(--arc-pad-x);
+  top: 47%;
+
+  z-index: 10;
+
+  max-width: 46vw;
+
+  transform: translateY(-50%);
+}
+
+.arcadia-hero-eyebrow {
+  display: block;
+
+  margin-bottom: max(14px, 1.5vw);
+
+  color: #a468ff;
+
+  font-size: max(10px, 0.684vw);
+  font-weight: 500;
+
+  letter-spacing: 0.62em;
+
+  text-shadow:
+    0 0 14px rgba(150, 70, 255, 0.55);
+}
+
+/*
+  inline-block + padding-right: the gradient text now covers the
+  full word including trailing letter-spacing (fixes the clipped
+  "ARCADI" in the old version).
+*/
+.arcadia-hero-title {
+  display: inline-block;
+
+  margin: 0;
+  padding: 0 0.1em 0.06em 0;
+
+  font-family:
+    "Orbitron",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+
+  font-size: min(max(44px, 4.8vw), 12.4vh);
+  font-weight: 800;
+  line-height: 1;
+
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+
+  background:
+    linear-gradient(
+      100deg,
+      #dcbcff 0%,
+      #b67cff 42%,
+      #9247ff 100%
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  filter:
+    drop-shadow(0 0 12px rgba(150, 70, 255, 0.55))
+    drop-shadow(0 0 34px rgba(110, 40, 255, 0.32));
+}
+
+.arcadia-hero-tagline {
+  display: flex;
+  align-items: center;
+
+  gap: max(12px, 1.05vw);
+
+  margin-top: max(16px, 1.47vw);
+
+  color: #d8cbee;
+
+  font-size: max(10px, 0.684vw);
+  font-weight: 500;
+
+  letter-spacing: 0.42em;
+}
+
+.arcadia-hero-tagline i {
+  color: #a94cff;
+
+  font-size: 8px;
+  font-style: normal;
+
+  text-shadow:
+    0 0 10px rgba(177, 70, 255, 0.9);
+}
+
+.arcadia-hero-description {
+  max-width: 24.5em;
+
+  margin: max(20px, 1.9vw) 0 0;
+
+  color: #c6badb;
+
+  font-size: max(13px, 0.895vw);
+  line-height: 1.7;
+
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+
+/* =========================================================
+   START BUTTON
+   ========================================================= */
+
+.arcadia-hero-button {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: max(12px, 0.74vw);
+
+  min-width: max(220px, 13.2vw);
+  height: max(46px, 2.74vw);
+
+  margin-top: max(24px, 2.1vw);
+
+  padding: 0 max(24px, 1.47vw);
+
+  border: 1.5px solid rgba(146, 84, 255, 0.95);
+  border-radius: 999px;
+
+  color: #efe4ff;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(96, 36, 190, 0.34),
+      rgba(48, 14, 110, 0.32)
+    );
+
+  box-shadow:
+    0 0 18px rgba(130, 50, 255, 0.34),
+    inset 0 0 16px rgba(170, 90, 255, 0.10);
+
+  backdrop-filter: blur(8px);
+
+  font-size: max(11px, 0.632vw);
+  font-weight: 600;
+
+  letter-spacing: 0.3em;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+/* soft outer ring */
+.arcadia-hero-button::before {
+  content: "";
+
+  position: absolute;
+  inset: -5px;
+
+  border-radius: inherit;
+
+  border: 1px solid rgba(150, 70, 255, 0.20);
+
+  filter: blur(2px);
+
+  pointer-events: none;
+}
+
+/* thin line trailing to the right of the button */
+.arcadia-hero-button::after {
+  content: "";
+
+  position: absolute;
+
+  left: calc(100% + max(20px, 1.47vw));
+  top: 50%;
+
+  width: max(70px, 5.9vw);
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(150, 90, 255, 0.7),
+      transparent
+    );
+
+  pointer-events: none;
+}
+
+.arcadia-hero-button:hover {
+  transform: translateY(-3px);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(140, 56, 240, 0.46),
+      rgba(70, 22, 150, 0.40)
+    );
+
+  box-shadow:
+    0 0 24px rgba(160, 64, 255, 0.55),
+    0 0 52px rgba(120, 39, 255, 0.26);
+}
+
+.arcadia-hero-button:focus-visible {
+  outline: 2px solid #d58aff;
+  outline-offset: 5px;
+}
+
+.arcadia-hero-button-icon {
+  font-size: max(14px, 0.84vw);
+
+  color: #c98bff;
+
+  text-shadow:
+    0 0 9px rgba(190, 90, 255, 0.95);
+}
+
+
+/* =========================================================
+   TOP-RIGHT QUOTE
+   ========================================================= */
+
+.arcadia-hero-quote {
+  position: absolute;
+
+  right: max(28px, 3.4vw);
+  top: 17%;
+
+  z-index: 9;
+
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  color: rgba(190, 160, 240, 0.62);
+
+  font-size: max(9px, 0.58vw);
+  font-weight: 500;
+  line-height: 1;
+
+  letter-spacing: 0.55em;
+
+  pointer-events: none;
+}
+
+.arcadia-hero-quote i {
+  display: block;
+
+  width: max(34px, 1.8vw);
+  height: 1px;
+
+  margin-top: 8px;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(170, 110, 255, 0.75),
+      transparent
+    );
+}
+
+
+/* =========================================================
+   BOTTOM-LEFT LABEL
+   ========================================================= */
+
+.arcadia-hero-master {
+  position: absolute;
+
+  left: var(--arc-pad-x);
+  bottom: max(28px, 6vh);
+
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  color: #a468ff;
+
+  pointer-events: none;
+}
+
+.arcadia-emblem {
+  width: max(30px, 1.8vw);
+  height: auto;
+
+  filter:
+    drop-shadow(0 0 8px rgba(160, 80, 255, 0.75));
+}
+
+.arcadia-hero-master-text {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.arcadia-hero-master-text strong {
+  color: #c7a5ff;
+
+  font-size: max(12px, 0.63vw);
+  font-weight: 500;
+  line-height: 1;
+
+  letter-spacing: 0.5em;
+}
+
+.arcadia-hero-master-text span {
+  color: rgba(190, 160, 240, 0.55);
+
+  font-size: max(9px, 0.47vw);
+  line-height: 1;
+
+  letter-spacing: 0.36em;
+}
+
+.arcadia-hero-master-line {
+  display: block;
+
+  width: max(160px, 22vw);
+  height: 1px;
+
+  margin-left: 20px;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(150, 90, 255, 0.55),
+      transparent
+    );
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (min-width: 801px) and (max-height: 760px) {
+  .arcadia-hero-master {
+    display: none;
+  }
+}
+
+
+@media (max-width: 1100px) {
+  .arcadia-hero {
+    --arc-pad-x: 5%;
+    --arc-char-h: min(calc(var(--arc-hero-h) * var(--arc-char-scale)), 66vw);
+    --arc-char-right: -9%;
+  }
+
+  .arcadia-hero-content {
+    max-width: 48vw;
+  }
+
+  .arcadia-hero-quote {
+    display: none;
+  }
+
+  .arcadia-hero-master-line {
+    display: none;
+  }
+}
+
+
+@media (max-width: 800px) {
+  .arcadia-hero {
+    --arc-fade: 130px;
+    --arc-top-fade: 40px;
+    --arc-pad-x: 7%;
+    --arc-char-h: 58%;
+    --arc-char-right: -16%;
+    --arc-char-bottom: -2%;
+
+    height: auto;
+    min-height: 740px;
+  }
+
+  .arcadia-hero-background {
+    background-position: 63% center;
+  }
+
+  .arcadia-hero-atmosphere {
+    background:
+      radial-gradient(
+        ellipse 80% 40% at 60% 70%,
+        rgba(112, 40, 235, 0.28) 0%,
+        transparent 70%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(7, 1, 17, 0.62) 0%,
+        rgba(12, 2, 28, 0.20) 45%,
+        rgba(17, 3, 35, 0.30) 100%
+      );
+  }
+
+  .arcadia-hero-content {
+    top: 52px;
+    left: var(--arc-pad-x);
+    right: var(--arc-pad-x);
+
+    max-width: none;
+
+    transform: none;
+  }
+
+  .arcadia-hero-description {
+    max-width: 26em;
+  }
+
+  .arcadia-hero-button::after,
+  .arcadia-hero-master {
+    display: none;
+  }
+}
+
+
+@media (max-width: 520px) {
+  .arcadia-hero {
+    min-height: 700px;
+
+    --arc-char-h: 54%;
+    --arc-char-right: -22%;
+  }
+
+  .arcadia-hero-eyebrow {
+    letter-spacing: 0.5em;
+  }
+
+  .arcadia-hero-tagline {
+    letter-spacing: 0.3em;
+  }
+
+  .arcadia-hero-button {
+    min-width: 210px;
+    height: 48px;
+
+    font-size: 11px;
+    letter-spacing: 0.24em;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .arcadia-character-glow,
+  .arcadia-character-body,
+  .arcadia-character-halo,
+  .arcadia-cube-wrap,
+  .arcadia-cube,
+  .arcadia-cube-glow,
+  .arcadia-cube-sparkles span,
+  .arcadia-hero-particles span {
+    animation: none !important;
+  }
+
+  .arcadia-cube-sparkles span {
+    opacity: 0.8;
+  }
+}
+
+/* Match the CTA's warmer purple image treatment. */
+.arcadia-hero-background {
+  filter: sepia(0.12) saturate(1.08) hue-rotate(18deg) contrast(1.04) brightness(0.98);
+}
+
+.arcadia-character-glow {
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(190, 67, 235, 0.46) 0%,
+      rgba(137, 42, 202, 0.24) 38%,
+      transparent 72%
+    );
+}
+
+.arcadia-character-image {
+  filter:
+    drop-shadow(0 0 5px rgba(226, 143, 255, 0.82))
+    drop-shadow(0 0 20px rgba(184, 67, 230, 0.56))
+    drop-shadow(0 0 46px rgba(137, 38, 202, 0.30));
+}
+
+.arcadia-cube-glow {
+  background:
+    radial-gradient(
+      circle,
+      rgba(216, 91, 245, 0.74) 0%,
+      rgba(169, 48, 220, 0.38) 30%,
+      transparent 68%
+    );
+}
+
+.arcadia-cube {
+  filter:
+    drop-shadow(0 0 5px rgba(239, 166, 255, 1))
+    drop-shadow(0 0 16px rgba(204, 82, 239, 0.92))
+    drop-shadow(0 0 34px rgba(155, 46, 207, 0.64));
+}
+/* =========================================================
+   ARCADIA HERO — RESPONSIVE PATCH
+   Landingpage.css ke SABSE END mein paste karo.
+   (Isse purana hero block override ho jayega — kuch delete
+    karne ki zaroorat nahi.)
+
+   TUNING KNOBS:
+   --arc-char-scale   Arcadion ka size
+   --arc-char-right   bada value = aur zyada LEFT
+   --arc-char-bottom  neeche/upar
+   --arc-cube-right / --arc-cube-top   cube ki jagah (hand ke upar)
+   ========================================================= */
+
+.arcadia-hero {
+  --arc-nav-h: 60px;
+
+  --arc-hero-h: max(460px, calc(100vh - var(--arc-nav-h)));
+
+  /* padding ab niche 20px tak gir sakti hai (pehle 36px floor tha) */
+  --arc-pad-x: clamp(20px, 5.6vw, 104px);
+
+  /* ---- ARCADION: bada + left ---- */
+  --arc-char-scale: 1.46;              /* tha 1.36 */
+
+  /* height ko width ka bhi cap diya → screen patli hoti hi shrink hoga */
+  --arc-char-h: min(
+    calc(var(--arc-hero-h) * var(--arc-char-scale)),
+    88vw
+  );
+
+  --arc-char-right: clamp(36px, 7vw, 160px);   /* tha 2.3vw */
+  --arc-char-bottom: calc(var(--arc-hero-h) * -0.05);
+
+  /* cube character-box ke andar % pe hai → apne aap locked rehta hai */
+  --arc-cube-right: 10%;
+  --arc-cube-top: 41%;
+  --arc-cube-size: 18.9%;
+
+  --arc-fade: clamp(64px, 9vh, 132px);
+  --arc-top-fade: clamp(14px, 2.6vh, 40px);
+
+  position: relative;
+  isolation: isolate;
+
+  width: 100%;
+  height: var(--arc-hero-h);
+
+  margin: 0;
+  padding: 0;
+
+  overflow: hidden;
+
+  background: transparent;
+}
+
+@supports (height: 100svh) {
+  .arcadia-hero {
+    --arc-hero-h: max(460px, calc(100svh - var(--arc-nav-h)));
+  }
+}
+
+
+/* =========================================================
+   FLUID TYPOGRAPHY
+   clamp() = min / fluid / max. Pehle `max(px, vw)` tha, isliye
+   chhoti screen par text freeze ho jaata tha.
+   ========================================================= */
+
+.arcadia-hero-content {
+  position: absolute;
+
+  left: var(--arc-pad-x);
+  top: 47%;
+
+  z-index: 10;
+
+  width: min(46vw, 620px);
+  max-width: calc(100% - var(--arc-pad-x) * 2);
+
+  transform: translateY(-50%);
+}
+
+.arcadia-hero-eyebrow {
+  margin-bottom: clamp(10px, 1.5vw, 22px);
+
+  font-size: clamp(9px, 0.7vw, 13px);
+  letter-spacing: clamp(0.34em, 0.62vw, 0.62em);
+}
+
+.arcadia-hero-title {
+  font-size: min(clamp(38px, 5.4vw, 108px), 13vh);
+  letter-spacing: 0.07em;
+}
+
+.arcadia-hero-tagline {
+  gap: clamp(8px, 1.05vw, 18px);
+  margin-top: clamp(12px, 1.5vw, 24px);
+
+  font-size: clamp(9px, 0.7vw, 13px);
+  letter-spacing: clamp(0.24em, 0.42vw, 0.42em);
+
+  flex-wrap: wrap;
+}
+
+.arcadia-hero-description {
+  max-width: 24.5em;
+
+  margin: clamp(14px, 1.9vw, 30px) 0 0;
+
+  font-size: clamp(12.5px, 0.92vw, 17px);
+  line-height: 1.65;
+}
+
+.arcadia-hero-button {
+  gap: clamp(10px, 0.74vw, 14px);
+
+  min-width: clamp(190px, 13.2vw, 260px);
+  height: clamp(44px, 2.74vw, 56px);
+
+  margin-top: clamp(18px, 2.1vw, 34px);
+  padding: 0 clamp(18px, 1.47vw, 28px);
+
+  font-size: clamp(10px, 0.65vw, 13px);
+  letter-spacing: clamp(0.2em, 0.3vw, 0.3em);
+}
+
+.arcadia-hero-button-icon {
+  font-size: clamp(13px, 0.84vw, 17px);
+}
+
+.arcadia-hero-quote {
+  right: clamp(20px, 3.4vw, 60px);
+
+  font-size: clamp(8px, 0.58vw, 11px);
+  letter-spacing: clamp(0.34em, 0.55vw, 0.55em);
+}
+
+.arcadia-hero-master-text strong {
+  font-size: clamp(10px, 0.63vw, 14px);
+  letter-spacing: clamp(0.3em, 0.5vw, 0.5em);
+}
+
+.arcadia-hero-master-text span {
+  font-size: clamp(8px, 0.47vw, 11px);
+  letter-spacing: clamp(0.24em, 0.36vw, 0.36em);
+}
+
+.arcadia-hero-master-line {
+  width: clamp(90px, 22vw, 420px);
+}
+
+
+/* =========================================================
+   BREAKPOINTS — ab beech ke sizes par bhi layout badalta hai
+   ========================================================= */
+
+/* bahut chaudi screen: character ko aur left rakho */
+@media (min-width: 1700px) {
+  .arcadia-hero {
+    --arc-char-right: clamp(160px, 9vw, 280px);
+    --arc-char-scale: 1.40;
+  }
+}
+
+/* laptop */
+@media (max-width: 1400px) {
+  .arcadia-hero {
+    --arc-char-scale: 1.40;
+    --arc-char-right: 5vw;
+  }
+
+  .arcadia-hero-content {
+    width: min(48vw, 560px);
+  }
+}
+
+/* chhota laptop — yahan pehle kuch nahi hota tha */
+@media (max-width: 1200px) {
+  .arcadia-hero {
+    --arc-char-scale: 1.32;
+    --arc-char-right: 1vw;
+    --arc-char-h: min(calc(var(--arc-hero-h) * var(--arc-char-scale)), 78vw);
+  }
+
+  .arcadia-hero-content {
+    width: min(52vw, 520px);
+  }
+
+  .arcadia-hero-quote {
+    top: 14%;
+  }
+}
+
+/* tablet landscape */
+@media (max-width: 1100px) {
+  .arcadia-hero {
+    --arc-pad-x: 5%;
+    --arc-char-scale: 1.26;
+    --arc-char-right: -6%;
+    --arc-char-h: min(calc(var(--arc-hero-h) * var(--arc-char-scale)), 74vw);
+  }
+
+  .arcadia-hero-content {
+    width: min(56vw, 480px);
+  }
+
+  .arcadia-hero-quote,
+  .arcadia-hero-master-line {
+    display: none;
+  }
+}
+
+/* text aur character takrane lagte hain → character halka karo */
+@media (max-width: 960px) {
+  .arcadia-hero {
+    --arc-char-right: -14%;
+    --arc-char-h: min(calc(var(--arc-hero-h) * 1.18), 76vw);
+  }
+
+  .arcadia-hero-content {
+    width: min(62vw, 440px);
+  }
+
+  .arcadia-character-image,
+  .arcadia-character-halo {
+    opacity: 0.88;
+  }
+}
+
+/* ---- STACKED LAYOUT: text upar, Arcadion neeche ---- */
+@media (max-width: 820px) {
+  .arcadia-hero {
+    --arc-pad-x: 7%;
+    --arc-fade: 120px;
+    --arc-top-fade: 36px;
+
+    --arc-char-h: min(46svh, 104vw);
+    --arc-char-right: -18%;
+    --arc-char-bottom: -2%;
+
+    height: auto;
+    min-height: clamp(620px, 94svh, 860px);
+  }
+
+  .arcadia-hero-background {
+    background-position: 64% center;
+  }
+
+  .arcadia-hero-atmosphere {
+    background:
+      radial-gradient(
+        ellipse 80% 40% at 60% 72%,
+        rgba(112, 40, 235, 0.28) 0%,
+        transparent 70%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(7, 1, 17, 0.72) 0%,
+        rgba(12, 2, 28, 0.24) 46%,
+        rgba(17, 3, 35, 0.32) 100%
+      );
+  }
+
+  .arcadia-hero-content {
+    position: relative;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    max-width: none;
+
+    padding: clamp(36px, 8vw, 64px) var(--arc-pad-x) 0;
+
+    transform: none;
+  }
+
+  .arcadia-hero-title {
+    font-size: clamp(42px, 11vw, 78px);
+  }
+
+  .arcadia-hero-description {
+    max-width: 30em;
+    font-size: clamp(13px, 3.5vw, 16px);
+  }
+
+  .arcadia-hero-button {
+    min-width: min(240px, 72vw);
+    height: 50px;
+    font-size: 11px;
+  }
+
+  .arcadia-hero-button::after,
+  .arcadia-hero-master {
+    display: none;
+  }
+
+  .arcadia-character-image,
+  .arcadia-character-halo {
+    opacity: 1;
+  }
+}
+
+/* phone */
+@media (max-width: 560px) {
+  .arcadia-hero {
+    --arc-pad-x: 22px;
+    --arc-char-h: min(40svh, 112vw);
+    --arc-char-right: -26%;
+
+    min-height: clamp(580px, 92svh, 760px);
+  }
+
+  .arcadia-hero-eyebrow {
+    letter-spacing: 0.4em;
+  }
+
+  .arcadia-hero-tagline {
+    letter-spacing: 0.22em;
+    gap: 8px;
+  }
+}
+
+/* chhota phone */
+@media (max-width: 400px) {
+  .arcadia-hero {
+    --arc-char-h: min(36svh, 118vw);
+    --arc-char-right: -32%;
+
+    min-height: 560px;
+  }
+
+  .arcadia-hero-title {
+    font-size: clamp(38px, 12vw, 52px);
+    letter-spacing: 0.05em;
+  }
+
+  .arcadia-hero-tagline i {
+    font-size: 7px;
+  }
+}
+
+/* choti/landscape screen: bottom label hata do */
+@media (min-width: 821px) and (max-height: 720px) {
+  .arcadia-hero-master {
+    display: none;
+  }
+
+  .arcadia-hero {
+    --arc-char-scale: 1.30;
+  }
+}/* =========================================================
+   ARCADIA HERO — COMPLETE BLOCK (self-contained)
+   ========================================================= */
+
+.arcadia-hero {
+  --arc-nav-h: 60px;
+  --arc-hero-h: max(460px, calc(100vh - var(--arc-nav-h)));
+
+  --arc-pad-x: clamp(20px, 5.6vw, 104px);
+
+  /* ---- ARCADION size ---- */
+  --arc-char-w: clamp(400px, 71vw, 1340px);
+
+  /* bada value = aur zyada LEFT */
+  --arc-char-right: calc(3.0vw + 52px);
+  --arc-char-bottom: calc(var(--arc-hero-h) * -0.03);
+
+  /* cube character-box ke andar % par hai → hand se locked */
+  --arc-cube-right: 11.5%;
+  --arc-cube-top: 30%;
+  --arc-cube-size: 18.9%;
+
+  --arc-fade: clamp(64px, 9vh, 132px);
+  --arc-top-fade: clamp(14px, 2.6vh, 40px);
+
+  position: relative;
+  isolation: isolate;
+
+  width: 100%;
+  height: var(--arc-hero-h);
+
+  margin: 0;
+  padding: 0;
+
+  overflow: hidden;
+
+  background: transparent;
+}
+
+@supports (height: 100svh) {
+  .arcadia-hero {
+    --arc-hero-h: max(460px, calc(100svh - var(--arc-nav-h)));
+  }
+}
+
+@supports not (height: 100svh) {
+  .arcadia-hero {
+    --arc-char-bottom: calc(var(--arc-hero-h) * -0.03);
+  }
+}
+
+
+/* =========================================================
+   STAGE — top/bottom edge page background mein ghul jaata hai
+   ========================================================= */
+
+.arcadia-hero-stage {
+  --arc-mask:
+    linear-gradient(
+      180deg,
+      transparent 0,
+      #000 var(--arc-top-fade),
+      #000 calc(100% - var(--arc-fade)),
+      rgba(0, 0, 0, 0.82) calc(100% - var(--arc-fade) * 0.78),
+      rgba(0, 0, 0, 0.56) calc(100% - var(--arc-fade) * 0.55),
+      rgba(0, 0, 0, 0.29) calc(100% - var(--arc-fade) * 0.32),
+      rgba(0, 0, 0, 0.09) calc(100% - var(--arc-fade) * 0.13),
+      transparent 100%
+    );
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 0;
+
+  pointer-events: none;
+
+  -webkit-mask-image: var(--arc-mask);
+  mask-image: var(--arc-mask);
+}
+
+
+/* =========================================================
+   BACKGROUND
+   ========================================================= */
+
+.arcadia-hero-background {
+  position: absolute;
+  inset: 0;
+
+  z-index: 0;
+
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+
+  transform: scale(1.02);
+}
+
+
+/* =========================================================
+   ATMOSPHERE
+   ========================================================= */
+
+.arcadia-hero-atmosphere {
+  position: absolute;
+  inset: 0;
+
+  z-index: 1;
+
+  background:
+    radial-gradient(
+      ellipse 46% 64% at 72% 46%,
+      rgba(112, 40, 235, 0.30) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(6, 1, 14, 0.80) 0%,
+      rgba(8, 2, 20, 0.44) 30%,
+      rgba(10, 3, 26, 0.06) 60%,
+      rgba(10, 3, 26, 0.14) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(5, 1, 11, 0.40) 0%,
+      transparent 22%
+    );
+}
+
+
+/* =========================================================
+   ARCADION
+   ========================================================= */
+
+.arcadia-hero-character {
+  position: absolute;
+
+  right: var(--arc-char-right);
+  bottom: var(--arc-char-bottom);
+
+  width: var(--arc-char-w);
+  height: auto;
+  aspect-ratio: 820 / 677;
+
+  /* safety net: sirf tab kaam karta hai jab viewport bahut
+     short ho jaaye (jaise landscape phone). Normal desktop
+     resizing mein ye kabhi bind hi nahi hota. */
+  max-height: calc(var(--arc-hero-h) * 1.15);
+
+  z-index: 6;
+}
+
+.arcadia-character-glow {
+  position: absolute;
+
+  left: 20%;
+  top: 10%;
+
+  width: 60%;
+  height: 84%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(157, 51, 255, 0.44) 0%,
+      rgba(119, 35, 220, 0.22) 38%,
+      transparent 72%
+    );
+
+  filter: blur(54px);
+
+  animation: arcadiaAura 4.2s ease-in-out infinite alternate;
+
+  z-index: -1;
+}
+
+@keyframes arcadiaAura {
+  from { opacity: 0.55; transform: scale(0.95); }
+  to   { opacity: 1;    transform: scale(1.07); }
+}
+
+.arcadia-character-body {
+  position: absolute;
+  inset: 0;
+
+  transform-origin: 55% 100%;
+
+  animation: arcadiaBreathe 6s ease-in-out infinite;
+}
+
+@keyframes arcadiaBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-7px) scale(1.007); }
+}
+
+.arcadia-character-halo {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  filter: blur(20px) brightness(1.9) saturate(1.5);
+
+  mix-blend-mode: screen;
+
+  opacity: 0.5;
+
+  animation: arcadiaHalo 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes arcadiaHalo {
+  from { opacity: 0.28; }
+  to   { opacity: 0.85; }
+}
+
+.arcadia-character-image {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  filter:
+    drop-shadow(0 0 5px rgba(196, 92, 255, 0.72))
+    drop-shadow(0 0 20px rgba(140, 40, 255, 0.46))
+    drop-shadow(0 0 46px rgba(105, 28, 255, 0.24));
+}
+
+
+/* =========================================================
+   FLOATING CUBE
+   ========================================================= */
+
+.arcadia-cube-wrap {
+  position: absolute;
+
+  right: var(--arc-cube-right);
+  top: var(--arc-cube-top);
+
+  width: var(--arc-cube-size);
+  aspect-ratio: 1;
+
+  z-index: 12;
+
+  display: grid;
+  place-items: center;
+
+  animation: arcadiaCubeFloat 3.8s ease-in-out infinite;
+}
+
+.arcadia-cube-glow {
+  position: absolute;
+  inset: -38%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(190, 65, 255, 0.70) 0%,
+      rgba(137, 35, 255, 0.34) 30%,
+      transparent 68%
+    );
+
+  filter: blur(26px);
+
+  animation: arcadiaCubeGlow 2s ease-in-out infinite alternate;
+}
+
+.arcadia-cube {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 0 5px rgba(225, 139, 255, 1))
+    drop-shadow(0 0 16px rgba(175, 64, 255, 0.9))
+    drop-shadow(0 0 34px rgba(132, 37, 255, 0.6));
+
+  animation: arcadiaCubeSway 5.5s ease-in-out infinite;
+}
+
+@keyframes arcadiaCubeFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-16px); }
+}
+
+@keyframes arcadiaCubeSway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%      { transform: rotate(5deg); }
+}
+
+@keyframes arcadiaCubeGlow {
+  from { opacity: 0.55; transform: scale(0.9); }
+  to   { opacity: 1;    transform: scale(1.1); }
+}
+
+
+/* =========================================================
+   CUBE SPARKLES
+   ========================================================= */
+
+.arcadia-cube-sparkles {
+  position: absolute;
+  inset: -30%;
+
+  pointer-events: none;
+}
+
+.arcadia-cube-sparkles span {
+  position: absolute;
+
+  left: var(--x);
+  top: var(--y);
+
+  width: calc(var(--s, 4%) * 1.35);
+  aspect-ratio: 1;
+
+  opacity: 0;
+
+  filter:
+    drop-shadow(0 0 4px #f1d6ff)
+    drop-shadow(0 0 10px rgba(184, 88, 255, 0.95));
+
+  animation:
+    arcadiaSparkle var(--d, 2.6s) ease-in-out var(--delay, 0s) infinite;
+}
+
+.arcadia-cube-sparkles span::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(circle, #ffffff 0%, #f1d6ff 35%, #c78bff 100%);
+
+  clip-path:
+    polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%,
+            50% 100%, 39% 61%, 0% 50%, 39% 39%);
+}
+
+.arcadia-cube-sparkles span:nth-child(1)  { --x: 6%;  --y: 18%; --s: 4.4%; --d: 2.4s; --delay: 0s; }
+.arcadia-cube-sparkles span:nth-child(2)  { --x: 80%; --y: 8%;  --s: 3.4%; --d: 3.1s; --delay: 0.5s; }
+.arcadia-cube-sparkles span:nth-child(3)  { --x: 92%; --y: 46%; --s: 5%;   --d: 2.8s; --delay: 1.1s; }
+.arcadia-cube-sparkles span:nth-child(4)  { --x: 70%; --y: 88%; --s: 3.4%; --d: 2.6s; --delay: 0.3s; }
+.arcadia-cube-sparkles span:nth-child(5)  { --x: 18%; --y: 82%; --s: 4%;   --d: 3.3s; --delay: 1.6s; }
+.arcadia-cube-sparkles span:nth-child(6)  { --x: 2%;  --y: 52%; --s: 3%;   --d: 2.2s; --delay: 0.9s; }
+.arcadia-cube-sparkles span:nth-child(7)  { --x: 48%; --y: 0%;  --s: 5.4%; --d: 3.6s; --delay: 1.9s; }
+.arcadia-cube-sparkles span:nth-child(8)  { --x: 50%; --y: 44%; --s: 4%;   --d: 2.9s; --delay: 0.7s; }
+.arcadia-cube-sparkles span:nth-child(9)  { --x: 32%; --y: 28%; --s: 3%;   --d: 2.5s; --delay: 2.2s; }
+.arcadia-cube-sparkles span:nth-child(10) { --x: 76%; --y: 68%; --s: 3%;   --d: 3s;   --delay: 1.4s; }
+
+@keyframes arcadiaSparkle {
+  0%   { opacity: 0;    transform: scale(0) rotate(0deg); }
+  35%  { opacity: 1;    transform: scale(1) rotate(45deg); }
+  70%  { opacity: 0.55; transform: scale(0.55) rotate(90deg); }
+  100% { opacity: 0;    transform: scale(0) rotate(135deg); }
+}
+
+
+/* =========================================================
+   AMBIENT PARTICLES
+   ========================================================= */
+
+.arcadia-hero-particles {
+  position: absolute;
+  inset: 0;
+
+  z-index: 7;
+
+  overflow: hidden;
+}
+
+.arcadia-hero-particles span {
+  position: absolute;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: #d989ff;
+
+  box-shadow:
+    0 0 7px #c45cff,
+    0 0 16px rgba(166, 62, 255, 0.8);
+
+  animation:
+    arcadiaParticleFloat var(--particle-duration, 5s) ease-in-out infinite;
+}
+
+.arcadia-hero-particles span:nth-child(n + 9) {
+  width: 3px;
+  height: 3px;
+
+  opacity: 0;
+
+  animation-name: arcadiaEmber;
+  animation-timing-function: ease-out;
+}
+
+.arcadia-hero-particles span:nth-child(1)  { left: 44%; top: 30%; --particle-duration: 4.4s; }
+.arcadia-hero-particles span:nth-child(2)  { left: 60%; top: 18%; --particle-duration: 5.5s; }
+.arcadia-hero-particles span:nth-child(3)  { left: 76%; top: 56%; --particle-duration: 4.8s; }
+.arcadia-hero-particles span:nth-child(4)  { left: 82%; top: 30%; --particle-duration: 6s; }
+.arcadia-hero-particles span:nth-child(5)  { left: 56%; top: 68%; --particle-duration: 5.2s; }
+.arcadia-hero-particles span:nth-child(6)  { left: 92%; top: 62%; --particle-duration: 4.5s; }
+.arcadia-hero-particles span:nth-child(7)  { left: 38%; top: 62%; --particle-duration: 5.8s; }
+.arcadia-hero-particles span:nth-child(8)  { left: 70%; top: 78%; --particle-duration: 4.9s; }
+.arcadia-hero-particles span:nth-child(9)  { left: 50%; top: 82%; --particle-duration: 7s;   animation-delay: 0s; }
+.arcadia-hero-particles span:nth-child(10) { left: 66%; top: 90%; --particle-duration: 8.5s; animation-delay: 1.5s; }
+.arcadia-hero-particles span:nth-child(11) { left: 86%; top: 84%; --particle-duration: 7.5s; animation-delay: 3s; }
+.arcadia-hero-particles span:nth-child(12) { left: 74%; top: 92%; --particle-duration: 9s;   animation-delay: 0.8s; }
+.arcadia-hero-particles span:nth-child(13) { left: 60%; top: 76%; --particle-duration: 8s;   animation-delay: 2.4s; }
+.arcadia-hero-particles span:nth-child(14) { left: 90%; top: 72%; --particle-duration: 9.5s; animation-delay: 4s; }
+
+@keyframes arcadiaParticleFloat {
+  0%, 100% { opacity: 0.25; transform: translate3d(0, 10px, 0) scale(0.8); }
+  50%      { opacity: 1;    transform: translate3d(5px, -18px, 0) scale(1.2); }
+}
+
+@keyframes arcadiaEmber {
+  0%   { opacity: 0;    transform: translate3d(0, 20px, 0) scale(1); }
+  20%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: translate3d(14px, -110px, 0) scale(0.4); }
+}
+
+
+/* =========================================================
+   LEFT CONTENT
+   ========================================================= */
+
+.arcadia-hero-content {
+  position: absolute;
+
+  left: var(--arc-pad-x);
+  top: 47%;
+
+  z-index: 10;
+
+  width: min(46vw, 620px);
+  max-width: calc(100% - var(--arc-pad-x) * 2);
+
+  transform: translateY(-50%);
+}
+
+.arcadia-hero-eyebrow {
+  display: block;
+
+  margin-bottom: clamp(10px, 1.5vw, 22px);
+
+  color: #a468ff;
+
+  font-size: clamp(9px, 0.7vw, 13px);
+  font-weight: 500;
+
+  letter-spacing: clamp(0.34em, 0.62vw, 0.62em);
+
+  text-shadow: 0 0 14px rgba(150, 70, 255, 0.55);
+}
+
+.arcadia-hero-title {
+  display: inline-block;
+
+  margin: 0;
+  padding: 0 0.1em 0.06em 0;
+
+  font-family: "Orbitron", Inter, ui-sans-serif, system-ui, sans-serif;
+
+  font-size: min(clamp(38px, 5.4vw, 108px), 13svh);
+  font-weight: 800;
+  line-height: 1;
+
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+
+  background: linear-gradient(100deg, #dcbcff 0%, #b67cff 42%, #9247ff 100%);
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  filter:
+    drop-shadow(0 0 12px rgba(150, 70, 255, 0.55))
+    drop-shadow(0 0 34px rgba(110, 40, 255, 0.32));
+}
+
+.arcadia-hero-tagline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: clamp(8px, 1.05vw, 18px);
+
+  margin-top: clamp(12px, 1.5vw, 24px);
+
+  color: #d8cbee;
+
+  font-size: clamp(9px, 0.7vw, 13px);
+  font-weight: 500;
+
+  letter-spacing: clamp(0.24em, 0.42vw, 0.42em);
+}
+
+.arcadia-hero-tagline i {
+  color: #a94cff;
+
+  font-size: 8px;
+  font-style: normal;
+
+  text-shadow: 0 0 10px rgba(177, 70, 255, 0.9);
+}
+
+.arcadia-hero-description {
+  max-width: 24.5em;
+
+  margin: clamp(14px, 1.9vw, 30px) 0 0;
+
+  color: #c6badb;
+
+  font-size: clamp(12.5px, 0.92vw, 17px);
+  line-height: 1.65;
+
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+
+/* =========================================================
+   START BUTTON
+   ========================================================= */
+
+.arcadia-hero-button {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: clamp(10px, 0.74vw, 14px);
+
+  min-width: clamp(190px, 13.2vw, 260px);
+  height: clamp(44px, 2.74vw, 56px);
+
+  margin-top: clamp(18px, 2.1vw, 34px);
+  padding: 0 clamp(18px, 1.47vw, 28px);
+
+  border: 1.5px solid rgba(146, 84, 255, 0.95);
+  border-radius: 999px;
+
+  color: #efe4ff;
+
+  background:
+    linear-gradient(135deg, rgba(96, 36, 190, 0.34), rgba(48, 14, 110, 0.32));
+
+  box-shadow:
+    0 0 18px rgba(130, 50, 255, 0.34),
+    inset 0 0 16px rgba(170, 90, 255, 0.10);
+
+  backdrop-filter: blur(8px);
+
+  font-size: clamp(10px, 0.65vw, 13px);
+  font-weight: 600;
+
+  letter-spacing: clamp(0.2em, 0.3vw, 0.3em);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.arcadia-hero-button::before {
+  content: "";
+
+  position: absolute;
+  inset: -5px;
+
+  border-radius: inherit;
+  border: 1px solid rgba(150, 70, 255, 0.20);
+
+  filter: blur(2px);
+
+  pointer-events: none;
+}
+
+.arcadia-hero-button::after {
+  content: "";
+
+  position: absolute;
+
+  left: calc(100% + clamp(16px, 1.47vw, 28px));
+  top: 50%;
+
+  width: clamp(50px, 5.9vw, 110px);
+  height: 1px;
+
+  background: linear-gradient(90deg, rgba(150, 90, 255, 0.7), transparent);
+
+  pointer-events: none;
+}
+
+.arcadia-hero-button:hover {
+  transform: translateY(-3px);
+
+  background:
+    linear-gradient(135deg, rgba(140, 56, 240, 0.46), rgba(70, 22, 150, 0.40));
+
+  box-shadow:
+    0 0 24px rgba(160, 64, 255, 0.55),
+    0 0 52px rgba(120, 39, 255, 0.26);
+}
+
+.arcadia-hero-button:focus-visible {
+  outline: 2px solid #d58aff;
+  outline-offset: 5px;
+}
+
+.arcadia-hero-button-icon {
+  font-size: clamp(13px, 0.84vw, 17px);
+
+  color: #c98bff;
+
+  text-shadow: 0 0 9px rgba(190, 90, 255, 0.95);
+}
+
+
+/* =========================================================
+   TOP-RIGHT QUOTE
+   ========================================================= */
+
+.arcadia-hero-quote {
+  position: absolute;
+
+  right: clamp(20px, 3.4vw, 60px);
+  top: 17%;
+
+  z-index: 9;
+
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  color: rgba(190, 160, 240, 0.62);
+
+  font-size: clamp(8px, 0.58vw, 11px);
+  font-weight: 500;
+  line-height: 1;
+
+  letter-spacing: clamp(0.34em, 0.55vw, 0.55em);
+
+  pointer-events: none;
+}
+
+.arcadia-hero-quote i {
+  display: block;
+
+  width: clamp(28px, 1.8vw, 40px);
+  height: 1px;
+
+  margin-top: 8px;
+
+  background: linear-gradient(90deg, rgba(170, 110, 255, 0.75), transparent);
+}
+
+
+/* =========================================================
+   BOTTOM-LEFT LABEL
+   ========================================================= */
+
+.arcadia-hero-master {
+  position: absolute;
+
+  left: var(--arc-pad-x);
+  bottom: max(28px, 6vh);
+
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  color: #a468ff;
+
+  pointer-events: none;
+}
+
+/* IMPORTANT: iske bina SVG poore screen jitna bada ho jaata hai */
+.arcadia-emblem {
+  flex: none;
+
+  width: clamp(26px, 1.8vw, 40px);
+  height: auto;
+
+  filter: drop-shadow(0 0 8px rgba(160, 80, 255, 0.75));
+}
+
+.arcadia-hero-master-text {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.arcadia-hero-master-text strong {
+  color: #c7a5ff;
+
+  font-size: clamp(10px, 0.63vw, 14px);
+  font-weight: 500;
+  line-height: 1;
+
+  letter-spacing: clamp(0.3em, 0.5vw, 0.5em);
+}
+
+.arcadia-hero-master-text span {
+  color: rgba(190, 160, 240, 0.55);
+
+  font-size: clamp(8px, 0.47vw, 11px);
+  line-height: 1;
+
+  letter-spacing: clamp(0.24em, 0.36vw, 0.36em);
+}
+
+.arcadia-hero-master-line {
+  display: block;
+
+  width: clamp(90px, 22vw, 420px);
+  height: 1px;
+
+  margin-left: 20px;
+
+  background: linear-gradient(90deg, rgba(150, 90, 255, 0.55), transparent);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   Size formula (vh + px) sab jagah same rehta hai — yahan
+   sirf position aur layout adjust ho rahe hain.
+   ========================================================= */
+
+@media (max-width: 1400px) {
+  .arcadia-hero-content {
+    width: min(48vw, 560px);
+  }
+}
+
+@media (max-width: 1200px) {
+  .arcadia-hero-content {
+    width: min(52vw, 520px);
+  }
+
+  .arcadia-hero-quote {
+    top: 14%;
+  }
+}
+
+@media (max-width: 1100px) {
+  .arcadia-hero {
+    --arc-pad-x: 5%;
+  }
+
+  .arcadia-hero-content {
+    width: min(56vw, 480px);
+  }
+
+  .arcadia-hero-quote,
+  .arcadia-hero-master-line {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .arcadia-hero-content {
+    width: min(62vw, 440px);
+  }
+
+  .arcadia-character-image,
+  .arcadia-character-halo {
+    opacity: 0.88;
+  }
+}
+
+/* ---- STACKED: text upar, Arcadion neeche ---- */
+@media (max-width: 820px) {
+  .arcadia-hero {
+    --arc-pad-x: 7%;
+    --arc-fade: 120px;
+    --arc-top-fade: 36px;
+
+    --arc-char-right: -18%;
+    --arc-char-bottom: -2%;
+
+    height: auto;
+    min-height: clamp(620px, 94svh, 860px);
+  }
+
+  .arcadia-hero-character {
+    width: auto;
+    height: min(calc(30svh + 200px), 104vw);
+    max-height: none;
+  }
+
+  .arcadia-hero-background {
+    background-position: 64% center;
+  }
+
+  .arcadia-hero-atmosphere {
+    background:
+      radial-gradient(
+        ellipse 80% 40% at 60% 72%,
+        rgba(112, 40, 235, 0.28) 0%,
+        transparent 70%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(7, 1, 17, 0.72) 0%,
+        rgba(12, 2, 28, 0.24) 46%,
+        rgba(17, 3, 35, 0.32) 100%
+      );
+  }
+
+  .arcadia-hero-content {
+    position: relative;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    max-width: none;
+
+    padding: clamp(36px, 8vw, 64px) var(--arc-pad-x) 0;
+
+    transform: none;
+  }
+
+  .arcadia-hero-title {
+    font-size: clamp(42px, 11vw, 78px);
+  }
+
+  .arcadia-hero-description {
+    max-width: 30em;
+    font-size: clamp(13px, 3.5vw, 16px);
+  }
+
+  .arcadia-hero-button {
+    min-width: min(240px, 72vw);
+    height: 50px;
+    font-size: 11px;
+  }
+
+  .arcadia-hero-button::after,
+  .arcadia-hero-master {
+    display: none;
+  }
+
+  .arcadia-character-image,
+  .arcadia-character-halo {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .arcadia-hero {
+    --arc-pad-x: 22px;
+    --arc-char-right: -26%;
+
+    min-height: clamp(580px, 92svh, 760px);
+  }
+
+  .arcadia-hero-character {
+    height: min(calc(26svh + 170px), 112vw);
+  }
+
+  .arcadia-hero-eyebrow {
+    letter-spacing: 0.4em;
+  }
+
+  .arcadia-hero-tagline {
+    letter-spacing: 0.22em;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .arcadia-hero {
+    --arc-char-right: -32%;
+
+    min-height: 560px;
+  }
+
+  .arcadia-hero-character {
+    height: min(calc(24svh + 150px), 118vw);
+  }
+
+  .arcadia-hero-title {
+    font-size: clamp(38px, 12vw, 52px);
+    letter-spacing: 0.05em;
+  }
+
+  .arcadia-hero-tagline i {
+    font-size: 7px;
+  }
+}
+
+/* choti landscape screen: sirf bottom label hatao */
+@media (min-width: 821px) and (max-height: 640px) {
+  .arcadia-hero-master {
+    display: none;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .arcadia-character-glow,
+  .arcadia-character-body,
+  .arcadia-character-halo,
+  .arcadia-cube-wrap,
+  .arcadia-cube,
+  .arcadia-cube-glow,
+  .arcadia-cube-sparkles span,
+  .arcadia-hero-particles span {
+    animation: none !important;
+  }
+
+  .arcadia-cube-sparkles span {
+    opacity: 0.8;
   }
 }
