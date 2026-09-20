@@ -77,7 +77,7 @@ function DailyChallenge({ games }: DailyChallengeProps) {
 						<p>{dailyGame.description}</p>
 					</div>
 
-					<button type="button" className="daily-challenge-button" onClick={handlePlay}>
+					<button type="button" className="card-play daily-challenge-button" onClick={handlePlay}>
 						Play Challenge
 						<span>→</span>
 					</button>
