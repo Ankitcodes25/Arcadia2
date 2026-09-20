@@ -1,4 +1,10 @@
-import { useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { ArrowLeft, ArrowRight, Crown, Star } from "lucide-react";
 
 type Player = {
@@ -7,10 +13,12 @@ type Player = {
   score: number;
 };
 
+/* Avatars: PlayerOne / Nova / Zyro pehle multi-part emoji (ZWJ) the jo
+   Windows par 2 alag glyph me toot jaate the — ab single emoji hain. */
 const PLAYERS: Player[] = [
   {
     name: "PlayerOne",
-    avatar: "🧑🏻‍🎮",
+    avatar: "🎮",
     score: 12840,
   },
   {
@@ -20,7 +28,7 @@ const PLAYERS: Player[] = [
   },
   {
     name: "Nova",
-    avatar: "🐱‍👤",
+    avatar: "🐱",
     score: 10740,
   },
   {
@@ -55,10 +63,18 @@ const PLAYERS: Player[] = [
   },
   {
     name: "Zyro",
-    avatar: "😵‍💫",
+    avatar: "😵",
     score: 7420,
   },
 ];
+
+/* armed   = section abhi screen par nahi aaya (cards hidden, score 0)
+   shown   = screen par aaya -> cards ek-ek karke aate hain, score count-up
+   instant = animation nahi (reduced motion / no IntersectionObserver) */
+type RevealState = "armed" | "shown" | "instant";
+
+const COUNT_UP_MS = 1400;
+const STAGGER_MS = 70;
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
@@ -72,13 +88,87 @@ function getRankClass(rank: number) {
   return "";
 }
 
+function getInitialReveal(): RevealState {
+  if (
+    typeof window === "undefined" ||
+    typeof IntersectionObserver === "undefined" ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    return "instant";
+  }
+
+  return "armed";
+}
+
+type CountUpProps = {
+  value: number;
+  reveal: RevealState;
+  delay: number;
+};
+
+function CountUp({ value, reveal, delay }: CountUpProps) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (reveal !== "shown") return;
+
+    let frame = 0;
+    let startedAt = 0;
+
+    const timer = window.setTimeout(() => {
+      const tick = (now: number) => {
+        if (!startedAt) startedAt = now;
+
+        const t = Math.min((now - startedAt) / COUNT_UP_MS, 1);
+
+        setProgress(1 - Math.pow(1 - t, 3));
+
+        if (t < 1) frame = window.requestAnimationFrame(tick);
+      };
+
+      frame = window.requestAnimationFrame(tick);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.cancelAnimationFrame(frame);
+    };
+  }, [reveal, delay]);
+
+  const current =
+    reveal === "instant"
+      ? value
+      : reveal === "armed"
+        ? 0
+        : Math.round(value * progress);
+
+  return (
+    <span className="leaderboard-home-count">
+      <span className="leaderboard-home-sr">
+        {formatNumber(value)} points
+      </span>
+
+      {/* ghost = final width reserve, taaki number badhte waqt box hile nahi */}
+      <span className="leaderboard-home-count-ghost" aria-hidden="true">
+        {formatNumber(value)}
+      </span>
+
+      <span className="leaderboard-home-count-live" aria-hidden="true">
+        {formatNumber(current)}
+      </span>
+    </span>
+  );
+}
+
 export default function LeaderboardHome() {
+  const sectionRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
+  const [reveal, setReveal] = useState<RevealState>(getInitialReveal);
   const [canGoPrevious, setCanGoPrevious] = useState(false);
   const [canGoNext, setCanGoNext] = useState(true);
 
-  const updateArrowState = () => {
+  const updateArrowState = useCallback(() => {
     const grid = gridRef.current;
 
     if (!grid) return;
@@ -87,16 +177,45 @@ export default function LeaderboardHome() {
 
     setCanGoPrevious(grid.scrollLeft > 5);
     setCanGoNext(grid.scrollLeft < maxScrollLeft - 5);
-  };
+  }, []);
+
+  /* arrows (ab header me): mount par aur resize par bhi check karo
+     (agar saare cards fit ho jayein to dono arrows disabled) */
+  useEffect(() => {
+    updateArrowState();
+
+    window.addEventListener("resize", updateArrowState);
+
+    return () => window.removeEventListener("resize", updateArrowState);
+  }, [updateArrowState]);
+
+  /* section screen par aate hi entrance + count-up start */
+  useEffect(() => {
+    const section = sectionRef.current;
+
+    if (!section || reveal !== "armed") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setReveal("shown");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(section);
+
+    return () => observer.disconnect();
+  }, [reveal]);
 
   const scrollCards = (direction: "previous" | "next") => {
     const grid = gridRef.current;
 
     if (!grid) return;
 
-    const card = grid.querySelector<HTMLElement>(
-      ".leaderboard-home-card"
-    );
+    const card = grid.querySelector<HTMLElement>(".leaderboard-home-card");
 
     if (!card) return;
 
@@ -111,17 +230,21 @@ export default function LeaderboardHome() {
       left: direction === "next" ? scrollAmount : -scrollAmount,
       behavior: "smooth",
     });
-
-    window.setTimeout(updateArrowState, 350);
   };
 
   return (
     <section
+      ref={sectionRef}
       className="leaderboard-home"
+      data-reveal={reveal}
       aria-labelledby="leaderboard-home-title"
     >
+      <div className="leaderboard-home-ambient" aria-hidden="true" />
+
       <div className="leaderboard-home-header">
         <div className="leaderboard-home-copy">
+          <span className="leaderboard-home-kicker">Leaderboard</span>
+
           <h2
             id="leaderboard-home-title"
             className="leaderboard-home-title"
@@ -130,54 +253,85 @@ export default function LeaderboardHome() {
           </h2>
 
           <p className="leaderboard-home-subtitle">
-            See who&apos;s ruling Arcadia right now. Rack up the score and
-            take your place at the top.
+            Arcadia&apos;s best, ranked. Score big and claim your throne.
           </p>
+        </div>
+
+        {/* arrows + View all ek saath, header ke right side me */}
+        <div className="leaderboard-home-actions">
+          <div
+            className="leaderboard-home-nav"
+            role="group"
+            aria-label="Scroll players"
+          >
+            <button
+              type="button"
+              className="leaderboard-home-arrow leaderboard-home-arrow-left"
+              onClick={() => scrollCards("previous")}
+              disabled={!canGoPrevious}
+              aria-label="Previous players"
+            >
+              <ArrowLeft aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              className="leaderboard-home-arrow leaderboard-home-arrow-right"
+              onClick={() => scrollCards("next")}
+              disabled={!canGoNext}
+              aria-label="Next players"
+            >
+              <ArrowRight aria-hidden="true" />
+            </button>
+          </div>
+
+          <a
+            href="/leaderboard"
+            className="view-all leaderboard-home-viewall"
+          >
+            View all <span aria-hidden="true">→</span>
+          </a>
         </div>
       </div>
 
       <div className="leaderboard-home-board">
         <div className="leaderboard-home-carousel">
-          <button
-            type="button"
-            className="leaderboard-home-arrow leaderboard-home-arrow-left"
-            onClick={() => scrollCards("previous")}
-            disabled={!canGoPrevious}
-            aria-label="Previous players"
-          >
-            <ArrowLeft aria-hidden="true" />
-          </button>
-
           <div
             ref={gridRef}
             className="leaderboard-home-grid"
+            role="group"
             aria-label="Top 10 Arcadia players"
+            tabIndex={0}
             onScroll={updateArrowState}
           >
             {PLAYERS.map((player, index) => {
               const rank = index + 1;
+              const isPodium = rank <= 3;
 
               return (
                 <article
                   key={player.name}
                   className={`leaderboard-home-card ${getRankClass(rank)}`}
+                  style={{ "--i": index } as CSSProperties}
                 >
-                  {rank <= 3 && (
-                    <Crown
-                      className="leaderboard-home-medal"
+                  <div className="leaderboard-home-badge">
+                    {isPodium && (
+                      <Crown
+                        className="leaderboard-home-crown"
+                        aria-hidden="true"
+                      />
+                    )}
+
+                    <div
+                      className="leaderboard-home-avatar"
                       aria-hidden="true"
-                    />
-                  )}
+                    >
+                      {player.avatar}
+                    </div>
 
-                  <span className="leaderboard-home-rank">
-                    #{rank}
-                  </span>
-
-                  <div
-                    className="leaderboard-home-avatar"
-                    aria-hidden="true"
-                  >
-                    {player.avatar}
+                    <span className="leaderboard-home-rank">
+                      #{rank}
+                    </span>
                   </div>
 
                   <div className="leaderboard-home-player">
@@ -186,32 +340,19 @@ export default function LeaderboardHome() {
 
                   <div className="leaderboard-home-score">
                     <Star aria-hidden="true" />
-                    <span>{formatNumber(player.score)}</span>
+
+                    <CountUp
+                      value={player.score}
+                      reveal={reveal}
+                      delay={index * STAGGER_MS + 250}
+                    />
+
+                    <em aria-hidden="true">PTS</em>
                   </div>
                 </article>
               );
             })}
           </div>
-
-          <button
-            type="button"
-            className="leaderboard-home-arrow leaderboard-home-arrow-right"
-            onClick={() => scrollCards("next")}
-            disabled={!canGoNext}
-            aria-label="Next players"
-          >
-            <ArrowRight aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className="leaderboard-home-footer">
-          <a
-            href="/leaderboard"
-            className="leaderboard-home-link"
-          >
-            <span>View full leaderboard</span>
-            <ArrowRight aria-hidden="true" />
-          </a>
         </div>
       </div>
     </section>
