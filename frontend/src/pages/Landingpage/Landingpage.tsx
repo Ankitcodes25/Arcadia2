@@ -3,12 +3,13 @@ import { games } from "../../constants/gameData";
 import HeroSection from "./Sections/HeroSection";
 import PopularGames from "./Sections/PopularGames";
 //import AllGames from "./Sections/AllGames";
-import BottomCta from "./Sections/BottomCta";
 import ContinuePlaying from "./Sections/ContinuePlaying";
 import DailyChallenge from "./Sections/DailyChallenge";
 import Arcadion from "./Sections/Arcadion";
 import LeaderboardHome from "./Sections/LeaderboardHome";
 import TimeArcadionBanner from "./Sections/TimeArcadionBanner";
+import ChallengeArcadion from "./Sections/ChallengeArcadion";
+import ArcadionCTA from "./Sections/ArcadionCTA";
 
 function LandingPage() {
   return (
@@ -26,7 +27,8 @@ function LandingPage() {
         <DailyChallenge games={games} />
         <LeaderboardHome />
         <Arcadion />
-        <BottomCta />
+        <ChallengeArcadion games={games} />
+        <ArcadionCTA />
       </main>
 
       <Footer />

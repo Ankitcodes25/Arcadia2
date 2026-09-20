@@ -157,6 +157,12 @@ function TimeArcadionBanner() {
   <span className="spark spark-22" />
   <span className="spark spark-23" />
   <span className="spark spark-24" />
+  <span className="spark spark-25" />
+  <span className="spark spark-26" />
+  <span className="spark spark-27" />
+  <span className="spark spark-28" />
+  <span className="spark spark-29" />
+  <span className="spark spark-30" />
         </div>
       </div>
 
