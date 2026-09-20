@@ -4967,9 +4967,9 @@ footer p {
 
   background: linear-gradient(
     90deg,
-    rgba(8, 2, 18, 0.78) 0%,
-    rgba(10, 3, 24, 0.42) 55%,
-    rgba(10, 3, 24, 0.18) 100%
+    rgba(8, 2, 18, 0.68) 0%,
+    rgba(10, 3, 24, 0.34) 55%,
+    rgba(10, 3, 24, 0.12) 100%
   );
 }
 
@@ -5209,9 +5209,9 @@ footer p {
     background:
       linear-gradient(
         90deg,
-        rgba(5, 1, 14, 0.91) 0%,
-        rgba(7, 2, 17, 0.76) 45%,
-        rgba(8, 2, 18, 0.25) 100%
+        rgba(5, 1, 14, 0.84) 0%,
+        rgba(7, 2, 17, 0.68) 45%,
+        rgba(8, 2, 18, 0.2) 100%
       );
   }
 
@@ -7115,10 +7115,10 @@ footer p {
 
   pointer-events: none;
 
-  animation: arcadionCharacterFloat 5.5s ease-in-out infinite;
+  animation: arcadionCtaCharacterFloat 5.5s ease-in-out infinite;
 }
 
-@keyframes arcadionCharacterFloat {
+@keyframes arcadionCtaCharacterFloat {
   0%,
   100% {
     transform: translate3d(0, 0, 0);
@@ -7150,7 +7150,9 @@ footer p {
 
 /* Character aura */
 
-.arcadion-character-aura {
+/* CTA aura. Scoped to .arcadion-cta on purpose: the "Arcadion is waiting" banner
+   uses the same .arcadion-character-aura class with its own rule further up. */
+.arcadion-cta .arcadion-character-aura {
   position: absolute;
 
   width: 70%;
@@ -7171,10 +7173,10 @@ footer p {
 
   filter: blur(9px);
 
-  animation: arcadionAuraPulse 4.5s ease-in-out infinite;
+  animation: arcadionCtaAuraPulse 4.5s ease-in-out infinite;
 }
 
-@keyframes arcadionAuraPulse {
+@keyframes arcadionCtaAuraPulse {
   0%,
   100% {
     opacity: 0.6;
@@ -7255,7 +7257,7 @@ footer p {
 }
 
 /* rising purple fumes (two layers of smoke wisps behind the character) */
-.arcadion-character-aura::before {
+.arcadion-cta .arcadion-character-aura::before {
   content: "";
   position: absolute;
   left: -34%;
@@ -7271,7 +7273,7 @@ footer p {
   animation: arcadionFumeRise 6s ease-in infinite;
 }
 
-.arcadion-character-aura::after {
+.arcadion-cta .arcadion-character-aura::after {
   content: "";
   position: absolute;
   left: -40%;
@@ -7531,9 +7533,9 @@ footer p {
   .arcadion-cta-character,
   .arcadion-cta-character img,
   .arcadion-cta-character::after,
-  .arcadion-character-aura,
-  .arcadion-character-aura::before,
-  .arcadion-character-aura::after,
+  .arcadion-cta .arcadion-character-aura,
+  .arcadion-cta .arcadion-character-aura::before,
+  .arcadion-cta .arcadion-character-aura::after,
   .arcadion-explore-button {
     animation: none;
   }
