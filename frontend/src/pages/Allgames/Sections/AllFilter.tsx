@@ -38,7 +38,10 @@ function AllFilter({
   return (
     <>
       <label className="library-search">
-        <span aria-hidden="true">⌕</span>
+        <svg className="library-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m16 16 4.5 4.5" />
+        </svg>
         <input
           type="search"
           value={query}
@@ -50,6 +53,9 @@ function AllFilter({
       <div className="category-filter" aria-label="Filter games by category">
         {categories.slice(0, 5).map(renderCategoryButton)}
         <button type="button" className="clear-filters" onClick={onClear}>
+          <svg className="clear-filters-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" />
+          </svg>
           Clear filters
         </button>
         {categories.slice(5).map(renderCategoryButton)}

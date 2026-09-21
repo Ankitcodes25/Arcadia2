@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Game } from "../../../types/game";
 import GameLogo from "./GameLogo";
+import arcadionFull from "../../../assets/ArcadionFull.png";
+import heroBg from "../../../assets/HeroBg.webp";
 
 type WeeklyTrendingProps = {
   games: Game[];
@@ -34,6 +36,35 @@ const LADDER_COIL_BEADS = Array.from({ length: 9 });
 
 function WeeklyTrending({ games }: WeeklyTrendingProps) {
   const [topGameIndex, setTopGameIndex] = useState(0);
+
+  // Dev-only calibrator: open the page with ?arcadion-debug and click Arcadion's hand.
+  const [calibrating] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("arcadion-debug"),
+  );
+  const [calibration, setCalibration] = useState("");
+  const stageRef = useRef<HTMLElement>(null);
+  const figureRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!calibrating) return;
+    const stage = stageRef.current;
+    const figure = figureRef.current;
+    const layout = stage?.closest<HTMLElement>(".games-browser-layout");
+    if (!stage || !figure || !layout) return;
+
+    const handleClick = (event: MouseEvent) => {
+      const box = figure.getBoundingClientRect();
+      const x = (((event.clientX - box.left) / box.width) * 100).toFixed(1);
+      const y = (((event.clientY - box.top) / box.height) * 100).toFixed(1);
+      layout.style.setProperty("--hand-x", `${x}%`);
+      layout.style.setProperty("--hand-y", `${y}%`);
+      setCalibration(`--hand-x: ${x}%;\n--hand-y: ${y}%;`);
+    };
+
+    stage.addEventListener("click", handleClick);
+    return () => stage.removeEventListener("click", handleClick);
+  }, [calibrating]);
+
   const weeklyTopGames = [...games]
     .sort((firstGame, secondGame) => secondGame.plays - firstGame.plays)
     .slice(0, 5);
@@ -150,37 +181,74 @@ function WeeklyTrending({ games }: WeeklyTrendingProps) {
     }
   };
 
-  const activeTopGame = weeklyTopGames[topGameIndex];
-
   return (
-    <aside className="weekly-top" aria-label="Weekly top playing games">
-      <span className="section-label weekly-label">WEEKLY TRENDING</span>
-      <div className="weekly-carousel" aria-live="polite">
-        {weeklyTopGames.map((game, index) => (
-          <button
-            type="button"
-            key={game.name}
-            className={`weekly-game-card ${getCarouselPosition(index)}`}
-            onClick={() => setTopGameIndex(index)}
-            aria-label={`Show ${game.name}`}
-          >
-            <span className={`weekly-game-icon ${getIconClassName(game.name)}`}>
-              {renderGameMark(game.name)}
-            </span>
-            <span className="weekly-game-category">{game.category}</span>
-          </button>
-        ))}
+    <>
+      {/* Full-bleed blended background (absolute inside .games-browser-layout) */}
+      <div className="arcadion-backdrop" aria-hidden="true">
+        <img className="arcadion-backdrop-img" src={heroBg} alt="" draggable={false} />
       </div>
-      {activeTopGame && (
-        <div className="weekly-game-details" key={activeTopGame.name}>
-          <h4>{activeTopGame.name}</h4>
-          <span className="weekly-plays-label">
-            {activeTopGame.plays.toLocaleString()} PLAYS THIS WEEK
-          </span>
-          <button type="button" className="weekly-play">Play now</button>
+
+      <aside className="weekly-top" aria-label="Weekly top playing games">
+        {/* Arcadion is anchored so his palm sits under the floating cards */}
+        <img
+          className="arcadion-figure"
+          src={arcadionFull}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+
+        <span className="section-label weekly-label">WEEKLY TRENDING</span>
+
+        <div className="weekly-float">
+          <div className="weekly-carousel" aria-live="polite">
+            {weeklyTopGames.map((game, index) => {
+              const position = getCarouselPosition(index);
+              const isActive = position === "is-active";
+
+              return (
+                <div key={game.name} className={`weekly-game-card ${position}`}>
+                  {/* Stretched button: clicking anywhere on a card brings it to the front */}
+                  <button
+                    type="button"
+                    className="weekly-card-select"
+                    onClick={() => setTopGameIndex(index)}
+                    aria-label={`Show ${game.name}`}
+                    tabIndex={position === "is-hidden" ? -1 : 0}
+                  />
+
+                  <span className="weekly-game-category">{game.category}</span>
+
+                  <span className={`weekly-game-icon ${getIconClassName(game.name)}`}>
+                    {renderGameMark(game.name)}
+                  </span>
+
+                  <div className="weekly-game-details">
+                    <h4>{game.name}</h4>
+                    <span className="weekly-plays-label">
+                      {game.plays.toLocaleString()} PLAYS THIS WEEK
+                    </span>
+                    <button
+                      type="button"
+                      className="weekly-play"
+                      tabIndex={isActive ? 0 : -1}
+                    >
+                      <svg className="weekly-play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 4.5v15l12-7.5-12-7.5Z" />
+                      </svg>
+                      Play now
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      )}
-    </aside>
+
+        {/* Soft energy backlight behind Arcadion's hand */}
+        <span className="weekly-aura" aria-hidden="true" />
+      </aside>
+    </>
   );
 }
 
