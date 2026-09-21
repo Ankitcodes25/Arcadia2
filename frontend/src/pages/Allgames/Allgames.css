@@ -2747,3 +2747,652 @@
   animation-iteration-count: infinite;
   animation-play-state: running !important;
 }
+
+/* ==========================================================================
+   ARCADION HERO — All games (v2)
+   Allgames.css ke bilkul END me rakho (purane rules ko override karta hai).
+
+   Hero ki height = poori screen - navbar, isliye page khulte hi sab kuch
+   pehli screen me fit hota hai aur results grid uske neeche se shuru hota hai.
+
+   Cards hath par na baithein toh sirf ye 4 numbers tune karo (.games-browser-layout):
+     --palm-x   cards + hath ka horizontal position, hero width ka %
+     --hand-x   PNG me palm kahan hai, image width ka fraction     (0.80 = 80%)
+     --hand-y   PNG me palm kahan hai, image height ka fraction    (0.51 = 51%)
+     --arc-k    Arcadion kitna bada (1.24 = hero height ka 124%)
+   ========================================================================== */
+
+.all-games-page {
+  overflow-x: clip; /* full-bleed bg se horizontal scrollbar na aaye */
+}
+
+.games-browser {
+  padding-top: 0; /* hero seedha navbar ke neeche se shuru */
+}
+
+.games-browser-layout {
+  --nav-h: 60px;
+  --hero-h: clamp(480px, calc(100svh - var(--nav-h)), 800px);
+
+  --palm-x: 80%;
+  --hand-x: 0.80;
+  --hand-y: 0.51;
+  --arc-k: 1.24;
+  --arc-top: calc(var(--hero-h) * 0.02);
+  --arc-h: calc(var(--hero-h) * var(--arc-k));
+  --anchor-y: calc(var(--arc-top) + var(--arc-h) * var(--hand-y));
+  --hand-lift: -44px; /* negative = cards palm se itna upar tairte hain */
+
+  --cw: clamp(104px, calc(var(--hero-h) * 0.19), 180px); /* card width = hero height ka 19% */
+  --ch: calc(var(--cw) * 1.36);
+  --hero-font: "Orbitron", "Rajdhani", "Segoe UI", system-ui, sans-serif;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 56%);
+  align-items: center;
+  height: var(--hero-h);
+  min-height: 0;
+  margin-bottom: 44px;
+}
+
+/* ---------- Background: hero ke bottom pe khatam, chaaron taraf blend ---------- */
+
+.arcadion-backdrop {
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--nav-h) * -1);
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(180deg, transparent 0, #000 10%, #000 68%, transparent 100%),
+    linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(180deg, transparent 0, #000 10%, #000 68%, transparent 100%),
+    linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask-composite: intersect;
+}
+
+.arcadion-backdrop-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  user-select: none;
+}
+
+.arcadion-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 3, 22, 0.86) 0%, rgba(8, 3, 22, 0.5) 34%, transparent 62%),
+    radial-gradient(ellipse at 78% 58%, rgba(139, 92, 246, 0.28), transparent 60%);
+}
+
+/* ---------- Left: title, search, pills ---------- */
+
+.games-browser-controls {
+  position: relative;
+  z-index: 2;
+}
+
+.explore-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #b58cff;
+}
+
+.explore-label::before {
+  content: "";
+  flex: none;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(180deg, #f0e4ff, #8b5cf6);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5 14 7l-2 3-2-3 2-5.5ZM4 4l4.5 4 1 5-4-2.5L4 4Zm16 0-1.5 6.5-4 2.5 1-5L20 4ZM11 12h2v8.5l-1 2-1-2V12Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5 14 7l-2 3-2-3 2-5.5ZM4 4l4.5 4 1 5-4-2.5L4 4Zm16 0-1.5 6.5-4 2.5 1-5L20 4ZM11 12h2v8.5l-1 2-1-2V12Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 0 8px rgba(167, 110, 255, 0.85));
+}
+
+.explore-label::after {
+  content: "";
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(190, 140, 255, 0.65), transparent);
+}
+
+.games-browser-top h2 {
+  margin: 10px 0 0;
+  font-family: var(--hero-font);
+  font-size: clamp(40px, min(5.4vw, 9.5svh), 84px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 8%, #dcc7ff 46%, #9a6bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px rgba(139, 92, 246, 0.55));
+}
+
+.library-search {
+  height: 60px;
+  margin-top: clamp(20px, 4svh, 34px);
+  border: 1px solid rgba(160, 120, 255, 0.4);
+  background: linear-gradient(90deg, rgba(30, 16, 66, 0.74), rgba(40, 22, 88, 0.42));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.06), 0 0 26px rgba(110, 60, 255, 0.16);
+}
+
+.library-search-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: #e6dcff;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.category-filter {
+  margin: clamp(14px, 3svh, 22px) 0 0;
+}
+
+.category-filter button {
+  border-color: rgba(150, 110, 240, 0.3);
+  background: rgba(28, 16, 60, 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #cbbdf0;
+}
+
+.category-filter button.active {
+  border-color: rgba(200, 170, 255, 0.85);
+  background: linear-gradient(135deg, #9b6bff, #5b37d6);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(110, 60, 255, 0.45);
+}
+
+.category-filter .clear-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border-color: rgba(190, 150, 255, 0.7);
+  background: rgba(70, 40, 140, 0.38);
+  color: #efe6ff;
+}
+
+.clear-filters-icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/* ---------- Right: Arcadion + cards (cards ka base = Arcadion ka palm) ---------- */
+
+.weekly-top {
+  position: absolute;
+  z-index: 1;
+  left: var(--palm-x);
+  bottom: calc(var(--hero-h) - var(--anchor-y) - var(--hand-lift));
+  width: calc(var(--cw) * 2.5);
+  max-width: none;
+  margin: 0 0 0 calc(var(--cw) * -1.25);
+  padding: 0;
+  perspective: 1400px;
+}
+
+/* Hath se upar uthte energy sparks */
+.weekly-top::before,
+.weekly-top::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: var(--hand-lift);
+  width: calc(var(--cw) * 1.5);
+  height: calc(var(--cw) * 0.7);
+  margin-left: calc(var(--cw) * -0.75);
+  opacity: 0;
+  pointer-events: none;
+  animation: weeklySparkRise 3.2s ease-out infinite;
+}
+
+.weekly-top::before {
+  background:
+    radial-gradient(circle at 16% 82%, #fff 0 1.4px, rgba(232, 180, 255, 0.7) 2px, transparent 4px),
+    radial-gradient(circle at 40% 58%, #f5d0fe 0 1.2px, transparent 3px),
+    radial-gradient(circle at 66% 80%, #fff 0 1.7px, rgba(216, 120, 255, 0.6) 2.4px, transparent 5px),
+    radial-gradient(circle at 86% 50%, #e9d5ff 0 1.2px, transparent 3px);
+}
+
+.weekly-top::after {
+  background:
+    radial-gradient(circle at 28% 70%, #fff 0 1.6px, rgba(216, 120, 255, 0.6) 2.2px, transparent 4.5px),
+    radial-gradient(circle at 54% 88%, #e9d5ff 0 1.2px, transparent 3px),
+    radial-gradient(circle at 76% 62%, #fff 0 1.4px, rgba(232, 180, 255, 0.7) 2px, transparent 4px),
+    radial-gradient(circle at 10% 46%, #f5d0fe 0 1.1px, transparent 3px);
+  animation-delay: -1.6s;
+}
+
+@keyframes weeklySparkRise {
+  0% { opacity: 0; transform: translateY(20px); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-48px); }
+}
+
+/* WEEKLY TRENDING: neon pill — rotating gradient border, bloom, shimmer */
+@property --wt-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.weekly-top > .section-label.weekly-label {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 50%;
+  width: fit-content;
+  margin: 0 0 12px;
+  padding: 9px 22px 9px 26px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(100deg, rgba(88, 28, 200, 0.95), rgba(192, 38, 211, 0.82) 55%, rgba(88, 28, 200, 0.95));
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  white-space: nowrap;
+  text-shadow: 0 0 6px #ffffff, 0 0 16px #f0abfc, 0 0 34px #c026d3;
+  transform: translateX(-50%);
+  box-shadow:
+    0 0 24px rgba(192, 86, 255, 0.8),
+    0 0 60px rgba(168, 85, 247, 0.5),
+    inset 0 0 16px rgba(255, 255, 255, 0.22);
+  animation: weeklyLabelGlow 2.4s ease-in-out infinite;
+}
+
+.weekly-top > .section-label.weekly-label::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  transform: translateX(-130%) skewX(-18deg);
+  animation: weeklyLabelShine 3s ease-in-out infinite;
+}
+
+/* ghoomta hua gradient border */
+.weekly-top > .section-label.weekly-label::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  height: auto;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--wt-angle), #fdf4ff, #d946ef 20%, #8b5cf6 40%, #22d3ee 55%, #8b5cf6 70%, #d946ef 85%, #fdf4ff);
+  box-shadow: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: weeklyBorderSpin 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes weeklyBorderSpin {
+  to { --wt-angle: 360deg; }
+}
+
+@keyframes weeklyLabelShine {
+  0%, 55% { transform: translateX(-130%) skewX(-18deg); }
+  100% { transform: translateX(340%) skewX(-18deg); }
+}
+
+@keyframes weeklyLabelGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(192, 86, 255, 0.65), 0 0 46px rgba(168, 85, 247, 0.4), inset 0 0 14px rgba(255, 255, 255, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(230, 110, 255, 1), 0 0 84px rgba(168, 85, 247, 0.7), inset 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Arcadion: palm (--hand-x/--hand-y) cards ke neeche. Edges pe purple rim-glow, neeche ka hissa hero ke bottom pe fade. */
+.arcadion-figure {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: calc(100% - var(--hand-lift));
+  width: auto;
+  height: var(--arc-h);
+  max-width: none;
+  transform: translate(calc(var(--hand-x) * -100%), calc(var(--hand-y) * -100%));
+  pointer-events: none;
+  user-select: none;
+  filter:
+    drop-shadow(0 0 1.5px rgba(240, 225, 255, 0.95))
+    drop-shadow(0 0 9px rgba(168, 85, 247, 0.95))
+    drop-shadow(0 0 26px rgba(124, 58, 237, 0.75))
+    drop-shadow(0 0 54px rgba(109, 40, 217, 0.5));
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 66%, transparent 80%);
+  mask-image: linear-gradient(180deg, #000 0, #000 66%, transparent 80%);
+  /* PNG ke peeche black bg ho toh: mix-blend-mode: screen; */
+}
+
+/* Cards hath pe float + halka spin */
+.weekly-float {
+  position: relative;
+  z-index: 2;
+  animation: weeklyHandFloat 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes weeklyHandFloat {
+  0%, 100% { transform: translate3d(0, 2px, 0) rotateY(-9deg) rotateZ(-0.7deg); }
+  50% { transform: translate3d(0, -12px, 0) rotateY(9deg) rotateZ(0.7deg); }
+}
+
+.weekly-carousel {
+  height: calc(var(--ch) * 1.2);
+  margin: 0;
+  perspective: 1100px;
+}
+
+/* Card = icon + name + plays + Play now, sab ek saath move karte hain */
+.weekly-game-card {
+  width: var(--cw);
+  height: var(--ch);
+  align-items: center;
+  padding: 0.9em 0.7em 1em;
+  font-size: calc(var(--cw) * 0.085);
+  border-color: rgba(190, 160, 255, 0.35);
+  border-radius: calc(var(--cw) * 0.16);
+  background: linear-gradient(150deg, rgba(150, 110, 255, 0.22), rgba(60, 30, 130, 0.58));
+  text-align: center;
+  cursor: pointer;
+}
+
+.weekly-card-select {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.weekly-card-select:focus-visible {
+  outline: 2px solid #d9b8ff;
+  outline-offset: -4px;
+}
+
+.weekly-game-card.is-active {
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: rgba(214, 190, 255, 0.85);
+  box-shadow:
+    0 22px 44px rgba(0, 0, 0, 0.35),
+    0 0 26px rgba(168, 85, 247, 0.65),
+    0 0 60px rgba(139, 92, 246, 0.4),
+    inset 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 24px rgba(216, 180, 254, 0.18);
+  background:
+    linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.3) 50%, transparent 62%) 0 0 / 260% 100% no-repeat,
+    radial-gradient(120% 55% at 50% 0%, rgba(255, 255, 255, 0.24), transparent 62%),
+    linear-gradient(160deg, rgba(150, 100, 255, 0.97), rgba(70, 38, 168, 0.95));
+  animation: weeklySheen 3.8s ease-in-out infinite, weeklyCardBloom 2.6s ease-in-out infinite;
+}
+
+/* ghoomta neon border sirf active card pe */
+.weekly-game-card.is-active::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--wt-angle), #fdf4ff, #d946ef 20%, #8b5cf6 40%, #22d3ee 55%, #8b5cf6 70%, #d946ef 85%, #fdf4ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: weeklyBorderSpin 3.2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes weeklySheen {
+  0%, 40% { background-position: 130% 0, 0 0, 0 0; }
+  100% { background-position: -60% 0, 0 0, 0 0; }
+}
+
+@keyframes weeklyCardBloom {
+  0%, 100% {
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.35), 0 0 24px rgba(168, 85, 247, 0.6), 0 0 56px rgba(139, 92, 246, 0.35), inset 0 1px rgba(255, 255, 255, 0.4), inset 0 0 24px rgba(216, 180, 254, 0.16);
+  }
+  50% {
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.35), 0 0 40px rgba(230, 110, 255, 0.95), 0 0 96px rgba(168, 85, 247, 0.6), inset 0 1px rgba(255, 255, 255, 0.5), inset 0 0 30px rgba(216, 180, 254, 0.3);
+  }
+}
+
+.weekly-game-card.is-active .weekly-game-icon {
+  border-color: rgba(240, 225, 255, 0.55);
+  box-shadow: 0 0 22px rgba(216, 180, 254, 0.6), inset 0 0 14px rgba(255, 255, 255, 0.2);
+}
+
+.weekly-game-card.is-active .weekly-game-details h4 {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.55), 0 0 22px rgba(216, 180, 254, 0.85);
+}
+
+/* Side cards: apni details ke saath, active card ke peeche se jhaankte hain */
+.weekly-game-card.is-next {
+  filter: saturate(0.65) brightness(0.88);
+  transform: translate(28%, -56%) scale(0.8) rotate(6deg) rotateY(-20deg);
+}
+
+.weekly-game-card.is-previous {
+  filter: saturate(0.65) brightness(0.88);
+  transform: translate(-128%, -44%) scale(0.8) rotate(-6deg) rotateY(20deg);
+}
+
+.weekly-game-card.is-next,
+.weekly-game-card.is-previous {
+  box-shadow: 0 0 22px rgba(139, 92, 246, 0.35), inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.weekly-game-card.is-next:hover,
+.weekly-game-card.is-previous:hover {
+  filter: saturate(1) brightness(1);
+}
+
+.weekly-game-category {
+  position: absolute;
+  top: 0.8em;
+  right: 0;
+  left: 0;
+  font-size: 0.72em;
+  letter-spacing: 1.2px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.weekly-game-card.is-active .weekly-game-category {
+  opacity: 0;
+}
+
+.weekly-game-icon {
+  width: max(46px, calc(var(--cw) * 0.42));
+  height: max(46px, calc(var(--cw) * 0.42));
+  margin: 1.3em 0 0;
+  border-radius: 28%;
+  pointer-events: none;
+}
+
+.weekly-game-details {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: auto 0 0;
+  padding: 0;
+  gap: 0.45em;
+  animation: none;
+  pointer-events: none;
+}
+
+.weekly-game-details h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.05em;
+  line-height: 1.1;
+  letter-spacing: 0.3px;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(30, 10, 80, 0.65);
+}
+
+.weekly-plays-label {
+  color: #eadcff;
+  font-size: 0.68em;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.weekly-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 2.7em;
+  padding: 0 1.2em;
+  border-color: rgba(232, 218, 255, 0.72);
+  background: linear-gradient(135deg, #a98bff, #6a45e0);
+  font-size: 0.85em;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  pointer-events: none; /* side card pe click = card select */
+}
+
+.weekly-game-card.is-active .weekly-play {
+  pointer-events: auto;
+  background: linear-gradient(100deg, #c084fc, #7c3aed 45%, #d946ef 90%) 0 0 / 220% 100%;
+  animation: weeklyPlayFlow 2.6s linear infinite, weeklyPlayPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes weeklyPlayFlow {
+  to { background-position: -220% 0; }
+}
+
+@keyframes weeklyPlayPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(217, 70, 239, 0.55), inset 0 1px rgba(255, 255, 255, 0.35); }
+  50% { box-shadow: 0 0 20px rgba(230, 110, 255, 0.95), 0 0 38px rgba(139, 92, 246, 0.6), inset 0 1px rgba(255, 255, 255, 0.5); }
+}
+
+.weekly-play-icon {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+
+/* Hath ke peeche soft backlight (ring nahi, sirf halka energy glow) */
+.weekly-aura {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: calc(var(--hand-lift) - var(--cw) * 0.45);
+  width: calc(var(--cw) * 2.2);
+  height: calc(var(--cw) * 0.9);
+  background: radial-gradient(ellipse at center, rgba(216, 120, 255, 0.55) 0%, rgba(139, 92, 246, 0.28) 38%, transparent 70%);
+  filter: blur(6px);
+  transform: translateX(-50%);
+  animation: weeklyAuraPulse 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes weeklyAuraPulse {
+  0%, 100% { opacity: 0.65; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weekly-float,
+  .weekly-aura,
+  .weekly-top::before,
+  .weekly-top::after,
+  .weekly-top > .section-label.weekly-label,
+  .weekly-top > .section-label.weekly-label::before,
+  .weekly-top > .section-label.weekly-label::after,
+  .weekly-game-card.is-active,
+  .weekly-game-card.is-active::after,
+  .weekly-game-card.is-active .weekly-play {
+    animation: none;
+  }
+}
+
+/* ---------- Tablet / mobile: single column, hero viewport-lock band ---------- */
+
+@media (max-width: 900px) {
+  .games-browser {
+    padding-top: 24px;
+  }
+
+  .games-browser-layout {
+    --hero-h: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    height: auto;
+  }
+
+  .games-browser-controls {
+    width: 100%;
+  }
+
+  .weekly-top {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 120px;
+  }
+}
+
+@media (max-width: 700px) {
+  .games-browser-layout {
+    --arc-k: 0.9;
+  }
+
+  .arcadion-figure {
+    opacity: 0.6;
+  }
+}
