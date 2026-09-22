@@ -51,14 +51,15 @@ function AllFilter({
         />
       </label>
       <div className="category-filter" aria-label="Filter games by category">
-        {categories.slice(0, 5).map(renderCategoryButton)}
+        <div className="category-filter-pills">
+          {categories.map(renderCategoryButton)}
+        </div>
         <button type="button" className="clear-filters" onClick={onClear}>
           <svg className="clear-filters-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" />
           </svg>
           Clear filters
         </button>
-        {categories.slice(5).map(renderCategoryButton)}
       </div>
     </>
   );
