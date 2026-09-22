@@ -7,7 +7,7 @@ function scrollToSection(targetId: string) {
   if (!targetElement) return;
 
   const navbarHeight = document.querySelector<HTMLElement>(".navbar")?.offsetHeight ?? 60;
-  const targetTop = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight - 12;
+  const targetTop = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight - 11;
 
   window.scrollTo({
     top: Math.max(0, targetTop),
@@ -60,21 +60,8 @@ export function navigateTo(
 
   window.dispatchEvent(new Event(NAVIGATION_EVENT));
 
-  /* -----------------------------------------
-     Scroll to hash after navigation
-  ----------------------------------------- */
-
-  if (url.hash) {
-    const targetId = url.hash.substring(1);
-
-    requestAnimationFrame(() => {
-      const targetElement =
-        document.getElementById(targetId);
-
-      if (!targetElement) return;
-      scrollToSection(targetId);
-    });
-  } else {
+  /* App owns scrolling after the new page has rendered. */
+  if (!url.hash) {
     /* -----------------------------------------
        Home / normal page navigation
     ----------------------------------------- */
