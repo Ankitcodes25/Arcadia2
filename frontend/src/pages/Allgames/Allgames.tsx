@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Footer from "../../components/Footer";
 import { games } from "../../constants/gameData";
 import type { Game } from "../../types/game";
@@ -6,6 +6,7 @@ import AllFilter from "./Sections/AllFilter";
 import AllGameCards from "./Sections/AllGameCards";
 import WeeklyTrending from "./Sections/WeeklyTrending";
 import "./Allgames.css";
+import ArcadionPick from "./Sections/ArcadionPick";
 
 const SEARCH_TEXT = "Search games...";
 
@@ -61,7 +62,19 @@ function Allgames() {
               <div className="games-browser-top">
                 <div>
                   <span className="section-label explore-label">EXPLORE</span>
-                  <h2>All games</h2>
+                  <h2 className="arcadia-hero-title all-games-title" aria-label="ALL GAMES" data-text="ALL GAMES">
+                    <span className="arcadia-title-aura" aria-hidden="true" />
+                    {"ALL GAMES".split("").map((letter, index) => (
+                      <span
+                        key={`${letter}-${index}`}
+                        className="arcadia-title-letter"
+                        style={{ "--i": index } as CSSProperties}
+                        aria-hidden="true"
+                      >
+                        {letter === " " ? "\u00a0" : letter}
+                      </span>
+                    ))}
+                  </h2>
                 </div>
               </div>
               <AllFilter
@@ -80,6 +93,7 @@ function Allgames() {
             games={filteredGames}
             heading={activeCategory === "ALL" ? "ALL GAMES" : activeCategory}
           />
+          <ArcadionPick games={filteredGames} />
         </section>
       </main>
       <Footer />

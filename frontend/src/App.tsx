@@ -21,7 +21,7 @@ function App() {
       const targetSection = document.getElementById(hash.slice(1));
       if (!targetSection) return;
       const navbarHeight = document.querySelector<HTMLElement>(".navbar")?.offsetHeight ?? 60;
-      const topOffset = navbarHeight + 12;
+      const topOffset = navbarHeight + 38;
       window.scrollTo({
         top: window.scrollY + targetSection.getBoundingClientRect().top - topOffset,
         behavior: "smooth",

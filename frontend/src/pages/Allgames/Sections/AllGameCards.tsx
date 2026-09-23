@@ -76,10 +76,16 @@ function AllGameCards({ games, heading }: AllGameCardsProps) {
       <div className="games-browser-grid-heading" id="all-games">
         <div className="all-games-heading-stage" aria-live="polite">
           {previousHeading && (
-            <span className="section-label all-games-label all-games-heading-exit">{previousHeading}</span>
+            <span className="section-label all-games-label all-games-heading-exit">
+              <i className="all-games-label-dots" aria-hidden="true" />
+              {previousHeading}
+              <i className="all-games-label-dots" aria-hidden="true" />
+            </span>
           )}
           <span className={`section-label all-games-label ${isHeadingChanging ? "all-games-heading-enter" : ""}`}>
+            <i className="all-games-label-dots" aria-hidden="true" />
             {visibleHeading}
+            <i className="all-games-label-dots" aria-hidden="true" />
           </span>
         </div>
       </div>
