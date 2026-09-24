@@ -4177,27 +4177,47 @@ body:has(.all-games-page) .navbar {
   mask-clip: no-clip;
 }
 /* =========================================================
-   ARCADION PICKS  (v2 — compact, blended, no box)
+   ARCADION PICKS  (v3)  +  SHARED NEON CARD HOVER (library-card)
    Allgames.css me purana poora "ARCADION PICKS" block delete
-   karke ye paste karo (file ke bilkul end me).
-   Cards ka look = .library-card (same colors/hover/logo animations).
+   karke ye poora paste karo (file ke bilkul end me).
    ========================================================= */
 
-@property --ap-angle {
+@property --card-angle {
   syntax: "<angle>";
   inherits: false;
   initial-value: 0deg;
 }
 
-/* ---------------- SECTION (no card, same width as page sections) ---------------- */
+@keyframes cardBorderSpin {
+  to { --card-angle: 360deg; }
+}
+
+/* ---------------- SECTION ----------------
+   Ye component .games-browser ke ANDAR render ho raha hai, isliye
+   width: 100% (pehle calc(100% - 96px) dobara ghat raha tha).
+   Agar kabhi .games-browser ke bahar rakho to yahan
+   width: min(1400px, calc(100% - 96px)); margin-inline: auto; kar dena. */
 
 .arcadion-picks {
+  --ap-char-h: 240px;
+  --ap-divider-h: 36px;
+  --ap-divider-gap: 30px;
+  --ap-top: calc(var(--ap-divider-h) + var(--ap-divider-gap)); /* content yahan se shuru */
+
+  /* ring tuning: Arcadion ke center pe na baithe to ye 3 numbers badlo */
+  --ring-k: 1.5;   /* ring size = Arcadion height x ye */
+  --ring-dx: 0.12; /* + = ring right, - = left  (Arcadion height ka fraction) */
+  --ring-dy: 0.04; /* + = ring neeche, - = upar */
+
   position: relative;
-  z-index: 2;
-  width: min(1400px, calc(100% - 96px));
-  margin: 30px auto 70px;
-  padding: 22px 0 0;
+  z-index: 1;
+  width: 100%;
+  margin: 36px 0 48px;
+  padding: 0;
   isolation: isolate;
+
+  /* upar/neeche se clip (upar ke cards pe overlap nahi), sides free */
+  clip-path: inset(0 -50vw);
 }
 
 /* soft full-bleed glow — page ke bg me melt ho jata hai */
@@ -4205,102 +4225,188 @@ body:has(.all-games-page) .navbar {
   content: "";
   position: absolute;
   z-index: -3;
-  top: -80px;
+  top: -20px;
   bottom: -30px;
   left: 50%;
   width: 100vw;
   margin-left: -50vw;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 34% 60% at 76% 34%, rgba(128, 52, 226, 0.34), transparent 70%),
-    radial-gradient(ellipse 30% 50% at 16% 62%, rgba(88, 30, 170, 0.18), transparent 70%);
+    radial-gradient(ellipse 34% 60% at 76% 34%, rgba(128, 52, 226, 0.32), transparent 70%),
+    radial-gradient(ellipse 30% 50% at 16% 62%, rgba(88, 30, 170, 0.16), transparent 70%);
   -webkit-mask-image:
-    linear-gradient(180deg, transparent 0, #000 26%, #000 70%, transparent 100%),
+    linear-gradient(180deg, transparent 0, #000 30%, #000 70%, transparent 100%),
     linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-image:
-    linear-gradient(180deg, transparent 0, #000 26%, #000 70%, transparent 100%),
+    linear-gradient(180deg, transparent 0, #000 30%, #000 70%, transparent 100%),
     linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
   mask-composite: intersect;
 }
 
-/* ---------------- RING ---------------- */
+/* ---------------- DIVIDER (upar ke cards ke baad) ---------------- */
+
+.arcadion-picks-divider {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: var(--ap-divider-h);
+  margin-bottom: var(--ap-divider-gap);
+}
+
+.arcadion-picks-divider-line {
+  flex: none;
+  width: clamp(90px, 14vw, 180px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(160, 100, 255, 0.85));
+}
+
+.arcadion-picks-divider-line-r {
+  background: linear-gradient(270deg, transparent, rgba(160, 100, 255, 0.85));
+}
+
+.arcadion-picks-divider-badge {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: 0 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(170, 110, 255, 0.6);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(90, 40, 190, 0.5), rgba(28, 9, 66, 0.9));
+  color: #d9c2ff;
+  box-shadow:
+    0 0 22px rgba(140, 60, 255, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.arcadion-picks-divider-badge svg {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 0 5px rgba(190, 120, 255, 0.7));
+}
+
+/* ---------------- STAGE: ring + Arcadion (same center) ----------------
+   Ring hamesha Arcadion ke PEECHE aur ThIK beech me rehta hai.
+   Arcadion ka neeche ka hissa fade hoke cards ke top se mil jata hai. */
+
+.arcadion-picks-stage {
+  position: absolute;
+  z-index: 1;
+  top: var(--ap-top);
+  right: 5%;
+  height: var(--ap-char-h);
+  pointer-events: none;
+  animation: apCharFloat 6s ease-in-out infinite;
+}
 
 .arcadion-picks-ring {
   position: absolute;
-  z-index: -2;
-  top: -70px;
-  right: 1%;
-  width: 470px;
-  height: 470px;
-  pointer-events: none;
-  opacity: 0.5;
+  z-index: 0;
+  top: calc(50% + var(--ap-char-h) * var(--ring-dy));
+  left: calc(50% + var(--ap-char-h) * var(--ring-dx));
+  width: calc(var(--ap-char-h) * var(--ring-k));
+  height: calc(var(--ap-char-h) * var(--ring-k));
+  opacity: 0.45;
   animation: apRingFloat 9s ease-in-out infinite;
-  -webkit-mask-image: radial-gradient(circle, #000 52%, transparent 74%);
-  mask-image: radial-gradient(circle, #000 52%, transparent 74%);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 62%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 62%, transparent 100%);
 }
 
 .arcadion-picks-ring img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: saturate(1.15) drop-shadow(0 0 34px rgba(128, 40, 220, 0.35));
+  filter: saturate(1.15) drop-shadow(0 0 30px rgba(128, 40, 220, 0.35));
 }
 
 @keyframes apRingFloat {
-  0%, 100% { transform: translateY(3px) rotate(-1deg); }
-  50%      { transform: translateY(-8px) rotate(1deg); }
-}
-
-/* ---------------- ARCADION (chhota + upar/neeche/side se blend) ---------------- */
-
-.arcadion-picks-character {
-  position: absolute;
-  z-index: 1;
-  top: 8px;
-  right: 6%;
-  height: 330px;
-  pointer-events: none;
-  animation: apCharFloat 6s ease-in-out infinite;
-
-  /* upar se, neeche se aur dono sides se fade — koi flat kata hua edge nahi */
-  -webkit-mask-image:
-    linear-gradient(180deg, transparent 0, #000 16%, #000 66%, transparent 98%),
-    linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(180deg, transparent 0, #000 16%, #000 66%, transparent 98%),
-    linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
-  mask-composite: intersect;
+  0%, 100% { transform: translate(-50%, -50%) rotate(-2deg); }
+  50%      { transform: translate(-50%, -50%) rotate(2deg); }
 }
 
 .arcadion-picks-character-glow {
   position: absolute;
+  z-index: 0;
   left: 50%;
-  top: 40%;
+  top: 34%;
   width: 240px;
-  height: 240px;
+  height: 260px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(180, 91, 255, 0.4), transparent 70%);
-  filter: blur(26px);
+  filter: blur(24px);
 }
 
-.arcadion-picks-character img {
-  position: relative;
-  display: block;
-  height: 100%;
+/* Glow ko image ke box se bahar nikalne ke liye img pe padding + negative margin:
+   layout wahi rehta hai, lekin drop-shadow / mask ab box ke andar hi poora aata hai,
+   isliye sir ke upar glow ek seedhi line pe kata hua nahi dikhta. */
+.arcadion-picks-stage {
+  --glow-pad: 60px; /* glow ke liye jagah (ap-top se chhoti rakho, warna upar se clip hoga) */
+  --char-mask:
+    linear-gradient(
+      180deg,
+      #000 0,
+      #000 calc(var(--glow-pad) + var(--ap-char-h) * 0.74),
+      transparent calc(var(--glow-pad) + var(--ap-char-h))
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0,
+      #000 calc(var(--glow-pad) * 0.9),
+      #000 calc(100% - var(--glow-pad) * 0.9),
+      transparent 100%
+    );
+}
+
+/* silhouette: Arcadion ke shape me dark fill, ring ke upar aur character ke neeche */
+.arcadion-picks-character-shadow {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--glow-pad) * -1);
+  left: calc(var(--glow-pad) * -1);
+  box-sizing: content-box;
+  height: var(--ap-char-h);
   width: auto;
+  padding: var(--glow-pad);
+  filter: brightness(0.1) saturate(1.4);
+  opacity: 0.94;
+  -webkit-mask-image: var(--char-mask);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--char-mask);
+  mask-composite: intersect;
+}
+
+.arcadion-picks-character {
+  position: relative;
+  z-index: 2;
+  display: block;
+  box-sizing: content-box;
+  height: var(--ap-char-h);
+  width: auto;
+  max-width: none;
+  padding: var(--glow-pad);
+  margin: calc(var(--glow-pad) * -1);
   filter:
-    brightness(0.95)
-    contrast(1.1)
-    drop-shadow(0 0 8px rgba(190, 110, 255, 0.5))
-    drop-shadow(0 0 28px rgba(130, 40, 230, 0.38));
+    brightness(1.02)
+    contrast(1.12)
+    drop-shadow(0 0 8px rgba(200, 130, 255, 0.6))
+    drop-shadow(0 0 26px rgba(150, 60, 245, 0.5))
+    drop-shadow(0 0 46px rgba(120, 40, 220, 0.3));
+  -webkit-mask-image: var(--char-mask);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--char-mask);
+  mask-composite: intersect;
 }
 
 @keyframes apCharFloat {
   0%, 100% { transform: translateY(3px); }
-  50%      { transform: translateY(-7px); }
+  50%      { transform: translateY(-6px); }
 }
 
 /* ---------------- NOTE ("Play what I picked") ---------------- */
@@ -4308,7 +4414,7 @@ body:has(.all-games-page) .navbar {
 .arcadion-picks-note {
   position: absolute;
   z-index: 4;
-  top: 26px;
+  top: calc(var(--ap-top) + 24px);
   right: 0;
   display: flex;
   flex-direction: column;
@@ -4340,100 +4446,99 @@ body:has(.all-games-page) .navbar {
   transform: rotate(8deg);
 }
 
-/* ---------------- HEADING ---------------- */
+/* ---------------- HEADING  (= "Continue Playing" style) ---------------- */
 
 .arcadion-picks-heading {
   position: relative;
   z-index: 3;
   width: min(600px, 52%);
-  margin-bottom: 22px;
-}
-
-.arcadion-picks-title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.arcadion-picks-emblem {
-  width: 46px;
-  height: 46px;
-  margin-top: 4px;
-  color: #b483ff;
-  filter: drop-shadow(0 0 10px rgba(170, 90, 255, 0.8));
-  flex-shrink: 0;
-}
-
-.arcadion-picks-title-stack {
+  min-height: var(--ap-char-h);
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  text-align: left;
 }
 
-.arcadion-picks-pre {
+/* glowing line + purple label */
+.arcadion-picks-kicker {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  margin-left: 4px;
-  color: #b99cf5;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 10px;
+  width: fit-content;
+  color: #bd62ff;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
 }
 
-.arcadion-picks-pre i {
-  display: block;
-  width: 22px;
+.arcadion-picks-kicker::before {
+  content: "";
+  width: 34px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #b483ff);
+  background: linear-gradient(90deg, transparent, rgba(189, 98, 255, 0.9));
+  box-shadow: 0 0 8px rgba(165, 87, 255, 0.6);
 }
 
-.arcadion-picks-pre i:last-child {
-  background: linear-gradient(270deg, transparent, #b483ff);
-}
-
+/* white word + neon purple word */
 .arcadion-picks-heading h2 {
-  margin: -4px 0 0;
-  font-size: clamp(56px, 6.2vw, 88px);
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 14px 0 0;
+  font-size: clamp(34px, 3.5vw, 46px);
   font-weight: 900;
-  line-height: 0.95;
-  letter-spacing: 2px;
-  background: linear-gradient(180deg, #ffffff 5%, #c9a4ff 45%, #8b4dea 100%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 20px rgba(150, 70, 255, 0.55));
+  line-height: 1;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  text-shadow: 0 0 22px rgba(174, 69, 255, 0.28);
 }
 
-.arcadion-picks-sub {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  color: #a58bd8;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 6px;
-  white-space: nowrap;
+.arcadion-picks-heading h2 span {
+  position: relative;
+  display: inline-block;
+  color: #c46aff;
+  -webkit-text-fill-color: #c46aff;
+  text-shadow:
+    0 0 8px rgba(191, 75, 255, 0.55),
+    0 0 24px rgba(159, 43, 255, 0.4);
 }
 
-.arcadion-picks-sub-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(181, 131, 255, 0.8), transparent);
+/* glitch flicker — same animation as landing page headings */
+.arcadion-picks-heading h2 span::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 2px;
+  top: 0;
+  color: #8b3eff;
+  -webkit-text-fill-color: #8b3eff;
+  opacity: 0;
+  text-shadow: none;
+  clip-path: inset(0 0 48% 0);
+  animation: apTextGlitch 3.7s steps(1) infinite;
 }
 
-.arcadion-picks-sub-line:last-child {
-  background: linear-gradient(270deg, rgba(181, 131, 255, 0.8), transparent);
+@keyframes apTextGlitch {
+  0%, 72%, 100% { opacity: 0;    transform: translateX(0); }
+  73%           { opacity: 0.8;  transform: translateX(-4px); }
+  74%           { opacity: 0;    transform: translateX(5px); }
+  75%           { opacity: 0.55; transform: translateX(-2px); }
+  76%           { opacity: 0; }
 }
 
 .arcadion-picks-heading p {
-  margin: 18px 0 0;
-  color: #c3b3e0;
+  max-width: 560px;
+  margin: 12px 0 0;
+  color: #b7a0c9;
   font-size: 14px;
-  line-height: 1.65;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
 }
 
-/* ---------------- CARDS  (look = .library-card) ---------------- */
+/* ---------------- CARDS  (base look = .library-card) ---------------- */
 
 .arcadion-picks-list {
   position: relative;
@@ -4441,6 +4546,7 @@ body:has(.all-games-page) .navbar {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+  margin-top: -20px; /* cards Arcadion ke hath ke neeche se shuru */
 }
 
 .arcadion-pick-card.library-card {
@@ -4454,10 +4560,8 @@ body:has(.all-games-page) .navbar {
   border-radius: 22px;
   background: linear-gradient(145deg, rgba(73, 22, 115, 0.74), rgba(24, 8, 46, 0.92));
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.07), 0 14px 34px rgba(0, 0, 0, 0.22);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* top-right purple blob (same as .library-card::before) */
 .arcadion-pick-card.library-card::before {
   width: 200px;
   height: 200px;
@@ -4465,43 +4569,9 @@ body:has(.all-games-page) .navbar {
   right: -80px;
 }
 
-/* hover pe ghoomta neon border (weekly card jaisa) */
-.arcadion-pick-card.library-card::after {
-  content: "";
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  padding: 1.5px;
-  border-radius: inherit;
-  background: conic-gradient(from var(--ap-angle), #fdf4ff, #d946ef 20%, #8b5cf6 40%, #22d3ee 55%, #8b5cf6 70%, #d946ef 85%, #fdf4ff);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  animation: apBorderSpin 3.2s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes apBorderSpin {
-  to { --ap-angle: 360deg; }
-}
-
-.arcadion-pick-card.library-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(201, 112, 255, 0.5);
-  box-shadow:
-    0 22px 55px rgba(0, 0, 0, 0.3),
-    0 0 30px rgba(150, 60, 255, 0.28),
-    inset 0 1px rgba(255, 255, 255, 0.12);
-}
-
-.arcadion-pick-card.library-card:hover::after {
-  opacity: 1;
-}
-
 .arcadion-pick-top {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4573,27 +4643,11 @@ body:has(.all-games-page) .navbar {
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
 }
 
-.arcadion-pick-players {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #d198f2;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-}
-
-.arcadion-pick-players svg {
-  width: 18px;
-  height: 18px;
-  color: #a878f0;
-}
-
-/* button = .weekly-play / .library-play ka pill version */
+/* button = .weekly-play pill */
 .arcadion-pick-button {
   min-height: 38px;
   margin: 0;
@@ -4634,88 +4688,85 @@ body:has(.all-games-page) .navbar {
   outline-offset: 3px;
 }
 
-/* ---------------- FOOTER DIVIDER ---------------- */
-
-.arcadion-picks-footer {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: min(560px, 80%);
-  margin: 22px auto 0;
-}
-
-.arcadion-picks-footer-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(160, 100, 255, 0.6));
-}
-
-.arcadion-picks-footer-line-r {
-  background: linear-gradient(270deg, transparent, rgba(160, 100, 255, 0.6));
-}
-
-.arcadion-picks-footer i {
-  width: 5px;
-  height: 5px;
-  transform: rotate(45deg);
-  background: #a56bff;
-  box-shadow: 0 0 8px #a56bff;
-}
-
-.arcadion-picks-footer-emblem {
-  width: 28px;
-  height: 28px;
-  color: #a97bff;
-  filter: drop-shadow(0 0 8px rgba(160, 90, 255, 0.8));
-}
-
 /* ---------------- TABLET ---------------- */
 
 @media (max-width: 1200px) {
-  .arcadion-picks-character { height: 290px; right: 3%; }
-  .arcadion-picks-ring { width: 400px; height: 400px; }
+  .arcadion-picks { --ap-char-h: 210px; }
   .arcadion-pick-icon { width: 68px; height: 68px; }
   .arcadion-pick-info h3 { font-size: 20px; }
   .arcadion-pick-info p { font-size: 12px; }
-  .arcadion-pick-players { font-size: 10px; letter-spacing: 1px; }
 }
 
 @media (max-width: 980px) {
-  .arcadion-picks { width: calc(100% - 56px); }
   .arcadion-picks-heading { width: 62%; }
-  .arcadion-picks-pre { letter-spacing: 7px; font-size: 13px; }
-  .arcadion-picks-sub { letter-spacing: 4px; font-size: 10px; }
   .arcadion-picks-list { grid-template-columns: 1fr; gap: 14px; }
 }
 
 /* ---------------- MOBILE ---------------- */
 
 @media (max-width: 700px) {
-  .arcadion-picks { width: calc(100% - 32px); margin-bottom: 50px; }
-
-  .arcadion-picks-heading { width: 100%; }
-  .arcadion-picks-emblem { width: 36px; height: 36px; }
-  .arcadion-picks-heading h2 { font-size: 56px; }
-  .arcadion-picks-pre { letter-spacing: 5px; font-size: 12px; }
-  .arcadion-picks-sub { letter-spacing: 3px; font-size: 9px; }
+  .arcadion-picks { --ap-char-h: 190px; margin-bottom: 50px; }
+  .arcadion-picks-heading { width: 100%; min-height: 0; padding-bottom: 150px; }
+  .arcadion-picks-kicker { font-size: 13px; }
+  .arcadion-picks-heading h2 { font-size: 30px; }
   .arcadion-picks-heading p { font-size: 13px; }
 
-  .arcadion-picks-character { height: 230px; right: -6%; top: 0; opacity: 0.5; }
-  .arcadion-picks-ring { width: 300px; height: 300px; right: -10%; }
+  .arcadion-picks-stage { top: auto; bottom: 0; right: -6%; opacity: 0.55; }
+  .arcadion-picks-divider-badge { width: 32px; height: 32px; }
   .arcadion-picks-note { display: none; }
+  .arcadion-picks-list { margin-top: 0; }
 }
 
 /* ---------------- REDUCED MOTION ---------------- */
 
 @media (prefers-reduced-motion: reduce) {
   .arcadion-picks-ring,
-  .arcadion-picks-character,
-  .arcadion-pick-card.library-card::after { animation: none !important; }
+  .arcadion-picks-stage,
+  .arcadion-picks-heading h2 span::after,
+  .library-card:hover::after { animation: none !important; }
 
-  .arcadion-pick-card,
   .arcadion-pick-button,
   .arcadion-pick-button span { transition: none !important; }
+}
+
+
+/* =========================================================
+   SHARED NEON CARD HOVER — .library-card  (All Games top cards
+   + Arcadion Picks cards). Ye block HAMESHA file ke end me rakho.
+   ========================================================= */
+
+.library-card {
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ghoomta neon border (hover pe fade-in) */
+.library-card::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--card-angle), #fdf4ff, #d946ef 20%, #8b5cf6 40%, #22d3ee 55%, #8b5cf6 70%, #d946ef 85%, #fdf4ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.library-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(201, 112, 255, 0.5);
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(150, 60, 255, 0.28),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.library-card:hover::after {
+  opacity: 1;
+  animation: cardBorderSpin 3.2s linear infinite;
 }
