@@ -9,26 +9,6 @@ type ArcadionPickProps = {
   games: Game[];
 };
 
-/* 5600 -> "5.6K+", 950 -> "950+" */
-function formatPlays(plays: number) {
-  if (plays >= 1000) {
-    const k = plays / 1000;
-    return `${k >= 10 ? Math.round(k) : k.toFixed(1).replace(".0", "")}K+`;
-  }
-  return `${plays}+`;
-}
-
-function EmblemIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
-      <path
-        d="M4 6l14 6 8 10 6-6 6 6 8-10 14-6-6 20-8 6-4 16-10 10-10-10-4-16-8-6z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
 function CrownIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
@@ -43,31 +23,61 @@ function CrownIcon({ className }: { className?: string }) {
   );
 }
 
-function PlayersIcon() {
+function SwordsIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="9" cy="8" r="3.2" fill="currentColor" />
-      <path d="M2.5 19c0-3.6 2.9-5.6 6.5-5.6s6.5 2 6.5 5.6z" fill="currentColor" />
-      <circle cx="17" cy="9" r="2.5" fill="currentColor" opacity="0.7" />
-      <path d="M17 13.5c2.6 0 4.5 1.6 4.5 4.5h-4.2" fill="currentColor" opacity="0.7" />
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 5l16 16" />
+        <path d="M26 5L10 21" />
+        <path d="M19 24l5-5" />
+        <path d="M13 24l-5-5" />
+        <path d="M22 21l3 3" />
+        <path d="M10 21l-3 3" />
+      </g>
     </svg>
   );
 }
 
+/* Sirf 1v1 games — single-player games yahan nahi dikhenge.
+   Aur koi game hatana ho to uska naam is list me jod do. */
+const SINGLE_PLAYER_GAMES = ["Snake"];
+
 function ArcadionPick({ games }: ArcadionPickProps) {
-  const picks = [...games].sort((a, b) => b.plays - a.plays).slice(0, 3);
+  const picks = games
+    .filter((game) => !SINGLE_PLAYER_GAMES.includes(game.name))
+    .sort((a, b) => b.plays - a.plays)
+    .slice(0, 3);
 
   return (
     <section className="arcadion-picks" aria-labelledby="arcadion-picks-title">
-      {/* Portal ring */}
-      <div className="arcadion-picks-ring" aria-hidden="true">
-        <img src={arcadionPickBg} alt="" draggable={false} />
+      {/* Divider — upar ke cards ke baad, phir gap, phir section */}
+      <div className="arcadion-picks-divider" aria-hidden="true">
+        <span className="arcadion-picks-divider-line" />
+        <span className="arcadion-picks-divider-badge">
+          <SwordsIcon />
+        </span>
+        <span className="arcadion-picks-divider-line arcadion-picks-divider-line-r" />
       </div>
 
-      {/* Game Master */}
-      <div className="arcadion-picks-character" aria-hidden="true">
+      {/* Stage: ring (peeche) + Arcadion (aage), dono ek hi center pe */}
+      <div className="arcadion-picks-stage" aria-hidden="true">
+        <div className="arcadion-picks-ring">
+          <img src={arcadionPickBg} alt="" draggable={false} />
+        </div>
         <div className="arcadion-picks-character-glow" />
-        <img src={arcadionPick} alt="" draggable={false} />
+        {/* dark silhouette: ring ko Arcadion ke andar se dikhne se rokta hai */}
+        <img
+          className="arcadion-picks-character-shadow"
+          src={arcadionPick}
+          alt=""
+          draggable={false}
+        />
+        <img
+          className="arcadion-picks-character"
+          src={arcadionPick}
+          alt=""
+          draggable={false}
+        />
       </div>
 
       {/* Handwritten note */}
@@ -92,30 +102,16 @@ function ArcadionPick({ games }: ArcadionPickProps) {
         </svg>
       </div>
 
-      {/* Heading */}
+      {/* Heading — same style as "Continue Playing" */}
       <div className="arcadion-picks-heading">
-        <div className="arcadion-picks-title-row">
-          <EmblemIcon className="arcadion-picks-emblem" />
-          <div className="arcadion-picks-title-stack">
-            <span className="arcadion-picks-pre">
-              <i />
-              ARCADION&rsquo;S
-              <i />
-            </span>
-            <h2 id="arcadion-picks-title">PICKS</h2>
-          </div>
-        </div>
+        <span className="arcadion-picks-kicker">CHOSEN BY THE GAME MASTER</span>
 
-        <div className="arcadion-picks-sub">
-          <span className="arcadion-picks-sub-line" />
-          <span>CHOSEN BY THE GAME MASTER</span>
-          <span className="arcadion-picks-sub-line" />
-        </div>
+        <h2 id="arcadion-picks-title">
+          ARCADION <span data-text="PICKS">PICKS</span>
+        </h2>
 
         <p>
-          These are the games Arcadion thinks you&rsquo;ll love.
-          <br />
-          Step in, play, and see if you can impress the Game Master.
+         Enter the game. Impress the Game Master.
         </p>
       </div>
 
@@ -143,10 +139,6 @@ function ArcadionPick({ games }: ArcadionPickProps) {
             </div>
 
             <div className="arcadion-pick-bottom">
-              <span className="arcadion-pick-players">
-                <PlayersIcon />
-                {formatPlays(game.plays)} PLAYING
-              </span>
 
               <button
                 type="button"
@@ -159,15 +151,6 @@ function ArcadionPick({ games }: ArcadionPickProps) {
             </div>
           </article>
         ))}
-      </div>
-
-      {/* Divider */}
-      <div className="arcadion-picks-footer" aria-hidden="true">
-        <span className="arcadion-picks-footer-line" />
-        <i />
-        <EmblemIcon className="arcadion-picks-footer-emblem" />
-        <i />
-        <span className="arcadion-picks-footer-line arcadion-picks-footer-line-r" />
       </div>
     </section>
   );
