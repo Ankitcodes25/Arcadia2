@@ -3770,6 +3770,8 @@ body:has(.all-games-page) .navbar {
 }
 
 /* =========================================================
-   VIEW MORE — centered button under the grid, same language
-   as the landing page's .view-all button, with an animated arrow
+   V2 FINAL — category filter rows, pills, clear-filters,
+   category heading chip, view-more button.
+   This block is intentionally last so it wins the cascade
+   over every earlier layer in this file.
 }
