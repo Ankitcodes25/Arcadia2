@@ -3770,105 +3770,6 @@ body:has(.all-games-page) .navbar {
 }
 
 /* =========================================================
-   VIEW MORE — centered button under the grid, same language
-   as the landing page's .view-all button, with an animated arrow
-========================================================= */
-
-.all-games-view-more {
-  display: flex;
-  justify-content: center;
-  margin: 34px 0 0;
-}
-
-.all-games-view-more .view-more-btn {
-  position: relative;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 0 26px;
-  overflow: hidden;
-  border: 1px solid rgba(211, 132, 255, 0.78);
-  border-radius: 13px;
-  background: linear-gradient(135deg, rgba(178, 78, 246, 0.22), rgba(113, 39, 183, 0.13));
-  color: #f0ddff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    inset 0 -1px 0 rgba(102, 32, 159, 0.22),
-    0 0 0 1px rgba(160, 66, 225, 0.06),
-    0 5px 18px rgba(110, 38, 175, 0.12);
-  font-size: 13px;
-  font-weight: 760;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  isolation: isolate;
-  cursor: pointer;
-  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease,
-    box-shadow 0.25s ease, transform 0.25s ease;
-}
-
-.all-games-view-more .view-more-btn::after {
-  content: "";
-  position: absolute;
-  top: -60%;
-  left: -35%;
-  width: 28%;
-  height: 220%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-  transform: rotate(18deg) translateX(-180%);
-  transition: transform 0.65s ease;
-  pointer-events: none;
-}
-
-.all-games-view-more .view-more-btn:hover::after {
-  transform: rotate(18deg) translateX(520%);
-}
-
-.all-games-view-more .view-more-btn span {
-  position: relative;
-  z-index: 1;
-  color: #dfadff;
-  transition: color 0.25s ease, transform 0.25s ease;
-}
-
-.all-games-view-more .view-more-btn .view-more-arrow {
-  position: relative;
-  z-index: 1;
-  width: 17px;
-  height: 17px;
-  flex: none;
-  fill: none;
-  stroke: #dfadff;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: transform 0.25s ease, stroke 0.25s ease;
-}
-
-.all-games-view-more .view-more-btn:hover {
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(190, 91, 255, 0.30), rgba(122, 47, 194, 0.18));
-  border-color: rgba(229, 170, 255, 0.98);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 0 1px rgba(187, 82, 248, 0.10),
-    0 0 18px rgba(173, 67, 246, 0.25),
-    0 7px 22px rgba(91, 28, 153, 0.16);
-  transform: translateY(-2px);
-}
-
-.all-games-view-more .view-more-btn:hover span {
-  color: #ffffff;
-  transform: translateX(3px);
-}
-
-.all-games-view-more .view-more-btn:hover .view-more-arrow {
-  stroke: #ffffff;
-  transform: translateX(6px);
-}
-
-/* =========================================================
    V2 FINAL — category filter rows, pills, clear-filters,
    category heading chip, view-more button.
    This block is intentionally last so it wins the cascade
@@ -4206,7 +4107,7 @@ body:has(.all-games-page) .navbar {
 
   /* ring tuning: Arcadion ke center pe na baithe to ye 3 numbers badlo */
   --ring-k: 1.5;   /* ring size = Arcadion height x ye */
-  --ring-dx: 0.12; /* + = ring right, - = left  (Arcadion height ka fraction) */
+  --ring-dx: 0.11; /* + = ring right, - = left  (Arcadion height ka fraction) */
   --ring-dy: 0.04; /* + = ring neeche, - = upar */
 
   position: relative;
