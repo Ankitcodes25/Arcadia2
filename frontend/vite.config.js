@@ -1,7 +1,41 @@
+/* global process */
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+
+const securityHeaders = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Permissions-Policy': 'camera=(), geolocation=(), microphone=(), payment=()',
+}
+
+function validateProductionEnvironment(mode, env) {
+  if (mode !== 'production') return
+
+  const apiUrl = env.VITE_API_URL?.trim()
+  if (!apiUrl) {
+    throw new Error('VITE_API_URL must be configured for a production frontend build')
+  }
+
+  let parsed
+  try {
+    parsed = new URL(apiUrl)
+  } catch {
+    throw new Error('VITE_API_URL must be an absolute HTTP(S) URL')
+  }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new Error('VITE_API_URL must be an HTTPS origin in production')
+  }
+}
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  validateProductionEnvironment(mode, env)
+
+  return {
+    plugins: [react()],
+    server: { headers: securityHeaders },
+    preview: { headers: securityHeaders },
+  }
 })

@@ -34,6 +34,48 @@ body {
   will-change: transform;
 }
 
+.auth-global-notice {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  z-index: 1150;
+  width: min(520px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 126, 158, 0.55);
+  border-radius: 12px;
+  background: rgba(70, 18, 53, 0.94);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), 0 0 22px rgba(211, 64, 255, 0.18);
+  color: #ffe5ec;
+  font-size: 12px;
+  line-height: 1.45;
+  /* Keep in sync with NOTICE_FADE_MS in src/auth/authNotice.ts. */
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.auth-global-notice.is-leaving {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+.auth-global-notice span {
+  flex: 1;
+}
+
+.auth-global-notice button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #ffb1c1;
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+
 @keyframes pageEnter {
   0% {
     opacity: 1;

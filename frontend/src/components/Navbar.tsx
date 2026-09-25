@@ -1,11 +1,12 @@
 import "./Navbar.css";
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import logo from "../assets/ArcadialogoA.png";
 import { navigateTo } from "../lib/navigation";
+import { useAuth } from "../auth/AuthContext";
+import AvatarPreview from "../auth/AvatarPreview";
+import type { AuthFormValues } from "../auth/authTypes";
 import LoginSignupModal from "./LoginSignupModal";
 import ProfilePopupModal from "./ProfilePopupmodal";
-
-const AUTH_HISTORY_KEY = "arcadia-auth-history";
 
 type NavItem = "home" | "games" | "popular" | "about";
 
@@ -33,14 +34,38 @@ function getInitialNavItem(): NavItem {
 }
 
 function Navbar() {
-  const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const {
+    user,
+    isAuthenticated,
+    isSubmitting,
+    authError,
+    authErrorKind,
+    authMode,
+    openAuthMode,
+    closeAuthMode,
+    clearError,
+    login,
+    register,
+    forgotPassword,
+    resendVerification,
+    loginWithGoogle,
+    logout,
+  } = useAuth();
 
   const [activeNavItem, setActiveNavItem] =
     useState<NavItem>(getInitialNavItem);
 
   const navbarNavRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleOpenLogin = () => {
+      openAuthMode("login");
+    };
+
+    window.addEventListener("arcadia:open-login", handleOpenLogin);
+    return () => window.removeEventListener("arcadia:open-login", handleOpenLogin);
+  }, [openAuthMode]);
 
   const isGamesPage = window.location.pathname === "/games";
 
@@ -189,23 +214,29 @@ function Navbar() {
      AUTH
   ------------------------------------------------------- */
 
-  const handleAuthSubmit = (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
+  const handleAuthSubmit = async (values: AuthFormValues) => {
+    const success = authMode === "login"
+      ? await login({ email: values.email, password: values.password })
+      : await register(values);
 
-    window.localStorage.setItem(
-      AUTH_HISTORY_KEY,
-      "true"
-    );
+    if (success) {
+      closeAuthMode();
+    }
 
-    setIsSignedIn(true);
-    setAuthMode(null);
+    return success;
   };
 
-  const handleLogout = () => {
-    setIsSignedIn(false);
-    setIsProfileOpen(false);
+  const handleGoogleLogin = () => {
+    clearError();
+    loginWithGoogle();
+  };
+
+  const handleLogout = async () => {
+    const result = await logout();
+    if (result.success) {
+      setIsProfileOpen(false);
+      navigateTo("/");
+    }
   };
 
   /* -------------------------------------------------------
@@ -329,33 +360,38 @@ function Navbar() {
 
         <div className="navbar-actions">
 
-          {isSignedIn ? (
+          {isAuthenticated && user ? (
             <div className="profile-menu-wrapper">
+              <div className="navbar-profile-identity">
+                <span className="navbar-username">{user.username}</span>
 
-              <button
-                type="button"
-                className="avatar-button"
-                aria-label="Open account menu"
-                aria-haspopup="menu"
-                aria-expanded={isProfileOpen}
-                onPointerDown={(event) =>
-                  event.stopPropagation()
-                }
-                onClick={() =>
-                  setIsProfileOpen(
-                    (open) => !open
-                  )
-                }
-              >
-                A
-              </button>
+                <button
+                  type="button"
+                  className="avatar-button"
+                  aria-label="Open account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileOpen}
+                  onPointerDown={(event) =>
+                    event.stopPropagation()
+                  }
+                  onClick={() =>
+                    setIsProfileOpen(
+                      (open) => !open
+                    )
+                  }
+                >
+                  <AvatarPreview user={user} className="navbar-avatar" />
+                </button>
+              </div>
 
               {isProfileOpen && (
                 <ProfilePopupModal
+                  user={user}
                   onClose={() =>
                     setIsProfileOpen(false)
                   }
                   onLogout={handleLogout}
+                  isLoggingOut={isSubmitting}
                 />
               )}
             </div>
@@ -366,7 +402,7 @@ function Navbar() {
                 type="button"
                 className="auth-button auth-button-primary"
                 onClick={() =>
-                  setAuthMode("signup")
+                  openAuthMode("signup")
                 }
               >
                 Sign up
@@ -376,7 +412,7 @@ function Navbar() {
                 type="button"
                 className="auth-button"
                 onClick={() =>
-                  setAuthMode("login")
+                  openAuthMode("login")
                 }
               >
                 Log in
@@ -398,17 +434,22 @@ function Navbar() {
       {authMode && (
         <LoginSignupModal
           authMode={authMode}
-          onClose={() =>
-            setAuthMode(null)
-          }
+          onClose={closeAuthMode}
           onSubmit={handleAuthSubmit}
+          onGoogleLogin={handleGoogleLogin}
+          onClearError={clearError}
+          onForgotPassword={forgotPassword}
+          onResendVerification={resendVerification}
           onSwitchMode={() =>
-            setAuthMode(
+            openAuthMode(
               authMode === "login"
                 ? "signup"
                 : "login"
             )
           }
+          isSubmitting={isSubmitting}
+          error={authErrorKind === "form" ? authError : null}
+          oauthError={authErrorKind === "oauth" ? authError : null}
         />
       )}
     </header>

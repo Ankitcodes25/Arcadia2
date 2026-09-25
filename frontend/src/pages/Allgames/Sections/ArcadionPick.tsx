@@ -49,7 +49,11 @@ function ArcadionPick({ games }: ArcadionPickProps) {
     .slice(0, 3);
 
   return (
-    <section className="arcadion-picks" aria-labelledby="arcadion-picks-title">
+    <section
+      id="arcadion-picks"
+      className="arcadion-picks"
+      aria-labelledby="arcadion-picks-title"
+    >
       {/* Divider — upar ke cards ke baad, phir gap, phir section */}
       <div className="arcadion-picks-divider" aria-hidden="true">
         <span className="arcadion-picks-divider-line" />
