@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
-import type { Game } from "../gameData";
+import type { Game } from "../../../types/game";
 import { navigateTo } from "../../../lib/navigation";
 import GameLogo from "../../Allgames/Sections/GameLogo";
 
@@ -79,40 +79,6 @@ function toKey(gameName: string) {
 function isSoloGame(gameName: string) {
   const key = toKey(gameName);
   return key === "snake" || key.startsWith("memory");
-}
-
-/* ---------------------------------------------------------
-   "View all challenges": open the All Games page and land on
-   the "All Games" heading (where the cards start).
-   Tip: add id="all-games" to that heading for an exact match,
-   otherwise the heading is found by its text.
---------------------------------------------------------- */
-const ALL_GAMES_SECTION_ID = "all-games";
-const SCROLL_OFFSET = 110; // space for the fixed navbar
-
-function scrollToAllGamesSection() {
-  let tries = 0;
-
-  const attempt = () => {
-    const onGamesPage = window.location.pathname.startsWith("/games");
-
-    const target =
-      document.getElementById(ALL_GAMES_SECTION_ID) ??
-      Array.from(document.querySelectorAll<HTMLElement>("h1, h2, h3")).find(
-        (element) => element.textContent?.trim().toLowerCase() === "all games",
-      );
-
-    if (onGamesPage && target) {
-      const top = target.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
-      window.scrollTo({ top, behavior: "smooth" });
-      return;
-    }
-
-    // page is still mounting, try again shortly
-    if (tries++ < 30) window.setTimeout(attempt, 100);
-  };
-
-  window.setTimeout(attempt, 60);
 }
 
 /* ---------------------------------------------------------
@@ -241,8 +207,7 @@ function ChallengeArcadion({ games }: ChallengeArcadionProps) {
           type="button"
           className="view-all"
           onClick={(event) => {
-            navigateTo("/games", event);
-            scrollToAllGamesSection();
+            navigateTo("/games#arcadion-picks", event);
           }}
         >
           View all challenges <span>→</span>

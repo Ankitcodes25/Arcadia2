@@ -7,6 +7,7 @@ import AllGameCards from "./Sections/AllGameCards";
 import WeeklyTrending from "./Sections/WeeklyTrending";
 import "./Allgames.css";
 import ArcadionPick from "./Sections/ArcadionPick";
+import ComingSoon from "./Sections/ComingSoon";
 
 const SEARCH_TEXT = "Search games...";
 
@@ -94,6 +95,7 @@ function Allgames() {
             heading={activeCategory === "ALL" ? "ALL GAMES" : activeCategory}
           />
           <ArcadionPick games={filteredGames} />
+          <ComingSoon />
         </section>
       </main>
       <Footer />

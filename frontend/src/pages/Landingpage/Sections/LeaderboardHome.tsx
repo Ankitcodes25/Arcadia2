@@ -6,6 +6,7 @@ import {
   type CSSProperties,
 } from "react";
 import { ArrowLeft, ArrowRight, Crown, Star } from "lucide-react";
+import { useAuth } from "../../../auth/AuthContext";
 
 type Player = {
   name: string;
@@ -161,6 +162,7 @@ function CountUp({ value, reveal, delay }: CountUpProps) {
 }
 
 export default function LeaderboardHome() {
+  const { isAuthenticated } = useAuth();
   const sectionRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -209,6 +211,19 @@ export default function LeaderboardHome() {
 
     return () => observer.disconnect();
   }, [reveal]);
+
+  const handleViewAll = () => {
+    if (!isAuthenticated) {
+      window.dispatchEvent(new Event("arcadia:open-login"));
+      return;
+    }
+
+    // TODO: Open the full leaderboard modal when it is implemented.
+  };
+
+  const handlePlayerProfile = (_player: Player) => {
+    // TODO: Open the player profile modal when it is implemented.
+  };
 
   const scrollCards = (direction: "previous" | "next") => {
     const grid = gridRef.current;
@@ -285,12 +300,13 @@ export default function LeaderboardHome() {
             </button>
           </div>
 
-          <a
-            href="/leaderboard"
+          <button
+            type="button"
             className="view-all leaderboard-home-viewall"
+            onClick={handleViewAll}
           >
             View all <span aria-hidden="true">→</span>
-          </a>
+          </button>
         </div>
       </div>
 
@@ -313,6 +329,7 @@ export default function LeaderboardHome() {
                   key={player.name}
                   className={`leaderboard-home-card ${getRankClass(rank)}`}
                   style={{ "--i": index } as CSSProperties}
+                  onClick={() => handlePlayerProfile(player)}
                 >
                   <div className="leaderboard-home-badge">
                     {isPodium && (

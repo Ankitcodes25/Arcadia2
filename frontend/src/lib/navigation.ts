@@ -17,7 +17,7 @@ function scrollToSection(targetId: string) {
 
 export function navigateTo(
   path: string,
-  event?: MouseEvent<HTMLAnchorElement>
+  event?: MouseEvent<HTMLElement>
 ) {
   event?.preventDefault();
 

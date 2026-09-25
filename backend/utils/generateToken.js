@@ -1,8 +1,4 @@
-const jwt = require('jsonwebtoken');
-const { jwtSecret } = require('../config/env');
+const { signAccessToken } = require('./jwt');
 
-function generateToken(user) {
-  return jwt.sign({ id: user.id, email: user.email }, jwtSecret, { expiresIn: '7d' });
-}
-
-module.exports = generateToken;
+// Backward-compatible export for code that previously imported generateToken.
+module.exports = signAccessToken;

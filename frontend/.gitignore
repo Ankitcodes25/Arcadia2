@@ -19,6 +19,7 @@ coverage/
 # Environment variables
 .env
 .env.*
+!.env.example
 *.local
 
 # Editor / IDE files

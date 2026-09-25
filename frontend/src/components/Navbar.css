@@ -274,6 +274,24 @@
   position: relative;
 }
 
+.navbar-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.navbar-username {
+  max-width: 120px;
+  overflow: hidden;
+  color: rgba(245, 233, 255, 0.88);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .avatar-button {
   width: 38px;
   height: 38px;
@@ -285,7 +303,16 @@
   color: white;
   font-size: 14px;
   font-weight: 800;
-  box-shadow: 0 0 16px rgba(173, 93, 255, 0.35);
+  box-shadow:
+    0 0 12px rgba(173, 93, 255, 0.28),
+    0 0 24px rgba(140, 60, 220, 0.12);
+}
+
+.navbar-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  font-size: 12px;
 }
 
 
@@ -422,6 +449,11 @@
   .auth-button-primary {
     padding-inline: 9px;
   }
+
+  .navbar-username {
+    max-width: 84px;
+    font-size: 12px;
+  }
 }
 
 
@@ -449,6 +481,10 @@
 
   .auth-button-primary {
     padding-inline: 7px;
+  }
+
+  .navbar-username {
+    max-width: 64px;
   }
 }
 

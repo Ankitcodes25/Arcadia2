@@ -1,0 +1,14 @@
+.avatar-preview-image,
+.avatar-preview-placeholder {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: #fff;
+  font-weight: 800;
+  object-fit: cover;
+}
+
+.avatar-preview-placeholder {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
