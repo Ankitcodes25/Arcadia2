@@ -1340,6 +1340,37 @@ footer p {
   border-radius: 27px;
   background: linear-gradient(145deg, #35105d, #1b092d);
   box-shadow: 0 25px 65px rgba(0, 0, 0, 0.35), 0 0 40px rgba(174, 69, 255, 0.18);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.daily-challenge-card::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--card-angle), #fdf4ff, #d946ef 20%, #8b5cf6 40%, #22d3ee 55%, #8b5cf6 70%, #d946ef 85%, #fdf4ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.daily-challenge-card:has(.daily-challenge-button:hover) {
+  border-color: rgba(201, 112, 255, 0.5);
+  box-shadow:
+    0 25px 65px rgba(0, 0, 0, 0.35),
+    0 0 30px rgba(150, 60, 255, 0.28),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.daily-challenge-card:has(.daily-challenge-button:hover)::before {
+  opacity: 1;
+  animation: cardBorderSpin 3.2s linear infinite;
 }
 
 .daily-challenge-glow {
@@ -9708,8 +9739,7 @@ footer p {
 .big-game-card::after,
 .game-card::after,
 .continue-game-card::after,
-.challenge-game-card::after,
-.daily-challenge-card::before {
+.challenge-game-card::after {
   content: "";
   position: absolute;
   z-index: 3;
@@ -9730,16 +9760,14 @@ footer p {
 .big-game-card,
 .game-card,
 .continue-game-card,
-.challenge-game-card,
-.daily-challenge-card {
+.challenge-game-card {
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.3s ease;
 }
 
 .big-game-card:hover,
 .game-card:hover,
 .continue-game-card:hover,
-.challenge-game-card:hover,
-.daily-challenge-card:hover {
+.challenge-game-card:hover {
   transform: translateY(-6px);
   border-color: rgba(201, 112, 255, 0.5);
   box-shadow:
@@ -9751,8 +9779,7 @@ footer p {
 .big-game-card:hover::after,
 .game-card:hover::after,
 .continue-game-card:hover::after,
-.challenge-game-card:hover::after,
-.daily-challenge-card:hover::before {
+.challenge-game-card:hover::after {
   opacity: 1;
   animation: cardBorderSpin 3.2s linear infinite;
 }
@@ -9775,8 +9802,7 @@ footer p {
   .big-game-card:hover::after,
   .game-card:hover::after,
   .continue-game-card:hover::after,
-  .challenge-game-card:hover::after,
-  .daily-challenge-card:hover::before {
+  .challenge-game-card:hover::after {
     animation: none;
   }
 }

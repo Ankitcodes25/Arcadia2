@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../../auth/AuthContext";
 import type { Game } from "../../../types/game";
 import GameLogo from "../../Allgames/Sections/GameLogo";
 
@@ -28,6 +29,7 @@ function pad(value: number) {
 }
 
 function DailyChallenge({ games }: DailyChallengeProps) {
+	const { isAuthenticated } = useAuth();
 	const dailyGame = useMemo(() => getDailyGame(games), [games]);
 	const [timeLeft, setTimeLeft] = useState(getTimeLeftToday);
 
@@ -38,6 +40,12 @@ function DailyChallenge({ games }: DailyChallengeProps) {
 
 	const handlePlay = () => {
 		if (!dailyGame) return;
+
+		if (!isAuthenticated) {
+			window.dispatchEvent(new Event("arcadia:open-login"));
+			return;
+		}
+
 		window.dispatchEvent(
 			new CustomEvent("arcadia:game-opened", { detail: { gameName: dailyGame.name } })
 		);

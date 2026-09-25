@@ -1,3 +1,4 @@
-const users = [];
+const { User } = require('./User');
 
-module.exports = { users };
+// Kept as a compatibility entry point for older imports. User records now live in MongoDB.
+module.exports = { User };
