@@ -9,6 +9,7 @@ const {
   getBcryptByteLengthError,
 } = require('../utils/passwordPolicy');
 const { hashPassword, needsRehash } = require('../utils/bcrypt');
+const { createUserWithPlayerId } = require('./playerIdService');
 const {
   normalizeDisplayName,
   getDisplayNameValidationError,
@@ -83,7 +84,9 @@ async function register({ email, password, name, username } = {}) {
   let user;
 
   try {
-    user = await User.create({
+    // createUserWithPlayerId generates the permanent Player ID server side and
+    // regenerates it if the unique index ever rejects a collision.
+    user = await createUserWithPlayerId({
       email: normalizedEmail,
       name: normalizedName,
       displayName: normalizedName,

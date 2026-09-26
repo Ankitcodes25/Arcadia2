@@ -16,7 +16,7 @@ import {
 import {
   getTrimmedUsernameLength,
   getUsernameLength,
-  truncateUsernameToMax,
+  resolveUsernameInput,
   USERNAME_MAX_LENGTH,
   USERNAME_MAX_REACHED_MESSAGE,
   USERNAME_MIN_LENGTH,
@@ -116,27 +116,27 @@ function LoginSignupModal({
     noticeDurationMs,
   );
 
+  /*
+   * The same shared resolver the username modals use, so the 20 character
+   * maximum means 20 code points on every username field. No native `maxLength`
+   * is set here either, because the browser counts it in UTF-16 units.
+   */
   function handleUsernameChange(event: ChangeEvent<HTMLInputElement>) {
-    const nextValue = event.target.value;
+    const { value, exceededMax } = resolveUsernameInput(event.target.value, {
+      isComposing: (event.nativeEvent as InputEvent)?.isComposing,
+    });
 
-    if (getUsernameLength(nextValue) <= USERNAME_MAX_LENGTH) {
-      setUsername(nextValue);
-      // A usable value clears the previous warning. The counter already shows
-      // the length, so nothing is shown while the user is still typing.
-      setUsernameWarning(null);
+    setUsername(value);
+
+    if (exceededMax) {
+      // A refused code point starts the shared warning lifecycle.
+      setUsernameWarning(USERNAME_MAX_REACHED_MESSAGE);
       return;
     }
 
-    // A 21st character is never accepted: only the allowed characters are kept
-    // and the warning starts its own lifecycle.
-    const nativeEvent = event.nativeEvent as InputEvent;
-    if (nativeEvent?.isComposing) {
-      setUsername(nextValue);
-      return;
-    }
-
-    setUsername(truncateUsernameToMax(nextValue));
-    setUsernameWarning(USERNAME_MAX_REACHED_MESSAGE);
+    // A usable value clears the previous warning. The counter already shows the
+    // length, so nothing is shown while the user is still typing.
+    setUsernameWarning(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

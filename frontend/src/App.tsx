@@ -8,6 +8,7 @@ import { shouldShowGlobalAuthNotice } from "./auth/authUtils";
 import { NOTICE_FADING_CLASS, useAutoDismissNotice } from "./auth/authNotice";
 import AccountActionPanel from "./auth/AccountActionPanel";
 import AuthLoading from "./auth/AuthLoading";
+import UsernameOnboarding from "./auth/UsernameOnboarding";
 
 function AuthNotice() {
   const { authError, authErrorKind, authMode, clearError } = useAuth();
@@ -45,7 +46,7 @@ function AppContent() {
     return `${url.pathname}${url.search}${url.hash}`;
   };
   const [path, setPath] = useState(getLocationKey);
-  const { isLoading } = useAuth();
+  const { isLoading, user, isAuthenticated } = useAuth();
 
   useEffect(() => onNavigation(() => setPath(getLocationKey())), []);
 
@@ -70,6 +71,19 @@ function AppContent() {
 
   if (isLoading) {
     return <AuthLoading />;
+  }
+
+  /*
+   * An account created through Google has no Arcadia username yet. Until one is
+   * stored the application is not reachable at all: the onboarding modal is the
+   * only thing rendered, and it has no close button, so signing in with Google
+   * alone can never be mistaken for finishing setup. A Google sign-in that
+   * already has a username falls straight through to the normal application.
+   */
+  const needsUsernameSetup = isAuthenticated && Boolean(user?.usernameSetupRequired);
+
+  if (needsUsernameSetup) {
+    return <UsernameOnboarding />;
   }
 
   const isGamesPage = path.startsWith("/games");

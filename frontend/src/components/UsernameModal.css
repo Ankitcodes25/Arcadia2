@@ -1,0 +1,171 @@
+.unm-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 1250;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	background: rgba(3, 2, 10, 0.7);
+	backdrop-filter: blur(4px);
+	animation: unmBackdropIn 180ms ease-out;
+}
+
+.unm-modal {
+	position: relative;
+	width: min(100%, 440px);
+	padding: 34px 30px 28px;
+	border: 1px solid rgba(224, 105, 255, 0.85);
+	border-radius: 22px;
+	background: linear-gradient(150deg, rgba(63, 25, 86, 0.94), rgba(19, 8, 38, 0.97) 78%);
+	box-shadow:
+		0 30px 90px rgba(0, 0, 0, 0.75),
+		0 0 28px rgba(211, 64, 255, 0.4),
+		inset 0 0 30px rgba(180, 59, 238, 0.1);
+	color: white;
+	text-align: center;
+	animation: unmModalIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.unm-close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border: 0;
+	border-radius: 9px;
+	background: rgba(224, 105, 255, 0.14);
+	color: rgba(255, 255, 255, 0.75);
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.unm-close svg { width: 17px; height: 17px; }
+.unm-close:hover { background: rgba(224, 105, 255, 0.24); color: white; }
+
+.unm-title {
+	margin: 0 0 24px;
+	color: white;
+	font-size: 22px;
+	font-weight: 800;
+	letter-spacing: 0.2px;
+}
+
+.unm-input-box {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 13px 16px;
+	border: 1px solid rgba(224, 105, 255, 0.35);
+	border-radius: 14px;
+	background: rgba(20, 14, 40, 0.55);
+	color: rgba(216, 200, 250, 0.55);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.unm-input-box svg { width: 18px; height: 18px; flex: none; opacity: 0.7; }
+
+.unm-input-box:focus-within {
+	border-color: #e34dff;
+	box-shadow: 0 0 0 3px rgba(224, 105, 255, 0.18);
+}
+
+.unm-input-box--error {
+	border-color: rgba(251, 113, 133, 0.7);
+}
+
+.unm-input {
+	flex: 1;
+	min-width: 0;
+	border: 0;
+	outline: none;
+	background: transparent;
+	color: white;
+	font: inherit;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.unm-input::placeholder { color: rgba(216, 200, 250, 0.4); }
+
+.unm-counter {
+	flex: none;
+	color: rgba(216, 200, 250, 0.45);
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.unm-hint {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	margin: 12px 0 22px;
+	color: rgba(216, 200, 250, 0.6);
+	font-size: 12.5px;
+	font-weight: 550;
+}
+
+.unm-hint svg { width: 15px; height: 15px; flex: none; color: #d9a9ff; opacity: 0.85; }
+
+.unm-hint--error {
+	color: #fb7185;
+	font-weight: 650;
+	/* Keep in sync with NOTICE_FADE_MS in src/auth/authNotice.ts. */
+	transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.unm-hint--error.is-leaving {
+	opacity: 0;
+	transform: translateY(-3px);
+}
+
+.unm-continue {
+	display: inline-flex;
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 48px;
+	border: 0;
+	border-radius: 13px;
+	background: linear-gradient(100deg, #d83bff, #863bff);
+	color: white;
+	cursor: pointer;
+	font: inherit;
+	font-size: 14.5px;
+	font-weight: 800;
+	box-shadow: 0 6px 20px rgba(224, 105, 255, 0.38);
+	transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.unm-continue svg { width: 16px; height: 16px; }
+
+.unm-continue:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 9px 24px rgba(224, 105, 255, 0.48);
+}
+
+.unm-continue:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+
+@keyframes unmBackdropIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes unmModalIn {
+	from { opacity: 0; transform: translateY(12px) scale(0.97); }
+	to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 480px) {
+	.unm-modal { padding: 28px 20px 22px; border-radius: 18px; }
+	.unm-title { font-size: 19px; }
+}

@@ -91,16 +91,113 @@ async function checkUsernameAvailability(username) {
   return { available: !existing };
 }
 
-async function setUsername({ userId, body }) {
-  assertOnlyKeys(body, ['username']);
-  const { username } = body;
-  const validationError = getUsernameValidationError(username);
+/*
+ * The one place a username change is validated and turned into the values that
+ * are written. `setUsername`, the Google onboarding completion and the combined
+ * profile save all go through here, so there is a single username rule set, a
+ * single cooldown rule and a single comparison-only normalization.
+ */
+function resolveUsernameChange({ currentUsername, currentNormalized, currentChangedAt, nextUsername, now }) {
+  const validationError = getUsernameValidationError(nextUsername);
   if (validationError) {
     throw createError(validationError, 400);
   }
 
-  const normalized = normalizeUsername(username);
-  const displayUsername = toDisplayUsername(username);
+  const displayUsername = toDisplayUsername(nextUsername);
+  const normalized = normalizeUsername(nextUsername);
+
+  // The comparison value can be unchanged while the visible casing/spacing
+  // still needs to be updated, so both forms have to match to be a no-op.
+  if (currentNormalized === normalized && currentUsername === displayUsername) {
+    return { changed: false };
+  }
+
+  if (
+    currentChangedAt
+    && currentChangedAt.getTime() > now.getTime() - USERNAME_CHANGE_COOLDOWN_MS
+  ) {
+    throw createError('Username can be changed once every 60 seconds', 429);
+  }
+
+  return {
+    changed: true,
+    username: displayUsername,
+    usernameNormalized: normalized,
+    usernameChangedAt: now,
+  };
+}
+
+/*
+ * The one place an avatar selection is validated. Only the two supported sources
+ * exist: an allowlisted local Arcadia avatar, or the trusted Google picture the
+ * account already owns. A URL is never accepted.
+ */
+function resolveAvatarSelection({ requestedAvatar, user }) {
+  if (!isRequestObject(requestedAvatar)) {
+    throw createError('Avatar must be an object', 400);
+  }
+
+  const unexpectedKey = Object.keys(requestedAvatar).find(
+    (key) => !['type', 'value'].includes(key),
+  );
+  if (unexpectedKey) {
+    throw createError('Request contains unsupported fields', 400);
+  }
+
+  if (!isSupportedAvatarType(requestedAvatar.type)) {
+    throw createError('Avatar type must be local or google', 400);
+  }
+
+  if (requestedAvatar.type === AVATAR_TYPES.LOCAL) {
+    if (!isAllowedLocalAvatarId(requestedAvatar.value)) {
+      throw createError('Invalid local avatar', 400);
+    }
+
+    return {
+      type: AVATAR_TYPES.LOCAL,
+      value: requestedAvatar.value,
+    };
+  }
+
+  if (
+    requestedAvatar.value !== undefined
+    && requestedAvatar.value !== GOOGLE_AVATAR_VALUE
+  ) {
+    throw createError('Invalid Google avatar selection', 400);
+  }
+
+  const googlePictureUrl = getTrustedGooglePictureUrl(
+    user.google && user.google.pictureUrl,
+  );
+  if (
+    !user.google
+    || user.google.provider !== GOOGLE_PROVIDER
+    || !googlePictureUrl
+  ) {
+    throw createError('Google profile picture is unavailable', 400);
+  }
+
+  return {
+    type: AVATAR_TYPES.GOOGLE,
+    value: GOOGLE_AVATAR_VALUE,
+  };
+}
+
+function isSameAvatar(currentAvatar, nextAvatar) {
+  return Boolean(currentAvatar)
+    && currentAvatar.type === nextAvatar.type
+    && currentAvatar.value === nextAvatar.value;
+}
+
+async function setUsername({ userId, body }) {
+  assertOnlyKeys(body, ['username']);
+  const { username } = body;
+  // Rejected before any lookup, so an invalid username is a 400 for everyone.
+  const usernameError = getUsernameValidationError(username);
+  if (usernameError) {
+    throw createError(usernameError, 400);
+  }
+
   const user = await User.findById(userId)
     .select('+usernameNormalized +usernameChangedAt');
   if (!user) {
@@ -111,18 +208,16 @@ async function setUsername({ userId, body }) {
     throw createError('Account is inactive', 403);
   }
 
-  // The comparison value can be unchanged while the visible casing/spacing
-  // still needs to be updated, so both forms have to match to be a no-op.
-  if (user.usernameNormalized === normalized && user.username === displayUsername) {
-    return toAccountProfile(user);
-  }
+  const change = resolveUsernameChange({
+    currentUsername: user.username,
+    currentNormalized: user.usernameNormalized,
+    currentChangedAt: user.usernameChangedAt,
+    nextUsername: username,
+    now: new Date(),
+  });
 
-  const now = new Date();
-  if (
-    user.usernameChangedAt
-    && user.usernameChangedAt.getTime() > now.getTime() - USERNAME_CHANGE_COOLDOWN_MS
-  ) {
-    throw createError('Username can be changed once every 60 seconds', 429);
+  if (!change.changed) {
+    return toAccountProfile(user);
   }
 
   let updatedUser;
@@ -134,9 +229,9 @@ async function setUsername({ userId, body }) {
       },
       {
         $set: {
-          username: displayUsername,
-          usernameNormalized: normalized,
-          usernameChangedAt: now,
+          username: change.username,
+          usernameNormalized: change.usernameNormalized,
+          usernameChangedAt: change.usernameChangedAt,
         },
       },
       { returnDocument: 'after' },
@@ -151,7 +246,7 @@ async function setUsername({ userId, body }) {
   if (!updatedUser) {
     const latestUser = await User.findById(userId)
       .select('+usernameNormalized +usernameChangedAt');
-    if (latestUser && latestUser.usernameNormalized === normalized) {
+    if (latestUser && latestUser.usernameNormalized === change.usernameNormalized) {
       return toAccountProfile(latestUser);
     }
     throw createError('Username changed concurrently; please retry', 409);
@@ -160,28 +255,113 @@ async function setUsername({ userId, body }) {
   return toAccountProfile(updatedUser);
 }
 
+/*
+ * The My Profile "Save Changes" write.
+ *
+ * Every field is validated before anything is written and the whole change is
+ * applied with one MongoDB update, so a rejected field can never leave a half
+ * applied profile behind. Only the fields that actually changed are sent, which
+ * keeps an avatar-only save from touching the username cooldown.
+ */
 async function updateProfile({ userId, body }) {
-  assertOnlyKeys(body, ['displayName']);
-  if (!Object.prototype.hasOwnProperty.call(body, 'displayName')) {
-    throw createError('Display name is required', 400);
+  assertOnlyKeys(body, ['displayName', 'username', 'avatar']);
+
+  const hasDisplayName = Object.prototype.hasOwnProperty.call(body, 'displayName');
+  const hasUsername = Object.prototype.hasOwnProperty.call(body, 'username');
+  const hasAvatar = Object.prototype.hasOwnProperty.call(body, 'avatar');
+
+  if (!hasDisplayName && !hasUsername && !hasAvatar) {
+    throw createError('No profile changes were provided', 400);
   }
 
-  const validationError = getDisplayNameValidationError(body.displayName);
-  if (validationError) {
-    throw createError(validationError, 400);
+  let displayName;
+  if (hasDisplayName) {
+    const displayNameError = getDisplayNameValidationError(body.displayName);
+    if (displayNameError) {
+      throw createError(displayNameError, 400);
+    }
+    displayName = normalizeDisplayName(body.displayName);
   }
 
-  const displayName = normalizeDisplayName(body.displayName);
-  const user = await User.findOneAndUpdate(
-    { _id: userId, status: ACCOUNT_STATUSES.ACTIVE },
-    { $set: { displayName } },
-    { returnDocument: 'after' },
-  );
+  const user = await User.findById(userId).select('+usernameNormalized +usernameChangedAt');
   if (!user) {
     throw createError('Account not found', 404);
   }
 
-  return toAccountProfile(user);
+  // Same condition as the previous display-name-only write: an account that is
+  // not active cannot be edited through this endpoint.
+  if (user.status !== ACCOUNT_STATUSES.ACTIVE) {
+    throw createError('Account not found', 404);
+  }
+
+  const now = new Date();
+  const updates = {};
+  const guard = { _id: userId, status: ACCOUNT_STATUSES.ACTIVE };
+  let usernameChange = { changed: false };
+
+  if (hasUsername) {
+    usernameChange = resolveUsernameChange({
+      currentUsername: user.username,
+      currentNormalized: user.usernameNormalized,
+      currentChangedAt: user.usernameChangedAt,
+      nextUsername: body.username,
+      now,
+    });
+
+    if (usernameChange.changed) {
+      updates.username = usernameChange.username;
+      updates.usernameNormalized = usernameChange.usernameNormalized;
+      updates.usernameChangedAt = usernameChange.usernameChangedAt;
+      // A concurrent username change is detected instead of overwritten.
+      guard.usernameNormalized = user.usernameNormalized || null;
+    }
+  }
+
+  if (hasAvatar) {
+    const avatar = resolveAvatarSelection({ requestedAvatar: body.avatar, user });
+    if (!isSameAvatar(user.avatar, avatar)) {
+      updates.avatar = avatar;
+    }
+  }
+
+  if (hasDisplayName && displayName !== user.displayName) {
+    updates.displayName = displayName;
+  }
+
+  if (!Object.keys(updates).length) {
+    return toAccountProfile(user);
+  }
+
+  let updatedUser;
+  try {
+    updatedUser = await User.findOneAndUpdate(
+      guard,
+      { $set: updates },
+      { returnDocument: 'after' },
+    ).select('+usernameNormalized +usernameChangedAt');
+  } catch (error) {
+    if (error && error.code === 11000) {
+      throw createError('That username is already taken', 409);
+    }
+    throw error;
+  }
+
+  if (!updatedUser) {
+    if (usernameChange.changed) {
+      const latestUser = await User.findById(userId)
+        .select('+usernameNormalized +usernameChangedAt');
+      if (
+        latestUser
+        && latestUser.usernameNormalized === usernameChange.usernameNormalized
+        && latestUser.username === usernameChange.username
+      ) {
+        return toAccountProfile(latestUser);
+      }
+    }
+    throw createError('Profile changed concurrently; please retry', 409);
+  }
+
+  return toAccountProfile(updatedUser);
 }
 
 async function updateAvatar({ userId, body }) {
@@ -198,39 +378,10 @@ async function updateAvatar({ userId, body }) {
     throw createError('Account is inactive', 403);
   }
 
-  let avatar;
-  if (body.type === AVATAR_TYPES.LOCAL) {
-    if (!isAllowedLocalAvatarId(body.value)) {
-      throw createError('Invalid local avatar', 400);
-    }
-    avatar = {
-      type: AVATAR_TYPES.LOCAL,
-      value: body.value,
-    };
-  } else {
-    if (
-      body.value !== undefined
-      && body.value !== GOOGLE_AVATAR_VALUE
-    ) {
-      throw createError('Invalid Google avatar selection', 400);
-    }
-
-    const googlePictureUrl = getTrustedGooglePictureUrl(
-      user.google && user.google.pictureUrl,
-    );
-    if (
-      !user.google
-      || user.google.provider !== GOOGLE_PROVIDER
-      || !googlePictureUrl
-    ) {
-      throw createError('Google profile picture is unavailable', 400);
-    }
-
-    avatar = {
-      type: AVATAR_TYPES.GOOGLE,
-      value: GOOGLE_AVATAR_VALUE,
-    };
-  }
+  const avatar = resolveAvatarSelection({
+    requestedAvatar: { type: body.type, value: body.value },
+    user,
+  });
 
   const updatedUser = await User.findOneAndUpdate(
     { _id: userId },

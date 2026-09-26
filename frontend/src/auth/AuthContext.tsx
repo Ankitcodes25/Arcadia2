@@ -23,6 +23,8 @@ import type {
   AuthUser,
   LoginValues,
   LogoutOtherSessionsResponse,
+  ProfileUpdate,
+  ProfileUpdateResult,
   RegisterValues,
   RevokeSessionResponse,
 } from "./authTypes";
@@ -46,6 +48,7 @@ type AuthContextValue = {
   clearError: () => void;
   dismissAccountAction: () => void;
   updateUser: (user: AuthUser) => void;
+  updateProfile: (changes: ProfileUpdate) => Promise<ProfileUpdateResult>;
   login: (values: LoginValues) => Promise<boolean>;
   register: (values: RegisterValues) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<string>;
@@ -124,6 +127,39 @@ function AuthProvider({ children }: AuthProviderProps) {
     }
     setUser(nextUser);
   }, [clearLocalAuth]);
+
+  /*
+   * The single account profile write used by My Profile and by Account Settings.
+   *
+   * The backend persists the change first and returns the stored profile, which
+   * is then pushed into the auth state. Because Navbar, the profile popup and
+   * My Profile all read that one state, they update from the same persisted
+   * values instead of from local component state.
+   *
+   * A failure resolves with `ok: false`, the server's safe message and the HTTP
+   * status, leaving the previous state untouched, so no surface can show an
+   * unsaved change. The status is what lets a caller recognise a 409 uniqueness
+   * conflict and report it as "already taken" rather than as a generic failure.
+   */
+  const updateProfile = useCallback(async (
+    changes: ProfileUpdate,
+  ): Promise<ProfileUpdateResult> => {
+    try {
+      const response = await authApi.updateProfile(changes);
+      updateUser(response.user);
+      return { ok: true, message: null, status: null, user: response.user };
+    } catch (requestError) {
+      return {
+        ok: false,
+        message: getAuthErrorMessage(
+          requestError,
+          "Your profile could not be saved. Please try again.",
+        ),
+        status: requestError instanceof AuthApiError ? requestError.status : null,
+        user: null,
+      };
+    }
+  }, [updateUser]);
 
   const setVisibleError = useCallback((message: string, kind: AuthErrorKind) => {
     setAuthError(message);
@@ -477,6 +513,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     clearError,
     dismissAccountAction,
     updateUser,
+    updateProfile,
     login,
     register,
     forgotPassword,
@@ -512,6 +549,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     resendVerification,
     revokeSession,
     submitPasswordReset,
+    updateProfile,
     updateUser,
     user,
   ]);

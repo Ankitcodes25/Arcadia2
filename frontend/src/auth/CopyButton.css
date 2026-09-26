@@ -1,0 +1,65 @@
+/* Copy-to-clipboard control for a read-only identity value.
+   Deliberately small and unobtrusive so it fits beside a username or Player ID
+   without competing with them for attention. */
+
+.copy-field {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	flex: none;
+}
+
+.copy-field-button {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	flex: none;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 7px;
+	background: rgba(224, 105, 255, 0.12);
+	color: rgba(216, 200, 250, 0.7);
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.copy-field-button svg { width: 12px; height: 12px; }
+
+.copy-field-button:hover:not(:disabled) {
+	border-color: rgba(224, 105, 255, 0.45);
+	background: rgba(224, 105, 255, 0.22);
+	color: white;
+}
+
+.copy-field-button:disabled { cursor: not-allowed; opacity: 0.4; }
+
+.copy-field-feedback {
+	position: absolute;
+	bottom: calc(100% + 6px);
+	left: 50%;
+	z-index: 5;
+	padding: 4px 9px;
+	border: 1px solid rgba(224, 105, 255, 0.45);
+	border-radius: 8px;
+	background: rgba(28, 12, 48, 0.96);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+	color: #e9d5ff;
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+	white-space: nowrap;
+	transform: translateX(-50%);
+	pointer-events: none;
+	/* Keep in sync with NOTICE_FADE_MS in src/auth/authNotice.ts. */
+	transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.copy-field-feedback.is-leaving {
+	opacity: 0;
+	transform: translate(-50%, -3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.copy-field-feedback { transition: none; }
+}
