@@ -5,8 +5,11 @@ import type {
   AuthMessageResponse,
   AuthResponse,
   AuthUser,
+  LevelBadgeKey,
+  LevelThemeKey,
   LoginValues,
   LogoutOtherSessionsResponse,
+  ProfileUpdate,
   RegisterValues,
   RevokeSessionResponse,
   UsernameAvailabilityResponse,
@@ -106,6 +109,45 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
+const BADGE_KEYS: readonly LevelBadgeKey[] = [
+  "bronze",
+  "silver",
+  "gold",
+  "diamond",
+  "crown",
+  "flame",
+];
+
+const THEME_KEYS: readonly LevelThemeKey[] = [
+  "neutral-grey",
+  "bright-green",
+  "deep-cyan",
+  "crimson-red",
+  "electric-purple",
+  "neon-golden",
+];
+
+/**
+ * Progression is read-only, backend-derived data. It is validated rather than
+ * trusted so a malformed payload is rejected instead of being rendered, and it
+ * is never accepted back from the client on a write.
+ */
+function isProgression(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return Number.isFinite(value.totalXp)
+    && Number.isFinite(value.level)
+    && Number.isInteger(value.level)
+    && (value.level as number) >= 0
+    && Number.isFinite(value.currentLevelXp)
+    && Number.isFinite(value.nextLevelXp)
+    && Number.isFinite(value.progressPercent)
+    && (value.progressPercent as number) >= 0
+    && (value.progressPercent as number) <= 100
+    && typeof value.title === "string"
+    && BADGE_KEYS.includes(value.badgeKey as LevelBadgeKey)
+    && THEME_KEYS.includes(value.themeKey as LevelThemeKey);
+}
+
 function isAuthUser(value: unknown): value is AuthUser {
   return isRecord(value)
     && typeof value.id === "string"
@@ -117,7 +159,9 @@ function isAuthUser(value: unknown): value is AuthUser {
     && typeof value.emailVerified === "boolean"
     && isRecord(value.avatar)
     && (value.avatar.type === "local" || value.avatar.type === "google")
-    && typeof value.avatar.value === "string";
+    && typeof value.avatar.value === "string"
+    && (value.playerId === null || typeof value.playerId === "string")
+    && isProgression(value.progression);
 }
 
 function isAuthResponse(value: unknown): value is AuthResponse {
@@ -337,10 +381,20 @@ export const authApi = {
     );
   },
 
-  updateProfile(values: { displayName: string }) {
+  /*
+   * The one account profile write. Only the fields that were actually changed
+   * are sent, and the backend applies them together and returns the persisted
+   * profile. XP, level, title and badge are never part of a request body.
+   */
+  updateProfile(changes: ProfileUpdate) {
+    const body: Record<string, unknown> = {};
+    if (changes.displayName !== undefined) body.displayName = changes.displayName;
+    if (changes.username !== undefined) body.username = changes.username;
+    if (changes.avatar !== undefined) body.avatar = changes.avatar;
+
     return request<AccountProfileResponse>(
       "/api/v1/account/profile",
-      { method: "PATCH", body: values },
+      { method: "PATCH", body },
       { credentials: "omit" },
     );
   },

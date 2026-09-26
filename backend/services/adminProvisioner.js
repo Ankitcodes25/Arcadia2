@@ -15,6 +15,7 @@ const {
   getPasswordValidationError,
 } = require('../utils/passwordPolicy');
 const { hashPassword } = require('../utils/bcrypt');
+const { createUserWithPlayerId } = require('./playerIdService');
 const {
   normalizeDisplayName,
   getDisplayNameValidationError,
@@ -200,8 +201,9 @@ function buildAdminDocument({ normalizedEmail, normalizedName, passwordHash, adm
 
 async function createAdminUser(adminDocument, session) {
   const options = session ? { session } : undefined;
-  const [admin] = await User.create([adminDocument], options);
-  return admin;
+  // The schema default assigns the permanent Player ID; this wrapper also retries
+  // if the unique index ever rejects a collision.
+  return createUserWithPlayerId(adminDocument, options);
 }
 
 async function verifyAdminPostcondition(adminId, normalizedEmail, session) {

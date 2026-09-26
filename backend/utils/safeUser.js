@@ -10,6 +10,8 @@ const {
   isAllowedLocalAvatarId,
 } = require('../config/avatar');
 const { getTrustedGooglePictureUrl } = require('./profileValidation');
+const { getProgression } = require('./progression');
+const { isValidPlayerId } = require('./playerId');
 
 function getGoogleIdentity(user, source) {
   if (user && typeof user === 'object' && user.google) {
@@ -65,6 +67,10 @@ function toSafeUser(user) {
       ? 'GOOGLE'
       : 'PASSWORD',
     usernameSetupRequired: !hasUsername,
+    // The permanent public Player ID. Only ever exposed when it is well formed,
+    // so an account awaiting its backfill reports null rather than a broken value.
+    playerId: isValidPlayerId(source.playerId) ? source.playerId : null,
+    progression: getProgression(source.totalXp),
     role: source.role === USER_ROLES.ADMIN ? USER_ROLES.ADMIN : USER_ROLES.USER,
     status: Object.values(ACCOUNT_STATUSES).includes(source.status)
       ? source.status
@@ -76,15 +82,41 @@ function toSafeUser(user) {
   };
 }
 
+/*
+ * Gaming statistics.
+ *
+ * No Arcadia game records exist yet, so these are neutral zero values rather
+ * than invented numbers. They live on the account profile response only, which
+ * keeps every gaming stat owned by the backend and gives the future game
+ * systems one place to populate real values. Level and badge progression are
+ * derived from XP alone and never read from here.
+ */
+function toGamingStats(source) {
+  const gamesPlayed = Number(source && source.gamesPlayed);
+  const gamesWon = Number(source && source.gamesWon);
+
+  return {
+    gamesPlayed: Number.isFinite(gamesPlayed) && gamesPlayed > 0 ? Math.floor(gamesPlayed) : 0,
+    gamesWon: Number.isFinite(gamesWon) && gamesWon > 0 ? Math.floor(gamesWon) : 0,
+    totalScore: 0,
+    bestScore: 0,
+    currentStreak: 0,
+    winRatePercent: 0,
+  };
+}
+
 function toAccountProfile(user) {
   const safeUser = toSafeUser(user);
   if (!safeUser) {
     return null;
   }
 
+  const source = typeof user.toObject === 'function' ? user.toObject() : user;
+
   return {
     ...safeUser,
     googleAvatarUrl: safeUser.googleAvatarUrl,
+    gamingStats: toGamingStats(source && source.gamingStats),
   };
 }
 

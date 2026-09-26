@@ -163,9 +163,13 @@ async function me(req, res, next) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const user = req.user.id && req.user.createdAt
-      ? req.user
-      : await authService.getUserById(req.user.id);
+    /*
+     * `req.user` is the already serialized safe user produced by the auth
+     * middleware, so it is re-read from the database here instead of being
+     * re-serialized. That keeps `/me` derived from the current account record,
+     * which is where the authoritative username, avatar and XP totals live.
+     */
+    const user = await authService.getUserById(req.user.id);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid or expired token' });

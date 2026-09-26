@@ -11,6 +11,7 @@ const user = {
   name: "Ankit Das",
   username: "ankitbuilds",
   usernameSetupRequired: false,
+  playerId: "ARC-7K4M2P9Q",
   displayName: "Ankit Das",
   avatar: { type: "google", value: "google" },
   avatarSource: "google",
@@ -45,12 +46,14 @@ after(async () => {
   await vite?.close();
 });
 
-function renderPopup() {
+function renderPopup(overrides = {}) {
   return renderToStaticMarkup(React.createElement(ProfilePopupModal, {
     user,
+    isMyProfileOpen: false,
     onClose: () => {},
     onLogout: () => {},
     isLoggingOut: false,
+    ...overrides,
   }));
 }
 
@@ -72,4 +75,34 @@ test("profile popup contains exactly the five approved menu options", () => {
     assert.doesNotMatch(markup, new RegExp(`>${label}<`));
   }
   assert.equal((markup.match(/class="profile-popup-item/g) || []).length, 5);
+});
+
+test("the profile popup exposes no email address or verification state", () => {
+  const markup = renderPopup();
+
+  assert.doesNotMatch(markup, /user@example\.com/);
+  assert.doesNotMatch(markup, /Verified/i);
+  assert.doesNotMatch(markup, /profile-popup-email/);
+});
+
+test("the profile popup identity leads with the Player ID and copies it", () => {
+  const markup = renderPopup();
+
+  // Player ID, then username, then the progression badge title.
+  const fields = [...markup.matchAll(/data-field="([a-zA-Z]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(fields, ["playerId", "username", "progressionTitle"]);
+
+  assert.match(markup, /ARC-7K4M2P9Q/);
+  assert.match(markup, /aria-label="Copy player ID"/);
+  // Username copy is not added to the popup.
+  assert.doesNotMatch(markup, /aria-label="Copy username"/);
+});
+
+test("the profile popup badge title comes from the progression payload", () => {
+  const markup = renderPopup({
+    user: { ...user, progression: { title: "Arcadia Vanguard", themeKey: "electric-purple" } },
+  });
+
+  assert.match(markup, /Arcadia Vanguard/);
+  assert.match(markup, /profile-popup-badge--electric-purple/);
 });

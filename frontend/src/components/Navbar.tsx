@@ -4,8 +4,10 @@ import logo from "../assets/ArcadialogoA.png";
 import { navigateTo } from "../lib/navigation";
 import { useAuth } from "../auth/AuthContext";
 import AvatarPreview from "../auth/AvatarPreview";
+import { getUserProgressionView } from "../auth/progression";
 import type { AuthFormValues } from "../auth/authTypes";
 import LoginSignupModal from "./LoginSignupModal";
+import MyProfileContainer from "../pages/Myprofile/MyProfileContainer";
 import ProfilePopupModal from "./ProfilePopupmodal";
 
 type NavItem = "home" | "games" | "popular" | "about";
@@ -35,6 +37,7 @@ function getInitialNavItem(): NavItem {
 
 function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
   const {
     user,
     isAuthenticated,
@@ -55,6 +58,13 @@ function Navbar() {
 
   const [activeNavItem, setActiveNavItem] =
     useState<NavItem>(getInitialNavItem);
+
+  /*
+   * The whole identity block reads the progression the backend already returned
+   * with the authenticated user. The badge tier title stays in My Profile; the
+   * navbar shows the level and the XP toward the next one instead.
+   */
+  const identity = getUserProgressionView(user);
 
   const navbarNavRef = useRef<HTMLElement>(null);
 
@@ -363,7 +373,45 @@ function Navbar() {
           {isAuthenticated && user ? (
             <div className="profile-menu-wrapper">
               <div className="navbar-profile-identity">
-                <span className="navbar-username">{user.username}</span>
+                {/*
+                  Username, level/XP and the XP bar are a pure view of the
+                  progression the backend already put on the authenticated user.
+                  Nothing here calculates a level or an XP requirement.
+                */}
+                <button
+                  type="button"
+                  className="navbar-identity-button"
+                  aria-label="Open account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileOpen}
+                  onClick={() =>
+                    setIsProfileOpen(
+                      (open) => !open
+                    )
+                  }
+                >
+                  <span className="navbar-username">{user.username}</span>
+
+                  <span className="navbar-identity-meta">
+                    <span className="navbar-level">Lv. {identity.level}</span>
+                    <span className="navbar-identity-divider" aria-hidden="true" />
+                    <span className="navbar-xp">{identity.xpLabel}</span>
+                  </span>
+
+                  <span
+                    className="navbar-xp-track"
+                    role="progressbar"
+                    aria-label={`XP toward Level ${identity.level + 1}`}
+                    aria-valuemin={0}
+                    aria-valuemax={identity.nextLevelXp}
+                    aria-valuenow={identity.currentLevelXp}
+                  >
+                    <span
+                      className="navbar-xp-fill"
+                      style={{ width: `${identity.progressPercent}%` }}
+                    />
+                  </span>
+                </button>
 
                 <button
                   type="button"
@@ -387,8 +435,18 @@ function Navbar() {
               {isProfileOpen && (
                 <ProfilePopupModal
                   user={user}
+                  isMyProfileOpen={isMyProfileOpen}
                   onClose={() =>
                     setIsProfileOpen(false)
+                  }
+                  /*
+                    My Profile is a layer above this menu, not a replacement for
+                    it, so opening it deliberately leaves the menu open. Closing
+                    My Profile only clears its own flag, which brings the still
+                    open menu back into view underneath.
+                  */
+                  onOpenMyProfile={() =>
+                    setIsMyProfileOpen(true)
                   }
                   onLogout={handleLogout}
                   isLoggingOut={isSubmitting}
@@ -426,6 +484,15 @@ function Navbar() {
 
         </div>
       </div>
+
+      {/* My Profile always re-reads the account profile from the backend, and
+          a save updates the shared auth state, so this Navbar and the modal
+          never disagree about the username or the avatar. Its X is a back
+          action: it clears only this flag, and the Profile Popup that is still
+          mounted above stays open. */}
+      {isMyProfileOpen && user && (
+        <MyProfileContainer onClose={() => setIsMyProfileOpen(false)} />
+      )}
 
       {/* ---------------------------------------------------
           AUTH MODAL

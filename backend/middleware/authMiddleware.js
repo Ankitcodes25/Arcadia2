@@ -59,7 +59,13 @@ async function authMiddleware(req, res, next) {
 
     return next();
   } catch (error) {
-    if (error?.name === 'CastError' && error?.path === 'tokenVersion') {
+    /*
+     * A cast failure while loading the account means the stored record is
+     * malformed, which covers the numeric security fields (`tokenVersion`) and
+     * the numeric progression field (`totalXp`). Such a token is never trusted,
+     * and the request fails closed with the same generic message.
+     */
+    if (error && error.name === 'CastError') {
       return unauthorized(res, 'Invalid or expired token');
     }
     return next(error);
