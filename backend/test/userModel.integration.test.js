@@ -1,6 +1,8 @@
 const { after, afterEach, before, beforeEach, test } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { once } = require('node:events');
 const bcrypt = require('bcryptjs');
@@ -47,6 +49,26 @@ let toDisplayUsername;
 let RESERVED_USERNAMES;
 let emailMessages;
 let googleOAuthService;
+let progressionService;
+let XP_GRANT_SOURCES;
+let XP_REWARDS;
+let MATCH_RESULTS;
+let XP_AWARD_REASONS;
+let XP_EARNING_GAME;
+let getProgression;
+let getLevelFromTotalXp;
+let getCumulativeXpForLevel;
+let getXpToAdvanceFromLevel;
+let normalizeTotalXp;
+let MAX_TOTAL_XP;
+let getLevelBadge;
+let LEVEL_BADGE_TIERS;
+let generatePlayerId;
+let isValidPlayerId;
+let PLAYER_ID_PATTERN;
+let PLAYER_ID_ALPHABET;
+let playerIdService;
+let backfillMissingPlayerIds;
 let generateOAuthState;
 let generateOAuthHandoffCode;
 let generateOAuthCodeVerifier;
@@ -111,6 +133,31 @@ before(async () => {
   } = require('../utils/username'));
   emailService = require('../services/emailService');
   googleOAuthService = require('../services/googleOAuthService');
+  progressionService = require('../services/progressionService');
+  ({
+    XP_GRANT_SOURCES,
+    XP_REWARDS,
+    MATCH_RESULTS,
+    XP_AWARD_REASONS,
+  } = progressionService);
+  ({
+    getProgression,
+    getLevelFromTotalXp,
+    getCumulativeXpForLevel,
+    getXpToAdvanceFromLevel,
+    normalizeTotalXp,
+    MAX_TOTAL_XP,
+    XP_EARNING_GAME,
+  } = require('../utils/progression'));
+  ({ getLevelBadge, LEVEL_BADGE_TIERS } = require('../config/levelBadges'));
+  ({
+    generatePlayerId,
+    isValidPlayerId,
+    PLAYER_ID_PATTERN,
+    PLAYER_ID_ALPHABET,
+  } = require('../utils/playerId'));
+  playerIdService = require('../services/playerIdService');
+  ({ backfillMissingPlayerIds } = playerIdService);
   ({
     generateOAuthState,
     generateOAuthHandoffCode,
@@ -251,6 +298,67 @@ async function registerAndLogin(server, email = 'session@example.com') {
   });
 
   return { registered, loggedIn, refreshCookie: getRefreshCookie(loggedIn.response) };
+}
+
+/*
+ * Runs one complete Google sign-in through the real state/PKCE/nonce/handoff
+ * path and returns the authenticated headers, so a test can act as a Google
+ * account that has just been created.
+ */
+async function signInWithGoogle(server) {
+  setGoogleMock();
+  const started = await startGoogleOAuth(server);
+  const callback = await completeGoogleCallback(server, {
+    state: started.state,
+    stateCookie: started.stateCookie,
+  });
+  const location = callback.response.headers.get('location');
+  const handoffCode = getLocationQuery(location, 'oauth_code');
+  const refreshCookie = getRefreshCookie(callback.response);
+  const exchanged = await requestJson(server, '/api/v1/auth/google/exchange', {
+    method: 'POST',
+    body: { code: handoffCode },
+  });
+
+  return {
+    callback,
+    handoffCode,
+    refreshCookie,
+    token: exchanged.body.token,
+    userId: exchanged.body.user.id,
+    user: exchanged.body.user,
+    headers: {
+      authorization: `Bearer ${exchanged.body.token}`,
+      cookie: `${REFRESH_COOKIE_NAME}=${refreshCookie}`,
+    },
+  };
+}
+
+/** Moves a username change outside the cooldown window. */
+async function clearUsernameCooldown(userId) {
+  await User.collection.updateOne(
+    { _id: new mongoose.Types.ObjectId(userId) },
+    {
+      $set: {
+        usernameChangedAt: new Date(Date.now() - USERNAME_CHANGE_COOLDOWN_MS - 1000),
+      },
+    },
+  );
+}
+
+/**
+ * Records a server-validated Arcadion match result through the progression
+ * service. Defaults to the only outcome that grants XP: a verified win against
+ * ARCADION.
+ */
+function recordArcadionResult(userId, overrides = {}) {
+  return progressionService.awardArcadionXp({
+    userId,
+    game: XP_EARNING_GAME,
+    result: MATCH_RESULTS.WIN,
+    verified: true,
+    ...overrides,
+  });
 }
 
 async function provisionAndLoginAdmin(
@@ -575,6 +683,8 @@ test('does not select password hashes unless explicitly requested and safe seria
       'id',
       'lastLoginAt',
       'name',
+      'playerId',
+      'progression',
       'role',
       'status',
       'updatedAt',
@@ -3699,6 +3809,1552 @@ test('missing Google OAuth configuration returns a safe 503 instead of a generic
       else process.env[name] = saved[name];
     }
     await stopHttpServer(server);
+  }
+});
+
+/* ==================================================================
+   ACCOUNT IDENTITY: normal signup, Google onboarding, My Profile save
+   ================================================================== */
+
+test('normal signup stores the entered username and serves it back from the database', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const registered = await requestJson(server, '/api/v1/auth/register', {
+      method: 'POST',
+      body: {
+        username: '  Ankit@Arcadia  ',
+        email: 'identity-signup@example.com',
+        password: 'identity-signup-password',
+      },
+    });
+
+    assert.equal(registered.response.status, 201);
+    assert.equal(registered.body.user.username, 'Ankit@Arcadia');
+    assert.equal(registered.body.user.usernameSetupRequired, false);
+
+    // The exact visible form is stored; the comparison value is only folded.
+    const stored = await User.findOne({ email: 'identity-signup@example.com' })
+      .select('+usernameNormalized');
+    assert.equal(stored.username, 'Ankit@Arcadia');
+    assert.equal(stored.usernameNormalized, 'ankit@arcadia');
+
+    // A later session never has to trust a stale client value.
+    const login = await requestJson(server, '/api/v1/auth/login', {
+      method: 'POST',
+      body: { email: 'identity-signup@example.com', password: 'identity-signup-password' },
+    });
+    assert.equal(login.response.status, 200);
+    assert.equal(login.body.user.username, 'Ankit@Arcadia');
+
+    const profile = await requestJson(server, '/api/v1/account/profile', {
+      headers: { authorization: `Bearer ${login.body.token}` },
+    });
+    assert.equal(profile.body.user.username, 'Ankit@Arcadia');
+    assert.equal(profile.body.user.usernameSetupRequired, false);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('a new Google account requires username setup until the username is stored', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const google = await signInWithGoogle(server);
+
+    // Google sign-in alone never invents a username.
+    assert.equal(google.user.username, null);
+    assert.equal(google.user.usernameSetupRequired, true);
+    assert.equal(
+      (await User.findById(google.userId)).username,
+      null,
+      'no username is written by the OAuth flow',
+    );
+
+    // The onboarding state is visible on the profile response too.
+    const beforeSetup = await requestJson(server, '/api/v1/account/profile', {
+      headers: google.headers,
+    });
+    assert.equal(beforeSetup.response.status, 200);
+    assert.equal(beforeSetup.body.user.username, null);
+    assert.equal(beforeSetup.body.user.usernameSetupRequired, true);
+
+    // A Google account can never take a username it already owns.
+    const completed = await requestJson(server, '/api/v1/account/username', {
+      method: 'PATCH',
+      headers: google.headers,
+      body: { username: '  Ｇoogle Player  ' },
+    });
+    assert.equal(completed.response.status, 200);
+    assert.equal(completed.body.user.username, 'Ｇoogle Player');
+    assert.equal(completed.body.user.usernameSetupRequired, false);
+
+    const stored = await User.findById(google.userId).select('+usernameNormalized');
+    assert.equal(stored.username, 'Ｇoogle Player');
+    assert.equal(stored.usernameNormalized, 'ｇoogle player');
+
+    // Setup stays complete for later sessions, and the Google identity is intact.
+    const profile = await requestJson(server, '/api/v1/account/profile', {
+      headers: google.headers,
+    });
+    assert.equal(profile.body.user.usernameSetupRequired, false);
+    assert.equal(profile.body.user.authProvider, 'GOOGLE');
+    assert.equal(profile.body.user.googleAvatarAvailable, true);
+    const refreshedUser = await User.findById(google.userId);
+    assert.equal(refreshedUser.google.subject, 'google-subject-123');
+    assert.equal(refreshedUser.tokenVersion, 0);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the combined profile save persists username and avatar together', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'combined-save@example.com');
+    const userId = account.registered.body.user.id;
+    const headers = { authorization: `Bearer ${account.loggedIn.body.token}` };
+
+    const saved = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: {
+        username: 'Combined Save',
+        avatar: { type: 'local', value: LOCAL_AVATAR_IDS[2] },
+      },
+    });
+
+    assert.equal(saved.response.status, 200);
+    assert.equal(saved.body.user.username, 'Combined Save');
+    assert.deepEqual(saved.body.user.avatar, {
+      type: 'local',
+      value: LOCAL_AVATAR_IDS[2],
+    });
+    assertNoSensitiveFields(saved.body);
+
+    const stored = await User.findById(userId).select('+usernameNormalized');
+    assert.equal(stored.username, 'Combined Save');
+    assert.equal(stored.usernameNormalized, 'combined save');
+    assert.equal(stored.avatar.value, LOCAL_AVATAR_IDS[2]);
+
+    // Reopening the profile reads the same values back from the database.
+    const reopened = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(reopened.body.user.username, 'Combined Save');
+    assert.equal(reopened.body.user.avatar.value, LOCAL_AVATAR_IDS[2]);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the combined profile save keeps a single username rule set and cooldown', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const owner = await registerAndLogin(server, 'combined-owner@example.com');
+    await requestJson(server, '/api/v1/account/username', {
+      method: 'PATCH',
+      headers: { authorization: `Bearer ${owner.loggedIn.body.token}` },
+      body: { username: 'Taken_Name' },
+    });
+    const ownerId = owner.registered.body.user.id;
+    const ownerAvatar = (await User.findById(ownerId)).avatar;
+
+    const account = await registerAndLogin(server, 'combined-rules@example.com');
+    const userId = account.registered.body.user.id;
+    const headers = { authorization: `Bearer ${account.loggedIn.body.token}` };
+
+    // Rejected usernames are rejected here too, and nothing is written.
+    for (const username of ['', 'ab', 'admin', 'zero\u200bwidth', 'x'.repeat(21)]) {
+      const rejected = await requestJson(server, '/api/v1/account/profile', {
+        method: 'PATCH',
+        headers,
+        body: { username, avatar: { type: 'local', value: LOCAL_AVATAR_IDS[0] } },
+      });
+      assert.equal(rejected.response.status, 400, username);
+    }
+    const untouched = await User.findById(userId).select('+usernameNormalized');
+    assert.equal(untouched.username, null);
+    assert.equal(untouched.avatar.value, 'avatar-01');
+
+    // A taken username is refused, and the avatar in the same request is not applied.
+    const duplicate = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: {
+        username: 'TAKEN_NAME',
+        avatar: { type: 'local', value: LOCAL_AVATAR_IDS[3] },
+      },
+    });
+    assert.equal(duplicate.response.status, 409);
+    assert.equal(duplicate.body.error, 'That username is already taken');
+    const afterDuplicate = await User.findById(userId).select('+usernameNormalized');
+    assert.equal(afterDuplicate.username, null);
+    assert.equal(afterDuplicate.avatar.value, 'avatar-01');
+    assert.equal((await User.findById(ownerId)).avatar.value, ownerAvatar.value);
+
+    // A case-only change keeps the same comparison value but updates the visible form.
+    await clearUsernameCooldown(userId);
+    const first = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: { username: 'Case_Only' },
+    });
+    assert.equal(first.response.status, 200);
+    assert.equal(first.body.user.username, 'Case_Only');
+
+    // The cooldown still applies to the combined save.
+    const cooldown = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: {
+        username: 'case_only_two',
+        avatar: { type: 'local', value: LOCAL_AVATAR_IDS[4] },
+      },
+    });
+    assert.equal(cooldown.response.status, 429);
+    assert.equal(cooldown.body.error, 'Username can be changed once every 60 seconds');
+    const afterCooldown = await User.findById(userId).select('+usernameNormalized');
+    assert.equal(afterCooldown.username, 'Case_Only');
+    assert.equal(afterCooldown.avatar.value, 'avatar-01', 'the avatar was not applied');
+
+    // An avatar-only save never consumes or blocks on the username cooldown.
+    await clearUsernameCooldown(userId);
+    const recased = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: { username: 'case_only' },
+    });
+    assert.equal(recased.response.status, 200);
+    assert.equal(recased.body.user.username, 'case_only');
+    const avatarOnly = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: { avatar: { type: 'local', value: LOCAL_AVATAR_IDS[4] } },
+    });
+    assert.equal(avatarOnly.response.status, 200);
+    assert.equal(avatarOnly.body.user.avatar.value, LOCAL_AVATAR_IDS[4]);
+    assert.equal(avatarOnly.body.user.username, 'case_only');
+
+    // A suspended account is refused by the existing access-token middleware
+    // before the profile write is ever reached, so no identity field can change.
+    await User.updateOne(
+      { _id: userId },
+      { $set: { status: ACCOUNT_STATUSES.SUSPENDED } },
+    );
+    const inactive = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: { username: 'suspended_change' },
+    });
+    assert.equal(inactive.response.status, 403);
+    assert.equal(inactive.body.error, 'Account is inactive');
+    const suspendedUser = await User.findById(userId).select('+usernameNormalized');
+    assert.equal(suspendedUser.username, 'case_only');
+    assert.equal(suspendedUser.avatar.value, LOCAL_AVATAR_IDS[4]);
+
+    // The service refuses the same account when it is called directly.
+    await assert.rejects(
+      () => accountProfileService.updateProfile({
+        userId,
+        body: { username: 'suspended_change' },
+      }),
+      (error) => error && error.statusCode === 404,
+    );
+    assert.equal((await User.findById(userId)).username, 'case_only');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('a failed profile save leaves the stored profile completely intact', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'failed-save@example.com');
+    const userId = account.registered.body.user.id;
+    const headers = { authorization: `Bearer ${account.loggedIn.body.token}` };
+
+    await requestJson(server, '/api/v1/account/username', {
+      method: 'PATCH',
+      headers,
+      body: { username: 'Original Name' },
+    });
+    await requestJson(server, '/api/v1/account/avatar', {
+      method: 'PATCH',
+      headers,
+      body: { type: 'local', value: LOCAL_AVATAR_IDS[1] },
+    });
+    const before = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(before.body.user.username, 'Original Name');
+
+    const rejectedBodies = [
+      { username: 'Replacement', avatar: { type: 'local', value: 'avatar-99' } },
+      { username: 'Replacement', avatar: { type: 'url', value: 'https://evil.example/a.png' } },
+      { username: 'Replacement', avatar: { type: 'google' } },
+      { username: 'Replacement', avatar: { type: 'local', value: 'avatar-02', url: 'https://evil.example/a.png' } },
+      { username: 'Replacement', displayName: 'Bad\u0001Name' },
+      { displayName: 'Fine Name', totalXp: 999999 },
+    ];
+
+    for (const body of rejectedBodies) {
+      const response = await requestJson(server, '/api/v1/account/profile', {
+        method: 'PATCH',
+        headers,
+        body,
+      });
+      assert.ok(response.response.status >= 400, JSON.stringify(body));
+      assert.ok(response.response.status < 500, JSON.stringify(body));
+    }
+
+    const stored = await User.findById(userId).select('+usernameNormalized');
+    assert.equal(stored.username, 'Original Name');
+    assert.equal(stored.usernameNormalized, 'original name');
+    assert.equal(stored.avatar.value, LOCAL_AVATAR_IDS[1]);
+    assert.equal(stored.displayName, 'Session User');
+    assert.equal(stored.totalXp, 0);
+
+    // A no-op save is reported as a success and writes nothing.
+    const noChange = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: { username: 'Original Name', avatar: { type: 'local', value: LOCAL_AVATAR_IDS[1] } },
+    });
+    assert.equal(noChange.response.status, 200);
+    assert.equal(noChange.body.user.username, 'Original Name');
+    assert.equal(noChange.body.user.avatar.value, LOCAL_AVATAR_IDS[1]);
+
+    const empty = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: {},
+    });
+    assert.equal(empty.response.status, 400);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+/* ==================================================================
+   XP, LEVEL, BADGE AND TITLE
+   ================================================================== */
+
+test('a new account starts with zero XP at Level 0', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const created = await User.create({ email: 'xp-start@example.com', name: 'XP Starter' });
+    assert.equal(created.totalXp, 0);
+
+    const registered = await requestJson(server, '/api/v1/auth/register', {
+      method: 'POST',
+      body: {
+        username: 'xp_starter',
+        email: 'xp-start-signup@example.com',
+        password: 'xp-start-password',
+      },
+    });
+    assert.equal(registered.response.status, 201);
+    assert.equal(registered.body.user.progression.totalXp, 0);
+    assert.equal(registered.body.user.progression.level, 0);
+    assert.equal(registered.body.user.progression.title, 'Arcadia Rookie');
+    assert.equal((await User.findOne({ email: 'xp-start-signup@example.com' })).totalXp, 0);
+
+    // XP is not part of the account profile identity surface.
+    const account = await registerAndLogin(server, 'xp-start-account@example.com');
+    const profile = await requestJson(server, '/api/v1/account/profile', {
+      headers: { authorization: `Bearer ${account.loggedIn.body.token}` },
+    });
+    assert.equal(profile.body.user.progression.totalXp, 0);
+    assert.equal(profile.body.user.progression.level, 0);
+    assert.equal(profile.body.user.progression.currentLevelXp, 0);
+    assert.equal(profile.body.user.progression.nextLevelXp, 100);
+    assert.equal(profile.body.user.progression.progressPercent, 0);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('total XP maps to the documented level at every exact boundary', () => {
+  const boundaries = [
+    [0, 0],
+    [1, 0],
+    [99, 0],
+    [100, 1],
+    [299, 1],
+    [300, 2],
+    [599, 2],
+    [600, 3],
+    [999, 3],
+    [1000, 4],
+    [1499, 4],
+    [1500, 5],
+    [2049, 5],
+    [2050, 6],
+    [2649, 6],
+    [2650, 7],
+    [3299, 7],
+    [3300, 8],
+    [3999, 8],
+    [4000, 9],
+  ];
+
+  for (const [totalXp, level] of boundaries) {
+    assert.equal(getLevelFromTotalXp(totalXp), level, `${totalXp} XP`);
+    assert.equal(getProgression(totalXp).level, level, `${totalXp} XP`);
+  }
+
+  // One XP below a cumulative boundary never reaches that level.
+  for (let level = 1; level <= 10; level += 1) {
+    const cumulative = getCumulativeXpForLevel(level);
+    assert.equal(getLevelFromTotalXp(cumulative - 1), level - 1, `${cumulative - 1} XP`);
+  }
+});
+
+test('the per-level XP requirement steps up by 50 after Level 5', () => {
+  const requirements = [];
+  for (let level = 0; level <= 12; level += 1) {
+    requirements.push(getXpToAdvanceFromLevel(level));
+  }
+
+  assert.deepEqual(requirements, [
+    100, 200, 300, 400, 500, 550, 600, 650, 700, 750, 800, 850, 900,
+  ]);
+
+  // The cumulative total is what the level is actually derived from.
+  assert.deepEqual(
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(getCumulativeXpForLevel),
+    [0, 100, 300, 600, 1000, 1500, 2050, 2650, 3300, 4000, 4750],
+  );
+
+  // Each level is reached at exactly the cumulative total, and the XP already
+  // banked inside a level never reaches the next level's requirement.
+  for (let level = 1; level <= 40; level += 1) {
+    const cumulative = getCumulativeXpForLevel(level);
+    assert.equal(getLevelFromTotalXp(cumulative), level, `level ${level}`);
+    assert.equal(
+      getLevelFromTotalXp(cumulative + getXpToAdvanceFromLevel(level) - 1),
+      level,
+      `level ${level} top`,
+    );
+  }
+});
+
+test('progression is deterministic and never produces NaN or Infinity', () => {
+  const unusable = [undefined, null, -1, -0.5, -1e9, NaN, Infinity, -Infinity, 'abc', {}];
+  for (const value of unusable) {
+    const progression = getProgression(value);
+    assert.equal(progression.totalXp, 0, String(value));
+    assert.equal(progression.level, 0, String(value));
+    assert.equal(progression.currentLevelXp, 0, String(value));
+    assert.equal(progression.nextLevelXp, 100, String(value));
+    assert.equal(progression.progressPercent, 0, String(value));
+  }
+
+  assert.equal(normalizeTotalXp(Number.MAX_SAFE_INTEGER), MAX_TOTAL_XP);
+  assert.equal(normalizeTotalXp(1e30), MAX_TOTAL_XP);
+
+  // Very high totals stay finite, stay at Level 0 for a hostile negative input
+  // and never overflow into a broken progress bar.
+  for (const totalXp of [1e6, 1e9, 1e12, 1e15, MAX_TOTAL_XP]) {
+    for (const view of [getProgression(totalXp), getProgression(-totalXp)]) {
+      assert.ok(Number.isFinite(view.progressPercent), String(totalXp));
+      assert.ok(Number.isFinite(view.currentLevelXp), String(totalXp));
+      assert.ok(Number.isFinite(view.nextLevelXp), String(totalXp));
+      assert.ok(Number.isInteger(view.level) && view.level >= 0, String(totalXp));
+      assert.ok(view.progressPercent >= 0 && view.progressPercent <= 100, String(totalXp));
+    }
+  }
+
+  // Identical input always produces an identical view.
+  for (const totalXp of [0, 20, 99, 100, 2050, 40000]) {
+    assert.deepEqual(getProgression(totalXp), getProgression(totalXp), String(totalXp));
+  }
+
+  // Progress is reported inside the current level only.
+  assert.deepEqual(getProgression(180), {
+    totalXp: 180,
+    level: 1,
+    currentLevelXp: 80,
+    nextLevelXp: 200,
+    progressPercent: 40,
+    title: 'Arcadia Rookie',
+    badgeKey: 'bronze',
+    themeKey: 'neutral-grey',
+  });
+  assert.equal(getProgression(199).progressPercent, 50);
+  assert.equal(getProgression(200).progressPercent, 50);
+  assert.equal(getProgression(299).progressPercent, 100);
+  // Crossing into the next level resets the bar instead of exceeding 100%.
+  assert.equal(getProgression(300).currentLevelXp, 0);
+  assert.equal(getProgression(300).progressPercent, 0);
+});
+
+test('every level maps to the documented badge, title and theme', () => {
+  const expectedTiers = [
+    { maxLevel: 4, title: 'Arcadia Rookie', badgeKey: 'bronze', themeKey: 'neutral-grey' },
+    { maxLevel: 9, title: 'Arcadia Challenger', badgeKey: 'silver', themeKey: 'bright-green' },
+    { maxLevel: 14, title: 'Arcadia Veteran', badgeKey: 'gold', themeKey: 'deep-cyan' },
+    { maxLevel: 19, title: 'Arcadia Master', badgeKey: 'diamond', themeKey: 'crimson-red' },
+    { maxLevel: 29, title: 'Arcadia Legend', badgeKey: 'crown', themeKey: 'electric-purple' },
+    { maxLevel: null, title: 'Arcadia Supreme', badgeKey: 'flame', themeKey: 'neon-golden' },
+  ];
+
+  assert.equal(LEVEL_BADGE_TIERS.length, expectedTiers.length);
+  for (const [index, tier] of LEVEL_BADGE_TIERS.entries()) {
+    assert.equal(tier.minLevel, index === 0 ? 0 : expectedTiers[index - 1].maxLevel + 1);
+    assert.equal(tier.maxLevel, expectedTiers[index].maxLevel);
+    assert.equal(tier.title, expectedTiers[index].title);
+    assert.equal(tier.badgeKey, expectedTiers[index].badgeKey);
+    assert.equal(tier.themeKey, expectedTiers[index].themeKey);
+  }
+
+  // Every level from 0 to 200, plus the open ended top tier, resolves a tier.
+  for (let level = 0; level <= 200; level += 1) {
+    const expected = expectedTiers.find(
+      (tier) => tier.maxLevel === null || level <= tier.maxLevel,
+    );
+    const badge = getLevelBadge(level);
+    assert.equal(badge.title, expected.title, `level ${level}`);
+    assert.equal(badge.badgeKey, expected.badgeKey, `level ${level}`);
+    assert.equal(badge.themeKey, expected.themeKey, `level ${level}`);
+
+    const progression = getProgression(getCumulativeXpForLevel(level));
+    assert.equal(progression.title, expected.title, `level ${level}`);
+    assert.equal(progression.badgeKey, expected.badgeKey, `level ${level}`);
+    assert.equal(progression.themeKey, expected.themeKey, `level ${level}`);
+  }
+
+  // The animated flame tier is a stable key only; no animation is decided here.
+  assert.deepEqual(Object.keys(getLevelBadge(30)).sort(), [
+    'badgeKey',
+    'maxLevel',
+    'minLevel',
+    'themeKey',
+    'title',
+  ]);
+  assert.equal(getLevelBadge(5000).badgeKey, 'flame');
+  assert.equal(getLevelBadge(5000).title, 'Arcadia Supreme');
+  // A hostile or missing level still resolves the first tier instead of crashing.
+  assert.equal(getLevelBadge(-5).title, 'Arcadia Rookie');
+  assert.equal(getLevelBadge(undefined).title, 'Arcadia Rookie');
+});
+
+test('the account profile response carries progression and no security fields', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'progression-profile@example.com');
+    const userId = account.registered.body.user.id;
+    const headers = { authorization: `Bearer ${account.loggedIn.body.token}` };
+
+    const awarded = await recordArcadionResult(userId, { reference: 'test:one-win' });
+    assert.equal(awarded.awardedXp, 20);
+    assert.equal(awarded.reason, XP_AWARD_REASONS.ARCADION_WIN);
+    assert.equal(awarded.progression.totalXp, 20);
+    assert.equal(awarded.progression.level, 0);
+
+    const profile = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(profile.response.status, 200);
+    assert.deepEqual(
+      Object.keys(profile.body.user.progression).sort(),
+      [
+        'badgeKey',
+        'currentLevelXp',
+        'level',
+        'nextLevelXp',
+        'progressPercent',
+        'themeKey',
+        'title',
+        'totalXp',
+      ],
+    );
+    assert.equal(profile.body.user.progression.totalXp, 20);
+    assert.equal(profile.body.user.progression.level, 0);
+    assert.equal(profile.body.user.progression.currentLevelXp, 20);
+    assert.equal(profile.body.user.progression.nextLevelXp, 100);
+    assert.equal(profile.body.user.progression.progressPercent, 20);
+    assert.equal(profile.body.user.progression.title, 'Arcadia Rookie');
+    assert.equal(profile.body.user.progression.badgeKey, 'bronze');
+    assert.equal(profile.body.user.progression.themeKey, 'neutral-grey');
+
+    // Gaming statistics are present but neutral: no game data is invented.
+    assert.deepEqual(profile.body.user.gamingStats, {
+      gamesPlayed: 0,
+      gamesWon: 0,
+      totalScore: 0,
+      bestScore: 0,
+      currentStreak: 0,
+      winRatePercent: 0,
+    });
+
+    // Identity, joined date and provider still come from the same record.
+    assert.equal(profile.body.user.id, userId);
+    assert.equal(profile.body.user.email, 'progression-profile@example.com');
+    assert.equal(profile.body.user.authProvider, 'PASSWORD');
+    assert.equal(profile.body.user.avatar.type, 'local');
+    assert.ok(profile.body.user.createdAt);
+
+    assertNoSensitiveFields(profile.body);
+
+    // Progression is the only new surface, and it stays free of security fields.
+    const serialized = JSON.stringify(profile.body);
+    for (const field of [
+      'passwordHash', 'tokenVersion', 'usernameNormalized',
+      'usernameChangedAt', '"google"', 'pictureUrl', '"subject"', 'lastLoginIp',
+    ]) {
+      assert.equal(serialized.includes(field), false, `${field} must not be serialized`);
+    }
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the auth responses carry the same progression as the profile', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'progression-auth@example.com');
+    await recordArcadionResult(account.registered.body.user.id);
+
+    const me = await requestJson(server, '/api/v1/auth/me', {
+      headers: { authorization: `Bearer ${account.loggedIn.body.token}` },
+    });
+    assert.equal(me.body.progression.totalXp, 20);
+    assert.equal(me.body.progression.level, 0);
+    assert.equal(me.body.gamingStats, undefined, 'gaming stats stay on the profile only');
+
+    const refreshed = await requestJson(server, '/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { cookie: `${REFRESH_COOKIE_NAME}=${account.refreshCookie}` },
+    });
+    assert.equal(refreshed.response.status, 200);
+    assert.equal(refreshed.body.user.progression.totalXp, 20);
+    assert.equal(refreshed.body.user.username, null);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('XP can never be assigned arbitrarily by a client', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'xp-client@example.com');
+    const userId = account.registered.body.user.id;
+    const headers = {
+      authorization: `Bearer ${account.loggedIn.body.token}`,
+      cookie: `${REFRESH_COOKIE_NAME}=${account.refreshCookie}`,
+    };
+
+    // No account endpoint accepts an XP field, on any route or verb.
+    const attempts = [
+      { path: '/api/v1/account/profile', method: 'PATCH', body: { totalXp: 5000 } },
+      { path: '/api/v1/account/profile', method: 'PATCH', body: { xp: 5000 } },
+      { path: '/api/v1/account/profile', method: 'PATCH', body: { level: 12, title: 'Arcadia Supreme', badgeKey: 'flame' } },
+      { path: '/api/v1/account/username', method: 'PATCH', body: { username: 'xp_client', totalXp: 5000 } },
+      { path: '/api/v1/account/avatar', method: 'PATCH', body: { type: 'local', value: 'avatar-02', totalXp: 5000 } },
+      // A client cannot report a match outcome either.
+      { path: '/api/v1/account/profile', method: 'PATCH', body: { result: 'WIN' } },
+      { path: '/api/v1/account/profile', method: 'PATCH', body: { game: 'arcadion', verified: true, result: 'WIN' } },
+      { path: '/api/v1/account/username', method: 'PATCH', body: { username: 'xp_client', game: 'arcadion', result: 'WIN' } },
+    ];
+
+    for (const attempt of attempts) {
+      const response = await requestJson(server, attempt.path, {
+        method: attempt.method,
+        headers,
+        body: attempt.body,
+      });
+      assert.equal(response.response.status, 400, `${attempt.method} ${attempt.path}`);
+      assert.equal(response.body.error, 'Request contains unsupported fields');
+    }
+
+    // The settings response is read-only: it is not an XP write surface either.
+    const settingsWrite = await requestJson(server, '/api/v1/account/settings', {
+      method: 'PATCH',
+      headers,
+      body: { totalXp: 5000 },
+    });
+    assert.equal(settingsWrite.response.status, 404);
+
+    // There is no XP endpoint at all: any guess is a 404, never a mutation.
+    for (const path of [
+      '/api/v1/account/xp',
+      '/api/v1/account/progression',
+      '/api/v1/account/level',
+      '/api/v1/account/arcadion',
+      '/api/v1/account/arcadion/result',
+      '/api/v1/account/arcadion/win',
+      '/api/v1/xp',
+      '/api/v1/account/award-xp',
+    ]) {
+      for (const method of ['GET', 'POST', 'PATCH']) {
+        const response = await requestJson(server, path, {
+          method,
+          headers,
+          body: method === 'GET' ? undefined : { amount: 5000, totalXp: 5000 },
+        });
+        assert.equal(response.response.status, 404, `${method} ${path}`);
+      }
+    }
+
+    // Registration cannot smuggle one in either.
+    const registered = await requestJson(server, '/api/v1/auth/register', {
+      method: 'POST',
+      body: {
+        username: 'xp_smuggle',
+        email: 'xp-smuggle@example.com',
+        password: 'xp-smuggle-password',
+        totalXp: 5000,
+        level: 12,
+      },
+    });
+    assert.equal(registered.response.status, 201);
+    assert.equal(registered.body.user.progression.totalXp, 0);
+    assert.equal((await User.findOne({ email: 'xp-smuggle@example.com' })).totalXp, 0);
+
+    assert.equal((await User.findById(userId)).totalXp, 0);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('XP can never become negative and is only granted server-side', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'xp-negative@example.com');
+    const userId = account.registered.body.user.id;
+
+    // The schema refuses a negative or fractional total outright.
+    for (const invalidXp of [-1, -500, 1.5]) {
+      await assert.rejects(
+        () => User.updateOne(
+          { _id: userId },
+          { $set: { totalXp: invalidXp } },
+          { runValidators: true },
+        ),
+        (error) => error && error.name === 'ValidationError',
+        `totalXp ${String(invalidXp)}`,
+      );
+    }
+    // A non-numeric total cannot even be cast into the field.
+    await assert.rejects(
+      () => User.updateOne(
+        { _id: userId },
+        { $set: { totalXp: 'many' } },
+        { runValidators: true },
+      ),
+      (error) => error && error.name === 'CastError',
+    );
+    await assert.rejects(
+      () => User.create({ email: 'xp-negative-create@example.com', totalXp: -1 }),
+      (error) => error && error.name === 'ValidationError',
+    );
+    assert.equal((await User.findById(userId)).totalXp, 0);
+
+    /*
+     * A total that was corrupted outside the schema degrades to a clean Level 0
+     * account instead of leaking NaN, and the grant service refuses to build on
+     * it, so a malformed value can never be turned into progression.
+     */
+    await User.collection.updateOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { $set: { totalXp: 'malformed' } },
+    );
+    const malformedProfile = await requestJson(server, '/api/v1/account/profile', {
+      headers: { authorization: `Bearer ${account.loggedIn.body.token}` },
+    });
+    assert.equal(malformedProfile.response.status, 200);
+    assert.equal(malformedProfile.body.user.progression.totalXp, 0);
+    assert.equal(malformedProfile.body.user.progression.level, 0);
+    assert.equal(malformedProfile.body.user.progression.progressPercent, 0);
+    await assert.rejects(
+      () => recordArcadionResult(userId),
+      (error) => error && error.statusCode === 404,
+    );
+    assert.equal(
+      (await User.collection.findOne({ _id: new mongoose.Types.ObjectId(userId) })).totalXp,
+      'malformed',
+    );
+    await User.collection.updateOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { $set: { totalXp: 0 } },
+    );
+
+    // The only exported entry point refuses an unusable target account.
+    await assert.rejects(
+      () => recordArcadionResult('not-an-object-id'),
+      (error) => error && error.statusCode === 400,
+    );
+    await assert.rejects(
+      () => recordArcadionResult('000000000000000000000000'),
+      (error) => error && error.statusCode === 404,
+    );
+    assert.equal((await User.findById(userId)).totalXp, 0);
+
+    // A total that was corrupted outside the schema is never incremented, and a
+    // suspended account is never awarded.
+    await User.collection.updateOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { $set: { totalXp: -500 } },
+    );
+    await assert.rejects(
+      () => recordArcadionResult(userId),
+      (error) => error && error.statusCode === 404,
+    );
+    assert.equal((await User.findById(userId)).totalXp, -500);
+    // Even a corrupted negative total is reported as a clean Level 0 account.
+    assert.equal(getProgression((await User.findById(userId)).totalXp).level, 0);
+    assert.equal(getProgression((await User.findById(userId)).totalXp).totalXp, 0);
+
+    await User.collection.updateOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { $set: { totalXp: 0, status: ACCOUNT_STATUSES.SUSPENDED } },
+    );
+    await assert.rejects(
+      () => recordArcadionResult(userId),
+      (error) => error && error.statusCode === 404,
+    );
+    assert.equal((await User.findById(userId)).totalXp, 0);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('only a verified Arcadion win awards XP', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'arcadion-only@example.com');
+    const userId = account.registered.body.user.id;
+    const expectStoredTotal = async (expected) => {
+      assert.equal((await User.findById(userId)).totalXp, expected);
+    };
+
+    // A loss never moves the total, however many are recorded.
+    for (const result of [MATCH_RESULTS.LOSS, MATCH_RESULTS.DRAW, 'win', 'WON', null, undefined, '']) {
+      const outcome = await recordArcadionResult(userId, { result });
+      assert.equal(outcome.awardedXp, 0, String(result));
+      assert.equal(outcome.reason, XP_AWARD_REASONS.NOT_A_WIN, String(result));
+      assert.equal(outcome.progression.level, 0, String(result));
+      await expectStoredTotal(0);
+    }
+
+    // Any non-Arcadion match never moves the total, even a win.
+    for (const game of ['ludo', 'tic-tac-toe', 'memory', 'snake-ladder', 'friends', '', null, undefined, 'ARCADION']) {
+      const outcome = await recordArcadionResult(userId, { game });
+      assert.equal(outcome.awardedXp, 0, String(game));
+      assert.equal(outcome.reason, XP_AWARD_REASONS.NOT_ARCADION, String(game));
+      await expectStoredTotal(0);
+    }
+
+    // An unverified Arcadion win never moves the total.
+    for (const verified of [false, undefined, null, 0, 'true', 1]) {
+      const outcome = await recordArcadionResult(userId, { verified });
+      assert.equal(outcome.awardedXp, 0, String(verified));
+      assert.equal(outcome.reason, XP_AWARD_REASONS.UNVERIFIED, String(verified));
+      await expectStoredTotal(0);
+    }
+
+    // Only the exact verified ARCADION win grants the reward.
+    const win = await recordArcadionResult(userId);
+    assert.equal(win.awardedXp, XP_REWARDS.ARCADION_WIN);
+    assert.equal(XP_REWARDS.ARCADION_WIN, 20);
+    assert.equal(win.reason, XP_AWARD_REASONS.ARCADION_WIN);
+    assert.equal(win.progression.totalXp, 20);
+    await expectStoredTotal(20);
+
+    // And the level only moves once the threshold is actually reached.
+    await User.collection.updateOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { $set: { totalXp: 80 } },
+    );
+    const beforeThreshold = await recordArcadionResult(userId);
+    assert.equal(beforeThreshold.awardedXp, 20);
+    assert.equal(beforeThreshold.progression.totalXp, 100);
+    assert.equal(beforeThreshold.progression.level, 1, 'the fifth win crosses into Level 1');
+    await expectStoredTotal(100);
+
+    // A loss after that changes nothing.
+    const afterLoss = await recordArcadionResult(userId, { result: MATCH_RESULTS.LOSS });
+    assert.equal(afterLoss.awardedXp, 0);
+    assert.equal(afterLoss.progression.level, 1);
+    await expectStoredTotal(100);
+
+    // The service exposes no way to name a different amount or source.
+    assert.equal(progressionService.awardXp, undefined);
+    assert.deepEqual(Object.keys(XP_GRANT_SOURCES), ['ARCADION_WIN']);
+    assert.deepEqual(XP_REWARDS, { ARCADION_WIN: 20 });
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('XP awards are atomic and keep progression consistent with the stored total', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'xp-atomic@example.com');
+    const userId = account.registered.body.user.id;
+
+    // Five verified Arcadion wins recorded at the same time all land.
+    const awards = await Promise.all(
+      Array.from({ length: 5 }, () => recordArcadionResult(userId)),
+    );
+    assert.equal((await User.findById(userId)).totalXp, 100);
+    // Each concurrent award reports the total as of its own write, so the
+    // reported values form the whole run rather than all being the final total.
+    const reportedTotals = awards.map((award) => award.progression.totalXp);
+    assert.equal(Math.max(...reportedTotals), 100);
+    assert.equal(new Set(reportedTotals).size, 5, reportedTotals.join(','));
+    for (const reported of reportedTotals) {
+      assert.equal(reported % XP_REWARDS.ARCADION_WIN, 0, String(reported));
+      assert.ok(
+        reported >= XP_REWARDS.ARCADION_WIN && reported <= 100,
+        String(reported),
+      );
+    }
+
+    const profile = await requestJson(server, '/api/v1/account/profile', {
+      headers: { authorization: `Bearer ${account.loggedIn.body.token}` },
+    });
+    assert.equal(profile.body.user.progression.totalXp, 100);
+    assert.equal(profile.body.user.progression.level, 1);
+    assert.equal(profile.body.user.progression.currentLevelXp, 0);
+    assert.equal(profile.body.user.progression.nextLevelXp, 200);
+    // Level 1 still sits in the first badge tier; Challenger starts at Level 5.
+    assert.equal(profile.body.user.progression.title, 'Arcadia Rookie');
+    assert.equal(profile.body.user.progression.badgeKey, 'bronze');
+    assert.equal(getLevelBadge(1).title, 'Arcadia Rookie');
+    assert.equal(getProgression(1500).title, 'Arcadia Challenger');
+    assert.equal(getProgression(1500).badgeKey, 'silver');
+    assert.equal(getProgression(1500).themeKey, 'bright-green');
+
+    // The view always matches the stored total, for every awardable amount.
+    for (const totalXp of [1500, 2050, 3300, 4750]) {
+      await User.collection.updateOne(
+        { _id: new mongoose.Types.ObjectId(userId) },
+        { $set: { totalXp } },
+      );
+      const updated = await accountProfileService.getProfile(userId);
+      assert.equal(updated.progression.totalXp, totalXp);
+      assert.equal(updated.progression.level, getLevelFromTotalXp(totalXp));
+      assert.equal(
+        updated.progression.title,
+        getLevelBadge(getLevelFromTotalXp(totalXp)).title,
+      );
+      // Identity is untouched by a progression-only change.
+      assert.equal(updated.email, 'xp-atomic@example.com');
+      assert.equal(updated.tokenVersion, undefined);
+    }
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+/* ==================================================================
+   ARCADIA PLAYER ID
+   ================================================================== */
+
+test('generated Player IDs are well formed, random and never sequential', () => {
+  const seen = new Set();
+  const generated = [];
+
+  for (let index = 0; index < 2000; index += 1) {
+    const playerId = generatePlayerId();
+    generated.push(playerId);
+    seen.add(playerId);
+
+    // The approved ARC-XXXXXXXX format.
+    assert.match(playerId, /^ARC-[A-Z0-9]{8}$/, playerId);
+    assert.equal(isValidPlayerId(playerId), true, playerId);
+    // Confusable characters are never produced.
+    assert.equal(/[IO01]/.test(playerId.slice(4)), false, playerId);
+    // The body is drawn from the documented alphabet only.
+    for (const character of playerId.slice(4)) {
+      assert.equal(PLAYER_ID_ALPHABET.includes(character), true, character);
+    }
+  }
+
+  // 2000 draws from ~1.1e12 possibilities must all be distinct.
+  assert.equal(seen.size, 2000);
+
+  // The alphabet is a power of two, which is what keeps the mapping unbiased.
+  assert.equal(PLAYER_ID_ALPHABET.length, 32);
+  // The prefix never varies.
+  assert.equal(new Set(generated.map((id) => id.slice(0, 4))).size, 1);
+  // Not a sequential counter: many different bodies across the range.
+  assert.ok(new Set(generated.map((id) => id.slice(4, 6))).size > 400);
+
+  for (const invalid of [
+    '', 'ARC-', 'ARC-1234567', 'ARC-123456789', 'arc-7K4M2P9Q',
+    'ARC-7k4m2p9q', 'ARC-7K4M2P9', 'ARC-7K4M2P9QA', 'ARC-7K4M2P9!',
+    '000000000000000000000001', 'ARC-7K4M2P9Q0', 'ARC-7K4M2P9OI',
+  ]) {
+    assert.equal(isValidPlayerId(invalid), false, invalid);
+    assert.equal(PLAYER_ID_PATTERN.test(invalid), false, invalid);
+  }
+});
+
+test('a new password signup automatically receives a permanent Player ID', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const registered = await requestJson(server, '/api/v1/auth/register', {
+      method: 'POST',
+      body: {
+        username: 'player_one',
+        email: 'player-one@example.com',
+        password: 'player-one-password',
+      },
+    });
+
+    assert.equal(registered.response.status, 201);
+    const playerId = registered.body.user.playerId;
+    assert.equal(isValidPlayerId(playerId), true, String(playerId));
+
+    const stored = await User.findOne({ email: 'player-one@example.com' });
+    assert.equal(stored.playerId, playerId);
+
+    // The Player ID is never derived from the database id.
+    assert.notEqual(playerId, String(stored._id));
+    assert.equal(playerId.includes(String(stored._id)), false);
+
+    // It is not the email, the username or anything else account specific.
+    assert.equal(playerId.includes('player-one@example.com'), false);
+    assert.equal(playerId.includes('player_one'), false);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('a new Google account automatically receives a permanent Player ID', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const google = await signInWithGoogle(server);
+    const playerId = google.user.playerId;
+
+    assert.equal(isValidPlayerId(playerId), true, String(playerId));
+    const stored = await User.findById(google.userId);
+    assert.equal(stored.playerId, playerId);
+    assert.notEqual(playerId, String(stored._id));
+
+    // Completing username onboarding does not change it.
+    const completed = await requestJson(server, '/api/v1/account/username', {
+      method: 'PATCH',
+      headers: google.headers,
+      body: { username: 'google_player' },
+    });
+    assert.equal(completed.response.status, 200);
+    assert.equal(completed.body.user.playerId, playerId);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('Player IDs are unique across accounts and across sign-up paths', async () => {
+  const server = await startHttpServer();
+
+  try {
+    // Kept under the per-IP registration rate limit.
+    const created = [];
+    for (let index = 0; index < 12; index += 1) {
+      const response = await requestJson(server, '/api/v1/auth/register', {
+        method: 'POST',
+        body: {
+          username: `unique_${index}`,
+          email: `unique-${index}@example.com`,
+          password: 'unique-player-password',
+        },
+      });
+      assert.equal(response.response.status, 201, `unique-${index}`);
+      created.push(response.body.user.playerId);
+    }
+
+    const google = await signInWithGoogle(server);
+    created.push(google.user.playerId);
+
+    assert.equal(new Set(created).size, created.length, 'every Player ID is distinct');
+    for (const playerId of created) {
+      assert.equal(await User.countDocuments({ playerId }), 1, playerId);
+    }
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the unique index rejects duplicates and a collision is retried, never accepted', async () => {
+  // The unique index is what makes a collision detectable at all.
+  await User.create({ email: 'index-first@example.com' });
+  const taken = (await User.findOne({ email: 'index-first@example.com' })).playerId;
+
+  await assert.rejects(
+    () => User.collection.insertOne({
+      email: 'index-second@example.com',
+      playerId: taken,
+      role: 'USER',
+      status: 'ACTIVE',
+    }),
+    (error) => error && error.code === 11000
+      && Object.prototype.hasOwnProperty.call(error.keyPattern || {}, 'playerId'),
+  );
+
+  // A single collision is recovered transparently with a fresh ID.
+  const attempts = [];
+  const recovered = await playerIdService.createUserWithPlayerId(
+    { email: 'collision-recovered@example.com', role: 'USER', status: 'ACTIVE' },
+    {
+      generateId: () => {
+        attempts.push(true);
+        return attempts.length === 1 ? taken : generatePlayerId();
+      },
+    },
+  );
+  assert.equal(attempts.length, 2, 'the insert was retried exactly once');
+  assert.equal(isValidPlayerId(recovered.playerId), true);
+  assert.notEqual(recovered.playerId, taken);
+  assert.equal(await User.countDocuments({ playerId: taken }), 1, 'no duplicate was stored');
+
+  // A collision that never clears is reported rather than silently accepted.
+  const stuckAttempts = [];
+  await assert.rejects(
+    () => playerIdService.createUserWithPlayerId(
+      { email: 'collision-stuck@example.com', role: 'USER', status: 'ACTIVE' },
+      {
+        generateId: () => {
+          stuckAttempts.push(true);
+          return taken;
+        },
+      },
+    ),
+    (error) => error && error.code === 11000,
+  );
+  assert.equal(stuckAttempts.length, playerIdService.MAX_PLAYER_ID_ATTEMPTS);
+  assert.equal(await User.countDocuments({ email: 'collision-stuck@example.com' }), 0);
+
+  // An unrelated conflict is re-thrown untouched, so callers keep their mapping.
+  await assert.rejects(
+    () => playerIdService.createUserWithPlayerId(
+      { email: 'index-first@example.com', role: 'USER', status: 'ACTIVE' },
+      { generateId: () => generatePlayerId() },
+    ),
+    (error) => error && error.code === 11000
+      && Object.prototype.hasOwnProperty.call(error.keyPattern || {}, 'email'),
+  );
+});
+
+test('the backfill also recovers from a Player ID collision', async () => {
+  const keeper = await User.create({ email: 'backfill-collision-keeper@example.com' });
+  const taken = keeper.playerId;
+
+  await User.collection.insertOne({
+    email: 'backfill-collision-target@example.com',
+    role: 'USER',
+    status: 'ACTIVE',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const attempts = [];
+  const result = await backfillMissingPlayerIds({
+    generateId: () => {
+      attempts.push(true);
+      return attempts.length === 1 ? taken : generatePlayerId();
+    },
+  });
+
+  assert.equal(result.failed, 0, JSON.stringify(result));
+  assert.equal(result.assigned, 1, JSON.stringify(result));
+  assert.equal(attempts.length, 2, 'the backfill regenerated the colliding ID');
+  const filled = await User.findOne({ email: 'backfill-collision-target@example.com' });
+  assert.equal(isValidPlayerId(filled.playerId), true);
+  assert.notEqual(filled.playerId, taken);
+  assert.equal(await User.countDocuments({ playerId: taken }), 1);
+});
+
+test('a Player ID never changes across the whole account lifecycle', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const registered = await requestJson(server, '/api/v1/auth/register', {
+      method: 'POST',
+      body: {
+        username: 'lifecycle_user',
+        email: 'lifecycle@example.com',
+        password: 'lifecycle-password',
+      },
+    });
+    const playerId = registered.body.user.playerId;
+    const userId = registered.body.user.id;
+    const headers = { authorization: `Bearer ${registered.body.token}` };
+
+    const me = await requestJson(server, '/api/v1/auth/me', { headers });
+    assert.equal(me.body.playerId, playerId, 'auth/me');
+
+    const refreshed = await requestJson(server, '/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { cookie: `${REFRESH_COOKIE_NAME}=${getRefreshCookie(registered.response)}` },
+    });
+    assert.equal(refreshed.body.user.playerId, playerId, 'refresh');
+
+    const profile = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(profile.body.user.playerId, playerId, 'profile');
+
+    const settings = await requestJson(server, '/api/v1/account/settings', { headers });
+    assert.equal(settings.body.settings.playerId, playerId, 'settings');
+
+    const login = await requestJson(server, '/api/v1/auth/login', {
+      method: 'POST',
+      body: { email: 'lifecycle@example.com', password: 'lifecycle-password' },
+    });
+    assert.equal(login.body.user.playerId, playerId, 'login');
+
+    // Username change, avatar change and display name change.
+    await clearUsernameCooldown(userId);
+    const usernameChange = await requestJson(server, '/api/v1/account/username', {
+      method: 'PATCH',
+      headers,
+      body: { username: 'lifecycle_renamed' },
+    });
+    assert.equal(usernameChange.body.user.playerId, playerId, 'username change');
+
+    const avatarChange = await requestJson(server, '/api/v1/account/avatar', {
+      method: 'PATCH',
+      headers,
+      body: { type: 'local', value: LOCAL_AVATAR_IDS[2] },
+    });
+    assert.equal(avatarChange.body.user.playerId, playerId, 'avatar change');
+
+    const displayNameChange = await requestJson(server, '/api/v1/account/profile', {
+      method: 'PATCH',
+      headers,
+      body: { displayName: 'Lifecycle User' },
+    });
+    assert.equal(displayNameChange.body.user.playerId, playerId, 'display name change');
+
+    // A logout and a fresh login.
+    await requestJson(server, '/api/v1/auth/logout', {
+      method: 'POST',
+      headers: { cookie: `${REFRESH_COOKIE_NAME}=${getRefreshCookie(login.response)}` },
+    });
+    const relogin = await requestJson(server, '/api/v1/auth/login', {
+      method: 'POST',
+      body: { email: 'lifecycle@example.com', password: 'lifecycle-password' },
+    });
+    assert.equal(relogin.body.user.playerId, playerId, 'logout then login');
+
+    assert.equal((await User.findById(userId)).playerId, playerId, 'stored value is unchanged');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('a Player ID cannot be changed by any client request', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'player-immutable@example.com');
+    const userId = account.registered.body.user.id;
+    const original = account.registered.body.user.playerId;
+    const headers = { authorization: `Bearer ${account.loggedIn.body.token}` };
+
+    // Every write endpoint rejects an unknown field, so playerId never arrives.
+    const attempts = [
+      { path: '/api/v1/account/profile', body: { displayName: 'Safe Name', playerId: 'ARC-ATTACKER1' } },
+      { path: '/api/v1/account/profile', body: { playerId: 'ARC-ATTACKER2' } },
+      { path: '/api/v1/account/username', body: { username: 'immutable_user', playerId: 'ARC-ATTACKER3' } },
+      { path: '/api/v1/account/avatar', body: { type: 'local', value: 'avatar-02', playerId: 'ARC-ATTACKER4' } },
+      { path: '/api/v1/account/username-availability', method: 'PATCH', body: { playerId: 'ARC-ATTACKER5' } },
+    ];
+
+    for (const attempt of attempts) {
+      const response = await requestJson(server, attempt.path, {
+        method: attempt.method || 'PATCH',
+        headers,
+        body: attempt.body,
+      });
+      assert.ok(response.response.status >= 400, JSON.stringify(attempt.body));
+      assert.ok(response.response.status < 500, JSON.stringify(attempt.body));
+    }
+
+    // Signup cannot choose one either.
+    const registered = await requestJson(server, '/api/v1/auth/register', {
+      method: 'POST',
+      body: {
+        email: 'player-chosen@example.com',
+        password: 'player-chosen-password',
+        playerId: 'ARC-CHOSENBY01',
+      },
+    });
+    assert.equal(registered.response.status, 201);
+    assert.notEqual(registered.body.user.playerId, 'ARC-CHOSENBY01', 'the server assigns the ID');
+    assert.equal(isValidPlayerId(registered.body.user.playerId), true);
+
+    // The schema is immutable, so even a direct model update cannot change it.
+    await User.updateOne({ _id: userId }, { $set: { playerId: 'ARC-ATTACKER6' } });
+    assert.equal((await User.findById(userId)).playerId, original, 'the model strips the update');
+
+    // The safe response exposes only the public identifier, never internals.
+    const profile = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(profile.body.user.playerId, original);
+    assertNoSensitiveFields(profile.body);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('accounts created before the Player ID are backfilled without overwriting', async () => {
+  const server = await startHttpServer();
+
+  try {
+    // An account that already has a valid Player ID.
+    const existing = await User.create({ email: 'backfill-keep@example.com' });
+    const keep = existing.playerId;
+    assert.equal(isValidPlayerId(keep), true);
+
+    // Accounts written before the field existed, including a malformed value.
+    const withoutOne = await User.collection.insertOne({
+      email: 'backfill-missing@example.com',
+      role: 'USER',
+      status: 'ACTIVE',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const withNull = await User.collection.insertOne({
+      email: 'backfill-null@example.com',
+      playerId: null,
+      role: 'USER',
+      status: 'ACTIVE',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const withMalformed = await User.collection.insertOne({
+      email: 'backfill-malformed@example.com',
+      playerId: 'not-an-arc-id',
+      role: 'USER',
+      status: 'ACTIVE',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // A legacy account without one still authenticates and reports it as null
+    // rather than as a broken value.
+    const login = await requestJson(server, '/api/v1/auth/login', {
+      method: 'POST',
+      body: { email: 'backfill-missing@example.com', password: 'anything' },
+    });
+    assert.equal(login.response.status, 401, 'the legacy account has no password yet');
+
+    const result = await backfillMissingPlayerIds();
+    assert.equal(result.failed, 0, JSON.stringify(result));
+    assert.equal(result.assigned, 3, JSON.stringify(result));
+
+    const filled = [
+      await User.findById(withoutOne.insertedId),
+      await User.findById(withNull.insertedId),
+      await User.findById(withMalformed.insertedId),
+    ];
+    for (const user of filled) {
+      assert.equal(isValidPlayerId(user.playerId), true, String(user.playerId));
+    }
+    assert.equal(new Set(filled.map((user) => user.playerId)).size, 3, 'each is distinct');
+
+    // The account that already had a valid ID was never touched.
+    assert.equal((await User.findById(existing._id)).playerId, keep);
+
+    // Running it again changes nothing.
+    const secondRun = await backfillMissingPlayerIds();
+    assert.equal(secondRun.assigned, 0, JSON.stringify(secondRun));
+    assert.equal((await User.findById(existing._id)).playerId, keep);
+    assert.equal((await User.findById(withoutOne.insertedId)).playerId, filled[0].playerId);
+
+    // A backfilled account now reports its Player ID through the safe response.
+    await User.updateOne(
+      { _id: withoutOne.insertedId },
+      { $set: { passwordHash: await bcrypt.hash('backfill-password-123', 10) } },
+    );
+    const backfilledLogin = await requestJson(server, '/api/v1/auth/login', {
+      method: 'POST',
+      body: { email: 'backfill-missing@example.com', password: 'backfill-password-123' },
+    });
+    assert.equal(backfilledLogin.response.status, 200);
+    assert.equal(backfilledLogin.body.user.playerId, filled[0].playerId);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the Player ID is a public identifier and never an authorization credential', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const account = await registerAndLogin(server, 'player-public@example.com');
+    const playerId = account.registered.body.user.playerId;
+    const userId = account.registered.body.user.id;
+
+    // It cannot stand in for a token.
+    const asToken = await requestJson(server, '/api/v1/auth/me', {
+      headers: { authorization: `Bearer ${playerId}` },
+    });
+    assert.equal(asToken.response.status, 401);
+
+    const asRefresh = await requestJson(server, '/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { cookie: `${REFRESH_COOKIE_NAME}=${playerId}` },
+    });
+    assert.equal(asRefresh.response.status, 401);
+
+    // It grants no access to another account's profile.
+    await registerAndLogin(server, 'player-other@example.com');
+    const asIdentity = await requestJson(
+      server,
+      `/api/v1/admin/users/${userId}`,
+      { headers: { authorization: `Bearer ${playerId}` } },
+    );
+    assert.equal(asIdentity.response.status, 401);
+
+    // The database ObjectId is never returned as the Player ID.
+    assert.notEqual(playerId, userId);
+    assert.notEqual(playerId, userId.slice(0, 8));
+    assert.match(playerId, /^ARC-/);
+
+    const profile = await requestJson(server, '/api/v1/account/profile', {
+      headers: { authorization: `Bearer ${account.loggedIn.body.token}` },
+    });
+    assert.equal(profile.body.user.playerId, playerId);
+    assertNoSensitiveFields(profile.body);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the backfill script loads its configuration from a .env like the backend does', async () => {
+  /*
+   * This is the exact shape that used to fail with "MONGODB_URI is required":
+   * the script is run as a fresh process with NO environment variables at all,
+   * and the only source of configuration is a .env file in its working
+   * directory, which is what `require('../config/env')` loads.
+   */
+  const os = require('node:os');
+  const fs = require('node:fs');
+  const scriptPath = path.join(process.cwd(), 'scripts', 'backfill-player-ids.js');
+
+  // Accounts that need a Player ID, plus one that must never be touched.
+  const keeper = await User.create({ email: 'script-keeper@example.com' });
+  const keeperPlayerId = keeper.playerId;
+  const needsOne = await User.collection.insertOne({
+    email: 'script-needs-one@example.com',
+    role: 'USER',
+    status: 'ACTIVE',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const workingDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'arcadia-backfill-'));
+  const envFile = path.join(workingDirectory, '.env');
+  fs.writeFileSync(
+    envFile,
+    [
+      'NODE_ENV=test',
+      `MONGODB_URI=${process.env.MONGODB_URI}`,
+      `JWT_SECRET=${process.env.JWT_SECRET}`,
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+
+  try {
+    const run = () => spawnSync(process.execPath, [scriptPath], {
+      cwd: workingDirectory,
+      // A deliberately bare environment: no MONGODB_URI reaches the child.
+      env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot },
+      encoding: 'utf8',
+    });
+
+    const first = run();
+    assert.equal(first.status, 0, `stdout: ${first.stdout} stderr: ${first.stderr}`);
+    assert.match(first.stdout, /Player ID backfill complete\./);
+    assert.match(first.stdout, /assigned: 1, failed: 0/);
+
+    // The account that already had a valid Player ID was not touched.
+    assert.equal((await User.findById(keeper._id)).playerId, keeperPlayerId);
+    const filled = await User.findById(needsOne.insertedId);
+    assert.equal(isValidPlayerId(filled.playerId), true);
+
+    // Rerunning is idempotent and assigns nobody.
+    const second = run();
+    assert.equal(second.status, 0, `stdout: ${second.stdout} stderr: ${second.stderr}`);
+    assert.match(second.stdout, /Accounts needing an ID: 0, assigned: 0, failed: 0/);
+    assert.equal((await User.findById(needsOne.insertedId)).playerId, filled.playerId);
+  } finally {
+    fs.rmSync(workingDirectory, { recursive: true, force: true });
+  }
+});
+
+test('the backfill script never prints the MongoDB URI or a secret', async () => {
+  const scriptSource = fs.readFileSync(
+    path.join(process.cwd(), 'scripts', 'backfill-player-ids.js'),
+    'utf8',
+  );
+
+  // It delegates configuration to config/env rather than reading it directly,
+  // so a .env can never be skipped again.
+  assert.doesNotMatch(scriptSource, /process\.env\.MONGODB_URI/);
+  assert.match(scriptSource, /require\('\.\.\/config\/env'\)/);
+  assert.match(scriptSource, /require\('\.\.\/config\/database'\)/);
+
+  // And a failure is reported by category, never by raw driver text, because a
+  // driver message can embed the connection string.
+  const safeFailure = require('../scripts/backfill-player-ids').printSafeFailure;
+  const printed = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+  console.log = (...args) => printed.push(args.join(' '));
+  console.error = (...args) => printed.push(args.join(' '));
+
+  try {
+    const uri = process.env.MONGODB_URI;
+    safeFailure(Object.assign(
+      new Error(`connect ECONNREFUSED ${uri}`),
+      { name: 'MongooseServerSelectionError' },
+    ));
+    safeFailure(new Error('MONGODB_URI is required'));
+  } finally {
+    console.log = originalLog;
+    console.error = originalError;
+  }
+
+  const output = printed.join('\n');
+  assert.equal(output.includes(process.env.MONGODB_URI), false, 'the URI is never printed');
+  assert.equal(/mongodb(\+srv)?:\/\//.test(output), false, 'no connection string is printed');
+  assert.match(output, /MongoDB connection problem/);
+  // An allowlisted configuration message is still shown, because it is safe.
+  assert.match(output, /MONGODB_URI is required/);
+});
+
+test('the backfill script reports a configuration failure without a usable .env', async () => {
+  const os = require('node:os');
+  const fs = require('node:fs');
+  const scriptPath = path.join(process.cwd(), 'scripts', 'backfill-player-ids.js');
+  const workingDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'arcadia-backfill-empty-'));
+
+  try {
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: workingDirectory,
+      env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot },
+      encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Player ID backfill failed\./);
+    assert.match(result.stderr, /MONGODB_URI is required/);
+    assert.equal(/mongodb(\+srv)?:\/\//.test(result.stdout + result.stderr), false);
+  } finally {
+    fs.rmSync(workingDirectory, { recursive: true, force: true });
   }
 });
 

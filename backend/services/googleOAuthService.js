@@ -24,6 +24,7 @@ const {
   verifyOAuthValue,
 } = require('../utils/oauth');
 const { getGoogleOAuthConfig } = require('../config/googleOAuth');
+const { createUserWithPlayerId } = require('./playerIdService');
 const {
   getTrustedGooglePictureUrl,
   normalizeDisplayName,
@@ -305,7 +306,9 @@ async function findOrCreateGoogleUser(identity, req) {
   }
 
   try {
-    const user = await User.create({
+    // createUserWithPlayerId gives the new Google account its permanent Player
+    // ID server side, regenerating it if the unique index rejects a collision.
+    const user = await createUserWithPlayerId({
       email: identity.email,
       name: identity.name,
       displayName: identity.name,

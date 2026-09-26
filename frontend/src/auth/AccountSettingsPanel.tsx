@@ -32,7 +32,7 @@ function formatDate(value: string | null) {
 function AccountSettingsPanel({ onClose }: AccountSettingsPanelProps) {
   const {
     user,
-    updateUser,
+    updateProfile,
     changePassword,
     revokeSession,
     logoutOtherSessions,
@@ -65,7 +65,6 @@ function AccountSettingsPanel({ onClose }: AccountSettingsPanelProps) {
       setProfile(profileResult.value.user);
       setUsername(profileResult.value.user.username || "");
       setDisplayName(profileResult.value.user.displayName || profileResult.value.user.name || "");
-      updateUser(profileResult.value.user);
     } else {
       loadErrors.push(getAuthErrorMessage(profileResult.reason, "Unable to load profile."));
     }
@@ -78,7 +77,7 @@ function AccountSettingsPanel({ onClose }: AccountSettingsPanelProps) {
 
     if (loadErrors.length) setError(loadErrors.join(" "));
     setIsLoading(false);
-  }, [updateUser]);
+  }, []);
 
   useEffect(() => {
     void loadAccountData();
@@ -126,7 +125,6 @@ function AccountSettingsPanel({ onClose }: AccountSettingsPanelProps) {
     try {
       const response = await authApi.setUsername(username.trim());
       setProfile(response.user);
-      updateUser(response.user);
       setUsername(response.user.username || "");
       setAvailability("current");
       setSuccess("Username saved.");
@@ -137,56 +135,65 @@ function AccountSettingsPanel({ onClose }: AccountSettingsPanelProps) {
     }
   }
 
+  /*
+   * The display name goes through the same shared account profile write as My
+   * Profile, so a save from either surface lands in the same auth state.
+   */
   async function saveDisplayName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusyAction("display-name");
     setError(null);
     setSuccess(null);
-    try {
-      const response = await authApi.updateProfile({ displayName: displayName.trim() });
-      setProfile(response.user);
-      updateUser(response.user);
-      setSuccess("Profile saved.");
-    } catch (requestError) {
-      setError(getAuthErrorMessage(requestError, "Unable to update display name."));
-    } finally {
+    const result = await updateProfile({ displayName: displayName.trim() });
+    if (!result.ok || !result.user) {
+      setError(result.message || "Unable to update display name.");
       setBusyAction(null);
+      return;
     }
+
+    setProfile(result.user);
+    setSuccess("Profile saved.");
+    setBusyAction(null);
   }
 
-  async function selectLocalAvatar(value: string) {
-    if (!profile || profile.avatar.type === "local" && profile.avatar.value === value) return;
-    setBusyAction(`avatar:${value}`);
+  /*
+   * The avatar selection goes through the same shared account profile write as
+   * My Profile, so the Navbar and the profile popup update from the persisted
+   * value instead of from local state.
+   */
+  async function selectAvatar(avatar: { type: "local" | "google"; value?: string }) {
+    if (!profile) return;
+    const current = profile.avatar;
+    if (current.type === avatar.type && (avatar.type === "google" || current.value === avatar.value)) {
+      return;
+    }
+
+    setBusyAction(`avatar:${avatar.type === "google" ? "google" : avatar.value}`);
     setError(null);
     setSuccess(null);
-    try {
-      const response = await authApi.setAvatar({ type: "local", value });
-      setProfile(response.user);
-      updateUser(response.user);
-      setSuccess("Avatar updated.");
-    } catch (requestError) {
-      setError(getAuthErrorMessage(requestError, "Unable to update avatar."));
-    } finally {
+    const result = await updateProfile({
+      avatar: { type: avatar.type, value: avatar.value ?? (avatar.type === "google" ? "google" : "") },
+    });
+
+    if (!result.ok || !result.user) {
+      setError(result.message || "Unable to update avatar.");
       setBusyAction(null);
+      return;
     }
+
+    setProfile(result.user);
+    setSuccess(avatar.type === "google"
+      ? "Google profile picture selected."
+      : "Avatar updated.");
+    setBusyAction(null);
   }
 
-  async function selectGoogleAvatar() {
-    if (!profile?.googleAvatarAvailable) return;
-    if (profile.avatar.type === "google") return;
-    setBusyAction("avatar:google");
-    setError(null);
-    setSuccess(null);
-    try {
-      const response = await authApi.setAvatar({ type: "google" });
-      setProfile(response.user);
-      updateUser(response.user);
-      setSuccess("Google profile picture selected.");
-    } catch (requestError) {
-      setError(getAuthErrorMessage(requestError, "Unable to select Google profile picture."));
-    } finally {
-      setBusyAction(null);
-    }
+  function selectLocalAvatar(value: string) {
+    return selectAvatar({ type: "local", value });
+  }
+
+  function selectGoogleAvatar() {
+    return selectAvatar({ type: "google" });
   }
 
   async function handleRevokeSession(session: AccountSession) {
