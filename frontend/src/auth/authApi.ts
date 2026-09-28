@@ -5,6 +5,8 @@ import type {
   AuthMessageResponse,
   AuthResponse,
   AuthUser,
+  MatchHistoryFilters,
+  MatchHistoryResponse,
   LevelBadgeKey,
   LevelThemeKey,
   LoginValues,
@@ -118,13 +120,16 @@ const BADGE_KEYS: readonly LevelBadgeKey[] = [
   "flame",
 ];
 
+/* The six tier themes, matching the backend tier table. `unearned` is not a
+   tier: it is the neutral treatment used to show a tier that is not yet earned,
+   so it is accepted on the wire but never chosen here. */
 const THEME_KEYS: readonly LevelThemeKey[] = [
-  "neutral-grey",
-  "bright-green",
-  "deep-cyan",
-  "crimson-red",
-  "electric-purple",
-  "neon-golden",
+  "bronze",
+  "silver",
+  "gold",
+  "diamond",
+  "crown",
+  "flame",
 ];
 
 /**
@@ -412,6 +417,42 @@ export const authApi = {
       "/api/v1/account/change-password",
       { method: "POST", body: values },
       { credentials: "include" },
+    );
+  },
+
+  /*
+   * The signed-in account's own completed matches.
+   *
+   * GET only. There is deliberately no method here that creates a match, because
+   * the backend exposes no such route: a client cannot report its own result,
+   * opponent or timestamp. The account is taken from the access token, so this
+   * always reads the caller's own history and nobody else's.
+   */
+  getMatchHistory(filters: MatchHistoryFilters = {}) {
+    const query = new URLSearchParams();
+    if (filters.from) query.set("from", filters.from);
+    if (filters.to) query.set("to", filters.to);
+    if (filters.opponentType && filters.opponentType !== "ALL") {
+      query.set("opponentType", filters.opponentType);
+    }
+    if (filters.result && filters.result !== "ALL") {
+      query.set("result", filters.result);
+    }
+    if (typeof filters.tzOffsetMinutes === "number") {
+      query.set("tzOffsetMinutes", String(filters.tzOffsetMinutes));
+    }
+    if (typeof filters.limit === "number") {
+      query.set("limit", String(filters.limit));
+    }
+    if (typeof filters.offset === "number") {
+      query.set("offset", String(filters.offset));
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<MatchHistoryResponse>(
+      `/api/v1/account/matches${suffix}`,
+      {},
+      { credentials: "omit" },
     );
   },
 

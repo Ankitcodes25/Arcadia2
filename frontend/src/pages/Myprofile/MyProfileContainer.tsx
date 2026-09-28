@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthApiError, authApi } from "../../auth/authApi";
 import { useAuth } from "../../auth/AuthContext";
 import { getAuthErrorMessage } from "../../auth/authUtils";
-import type { AccountProfileUser } from "../../auth/authTypes";
+import type { AccountProfileUser, AuthAvatar } from "../../auth/authTypes";
 import {
   isUsernameTakenFailure,
   USERNAME_TAKEN_MESSAGE,
@@ -109,6 +109,35 @@ function MyProfileContainer({ onClose, globalRank = null }: MyProfileContainerPr
     setIsSaving(false);
   }, [isSaving, updateProfile]);
 
+  /*
+   * The avatar write. It is the same account profile endpoint and the same auth
+   * state update as the username, so My Profile, the Profile Popup and the
+   * Navbar all read the persisted value from one place.
+   */
+  const handleSaveAvatar = useCallback(async (avatar: AuthAvatar) => {
+    if (isSaving) {
+      throw new AuthApiError(PROFILE_SAVE_FAILED_MESSAGE, 0);
+    }
+    setIsSaving(true);
+
+    const result = await updateProfile({ avatar });
+    if (!isMountedRef.current) return;
+
+    if (!result.ok || !result.user) {
+      /*
+       * The backend refuses an avatar it will not store, for example a Google
+       * picture that is not currently trusted. The safe message is surfaced in
+       * the Avatar Modal and nothing is changed.
+       */
+      const message = result.message || PROFILE_SAVE_FAILED_MESSAGE;
+      setIsSaving(false);
+      throw new AuthApiError(message, result.status ?? 0);
+    }
+
+    setProfile(result.user);
+    setIsSaving(false);
+  }, [isSaving, updateProfile]);
+
   if (!user) {
     return null;
   }
@@ -127,6 +156,7 @@ function MyProfileContainer({ onClose, globalRank = null }: MyProfileContainerPr
         onClose={onClose}
         loadError={loadError}
         onSaveUsername={handleSaveUsername}
+        onSaveAvatar={handleSaveAvatar}
       />
     );
   }
@@ -138,6 +168,7 @@ function MyProfileContainer({ onClose, globalRank = null }: MyProfileContainerPr
       onClose={onClose}
       loadError={loadError}
       onSaveUsername={handleSaveUsername}
+      onSaveAvatar={handleSaveAvatar}
     />
   );
 }

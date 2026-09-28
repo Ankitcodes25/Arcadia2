@@ -28,6 +28,24 @@ body {
   background: #07020e;
 }
 
+/* =========================================================
+   MODAL SCROLL LOCK
+
+   Set on <html> for as long as a modal layer holds the document scroll (see
+   `src/auth/modalScrollLock.ts`). Hiding the document overflow removes the
+   scrollbar, which would otherwise narrow the space a `position: fixed` dialog
+   is centred in and make a centred parent dialog jump sideways when a child
+   layer opens. Reserving the gutter keeps the available width identical before
+   and after locking, so nothing moves.
+
+   It is scoped to the locked state, so the page layout is untouched whenever no
+   modal is open.
+   ========================================================= */
+
+html.has-modal-scroll-lock {
+  scrollbar-gutter: stable;
+}
+
 .page-transition {
   width: 100%;
   animation: pageEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1);

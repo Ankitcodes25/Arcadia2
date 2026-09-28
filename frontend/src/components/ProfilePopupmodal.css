@@ -43,21 +43,16 @@
   width: min(430px, calc(100vw - 28px));
 }
 
-.profile-popup::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  right: 12px;
+/*
+   There is deliberately no ::before caret here any more.
 
-  width: 14px;
-  height: 14px;
-
-  border-top: 1px solid rgba(224, 105, 255, 0.42);
-  border-left: 1px solid rgba(224, 105, 255, 0.42);
-  background: #2a1440;
-
-  transform: rotate(45deg);
-}
+   The popup used to carry a rotated 14px square at its top-right corner, filled
+   with a flat #2a1440. That is a tooltip arrow, and a menu is not a tooltip: it
+   pointed at nothing, and because its flat fill did not match the popup's
+   gradient it read on screen as a stray dark arrow in the corner. Removing the
+   rule removes the element. Nothing replaces it, and the menu's own controls,
+   including the Match History option, are untouched.
+*/
 
 /* ---------------- Identity ----------------
    The Player ID is compact and secondary, the username is the prominent name,
@@ -184,12 +179,14 @@
   white-space: nowrap;
 }
 
-.profile-popup-badge--neutral-grey   { border-color: rgba(156, 163, 175, 0.34); background: rgba(156, 163, 175, 0.13); color: #d5dae3; }
-.profile-popup-badge--bright-green  { border-color: rgba(52, 211, 153, 0.36);  background: rgba(52, 211, 153, 0.13);  color: #9df0cd; }
-.profile-popup-badge--deep-cyan     { border-color: rgba(34, 211, 238, 0.36);   background: rgba(34, 211, 238, 0.13);   color: #a5eefc; }
-.profile-popup-badge--crimson-red   { border-color: rgba(248, 113, 113, 0.36); background: rgba(248, 113, 113, 0.13); color: #ffbdbd; }
-.profile-popup-badge--electric-purple { border-color: rgba(192, 132, 252, 0.4); background: rgba(192, 132, 252, 0.15); color: #e9d5ff; }
-.profile-popup-badge--neon-golden   { border-color: rgba(250, 204, 21, 0.36);  background: rgba(250, 204, 21, 0.12);  color: #ffe9a3; }
+/* The six tier themes, matching the badge pill and level card in My Profile. */
+.profile-popup-badge--bronze   { border-color: rgba(217, 119, 6, 0.42);  background: rgba(217, 119, 6, 0.15);  color: #f0cfa8; }
+.profile-popup-badge--silver   { border-color: rgba(203, 213, 225, 0.42); background: rgba(203, 213, 225, 0.14); color: #e2e8f0; }
+.profile-popup-badge--gold     { border-color: rgba(234, 179, 8, 0.42);   background: rgba(234, 179, 8, 0.15);   color: #fde68a; }
+.profile-popup-badge--diamond  { border-color: rgba(34, 211, 238, 0.42);  background: rgba(34, 211, 238, 0.14);  color: #a5f3fc; }
+.profile-popup-badge--crown    { border-color: rgba(192, 132, 252, 0.44); background: rgba(192, 132, 252, 0.15); color: #d8b4fe; }
+.profile-popup-badge--flame    { border-color: rgba(249, 115, 22, 0.44);  background: rgba(249, 115, 22, 0.15);  color: #fed7aa; }
+.profile-popup-badge--unearned { border-color: rgba(156, 163, 175, 0.34); background: rgba(156, 163, 175, 0.12); color: #d5dae3; }
 
 .profile-popup-status {
   display: flex;

@@ -2,6 +2,9 @@ import type { MouseEvent } from "react";
 
 const NAVIGATION_EVENT = "arcadia:navigate";
 
+/** The Match History page, reached from the Profile Popup. */
+export const MATCH_HISTORY_PATH = "/match-history";
+
 function scrollToSection(targetId: string) {
   const targetElement = document.getElementById(targetId);
   if (!targetElement) return;
@@ -104,4 +107,48 @@ export function onNavigation(callback: () => void) {
       callback
     );
   };
+}
+
+/* -----------------------------------------
+   Match History and the Profile Popup
+
+   Match History is a separate page, so the Profile Popup is unmounted while it
+   is open. Coming back has to put that popup back, and the popup cannot do it
+   itself because it is not mounted at the time. So the intent is parked here for
+   the length of one navigation.
+
+   These are transient values held in memory only. They are deliberately NOT in
+   localStorage or sessionStorage: they describe a single click in a single
+   session, so a reload or a new tab must not resurrect a popup the reader never
+   asked for.
+   ----------------------------------------- */
+
+let shouldReopenProfilePopup = false;
+let matchHistoryReturnPath = "/";
+
+/** Parks the intent to bring the Profile Popup back. */
+export function rememberReturningToProfilePopup() {
+  shouldReopenProfilePopup = true;
+}
+
+/**
+ * Reads and clears the intent in one step, so it fires exactly once. The clear on
+ * read is what stops the popup reappearing on some later, unrelated navigation.
+ */
+export function consumeProfilePopupReopenRequest(): boolean {
+  const requested = shouldReopenProfilePopup;
+  shouldReopenProfilePopup = false;
+  return requested;
+}
+
+/**
+ * Records the page the reader was on when they left for Match History, so Return
+ * sends them back to exactly that page rather than to a hard-coded guess.
+ */
+export function rememberMatchHistoryReturnPath(path: string) {
+  matchHistoryReturnPath = path || "/";
+}
+
+export function getMatchHistoryReturnPath(): string {
+  return matchHistoryReturnPath;
 }

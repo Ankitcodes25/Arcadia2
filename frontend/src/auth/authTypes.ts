@@ -22,13 +22,19 @@ export type AuthAvatar = {
 export type LevelBadgeKey = "bronze" | "silver" | "gold" | "diamond" | "crown" | "flame";
 
 /** Stable visual theme identifiers owned by the backend. */
+/**
+ * A tier's theme names the same material as its badge, so the two can never
+ * disagree. `unearned` is not a tier: it is the neutral treatment used to show a
+ * tier the account has not actually earned yet.
+ */
 export type LevelThemeKey =
-  | "neutral-grey"
-  | "bright-green"
-  | "deep-cyan"
-  | "crimson-red"
-  | "electric-purple"
-  | "neon-golden";
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "diamond"
+  | "crown"
+  | "flame"
+  | "unearned";
 
 /**
  * Progression is always derived on the backend from the account's total Arcadion
@@ -142,6 +148,67 @@ export type AccountProfileResponse = {
 
 export type AccountSettingsResponse = {
   settings: AccountProfileUser;
+};
+
+/* ------------------------------------------------------------------
+   Match history
+
+   Read-only. The backend has no route that creates a match, so a client can
+   never report a result, an opponent or a timestamp for itself. Every value
+   here comes from a genuine completed match recorded server-side.
+   ------------------------------------------------------------------ */
+
+/** Who the account played against. The backend allowlists exactly these. */
+export type MatchOpponentType = "ARCADION" | "ONLINE_FRIEND" | "LOCAL";
+
+/** How the completed match ended for this account. */
+export type MatchResult = "WIN" | "LOSS" | "DRAW";
+
+export type MatchRecord = {
+  /** The stable public id, used as the list key. */
+  matchId: string;
+  game: string;
+  opponentType: MatchOpponentType;
+  /** A public display label, only when the opponent has one. Never account data. */
+  opponentName: string | null;
+  result: MatchResult;
+  /** When the match actually finished, as an ISO instant. */
+  completedAt: string;
+  /** Only present when the game system measured it. */
+  durationMinutes: number | null;
+};
+
+export type MatchHistoryFilters = {
+  /** Inclusive `YYYY-MM-DD` calendar dates, or null for an open bound. */
+  from?: string | null;
+  to?: string | null;
+  opponentType?: MatchOpponentType | "ALL" | null;
+  /**
+   * Filters on the STORED result. The page shows `DRAW` as "Tie", but the value
+   * that is sent and matched is the one that was recorded.
+   */
+  result?: MatchResult | "ALL" | null;
+  /** The reader's UTC offset, so the day bounds are the reader's own days. */
+  tzOffsetMinutes?: number;
+  limit?: number;
+  /** How many matches to skip, so the whole history can be walked. */
+  offset?: number;
+};
+
+export type MatchHistoryResponse = {
+  matches: MatchRecord[];
+  /** The real count across every page, not just this one. */
+  total: number;
+  limit: number;
+  offset: number;
+  /** Whether anything is left below this page. Never implied from the count. */
+  hasMore: boolean;
+  filters: {
+    from: string | null;
+    to: string | null;
+    opponentType: MatchOpponentType | null;
+    result: MatchResult | null;
+  };
 };
 
 export type UsernameAvailabilityResponse = {

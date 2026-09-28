@@ -1,9 +1,15 @@
 import "./Navbar.css";
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import logo from "../assets/ArcadialogoA.png";
-import { navigateTo } from "../lib/navigation";
+import {
+  MATCH_HISTORY_PATH,
+  consumeProfilePopupReopenRequest,
+  navigateTo,
+  onNavigation,
+  rememberMatchHistoryReturnPath,
+} from "../lib/navigation";
 import { useAuth } from "../auth/AuthContext";
-import AvatarPreview from "../auth/AvatarPreview";
+import AvatarPreview from "../pages/Myprofile/AvatarPreview";
 import { getUserProgressionView } from "../auth/progression";
 import type { AuthFormValues } from "../auth/authTypes";
 import LoginSignupModal from "./LoginSignupModal";
@@ -35,7 +41,21 @@ function getInitialNavItem(): NavItem {
   return "home";
 }
 
-function Navbar() {
+type NavbarProps = {
+  /**
+   * Whether the bar is shown.
+   *
+   * The Match History page is a full page of its own and does not display the
+   * Navbar. It is still MOUNTED there, though, and that is deliberate: this
+   * component owns the Profile Popup state and the navigation listener that the
+   * Match History back button depends on. Hiding the bar rather than unmounting
+   * it is what lets the reader leave the page and find the popup exactly as they
+   * left it, with no timer and no second copy of the menu.
+   */
+  isVisible?: boolean;
+};
+
+function Navbar({ isVisible = true }: NavbarProps = {}) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
   const {
@@ -249,12 +269,44 @@ function Navbar() {
     }
   };
 
+  /*
+   * Match History is a separate page. Leaving through the normal navigation
+   * helper is what keeps the app's single page state machine in charge, rather
+   * than a second, overlapping copy of this menu.
+   *
+   * The reopen marker is deliberately NOT armed here. It is armed by the page's
+   * Return button alone, so leaving closes the popup and nothing on the way out
+   * can bring it straight back.
+   */
+  const openMatchHistory = () => {
+    // Where Return should go back to, so the reader lands where they were.
+    rememberMatchHistoryReturnPath(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    );
+    navigateTo(MATCH_HISTORY_PATH);
+  };
+
+  /*
+   * Return from Match History restores this popup.
+   *
+   * The intent is a transient flag parked by the navigation helper, and it is
+   * consumed on read. Consuming it here, inside the same navigation callback
+   * that swapped the page, is what makes this work without a timer: the popup is
+   * opened because the reader asked to come back, not because enough time
+   * passed. A later unrelated navigation finds the flag already cleared.
+   */
+  useEffect(() => onNavigation(() => {
+    if (consumeProfilePopupReopenRequest()) {
+      setIsProfileOpen(true);
+    }
+  }), []);
+
   /* -------------------------------------------------------
      RENDER
   ------------------------------------------------------- */
 
   return (
-    <header className="navbar">
+    <header className={`navbar${isVisible ? "" : " navbar--hidden"}`}>
       <div className="navbar-inner">
 
         {/* -------------------------------------------------
@@ -448,6 +500,12 @@ function Navbar() {
                   onOpenMyProfile={() =>
                     setIsMyProfileOpen(true)
                   }
+                  /*
+                    Match History is a separate page, so this leaves through the
+                    normal navigation helper. The page it opens records where the
+                    reader was, and its Return button brings this popup back.
+                  */
+                  onOpenMatchHistory={openMatchHistory}
                   onLogout={handleLogout}
                   isLoggingOut={isSubmitting}
                 />

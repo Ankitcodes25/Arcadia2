@@ -7,14 +7,21 @@
  * `getLevelBadge()` to resolve the metadata for the level it calculated.
  *
  * Only stable keys cross the API boundary. Any animation, gradient or glow
- * that belongs to a tier is a frontend presentation concern, so a tier such as
- * the animated flame badge is described here purely by its keys.
+ * that belongs to a tier is a frontend presentation concern, so the animated
+ * flame tier at the top is described here purely by its keys: the frontend
+ * drives that animation off `badgeKey`, not off `themeKey`.
+ *
+ * A tier's `badgeKey` and `themeKey` name the same material (bronze, silver,
+ * gold, diamond, crown, flame) and the frontend renders the matching theme.
+ * The level ranges here are authoritative and are shared with the level avatar
+ * tiers, which the frontend test suite pins to these exact values so the two
+ * lists can never drift apart.
  */
 const LEVEL_BADGE_TIERS = Object.freeze([
   Object.freeze({
     badgeKey: 'bronze',
     title: 'Arcadia Rookie',
-    themeKey: 'neutral-grey',
+    themeKey: 'bronze',
     minLevel: 0,
     // null means "and every level above", which is how the last tier is open ended.
     maxLevel: 4,
@@ -22,35 +29,35 @@ const LEVEL_BADGE_TIERS = Object.freeze([
   Object.freeze({
     badgeKey: 'silver',
     title: 'Arcadia Challenger',
-    themeKey: 'bright-green',
+    themeKey: 'silver',
     minLevel: 5,
     maxLevel: 9,
   }),
   Object.freeze({
     badgeKey: 'gold',
     title: 'Arcadia Veteran',
-    themeKey: 'deep-cyan',
+    themeKey: 'gold',
     minLevel: 10,
     maxLevel: 14,
   }),
   Object.freeze({
     badgeKey: 'diamond',
     title: 'Arcadia Master',
-    themeKey: 'crimson-red',
+    themeKey: 'diamond',
     minLevel: 15,
     maxLevel: 19,
   }),
   Object.freeze({
     badgeKey: 'crown',
     title: 'Arcadia Legend',
-    themeKey: 'electric-purple',
+    themeKey: 'crown',
     minLevel: 20,
     maxLevel: 29,
   }),
   Object.freeze({
     badgeKey: 'flame',
     title: 'Arcadia Supreme',
-    themeKey: 'neon-golden',
+    themeKey: 'flame',
     minLevel: 30,
     maxLevel: null,
   }),

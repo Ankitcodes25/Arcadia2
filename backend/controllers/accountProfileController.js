@@ -1,4 +1,5 @@
 const accountProfileService = require('../services/accountProfileService');
+const matchHistoryService = require('../services/matchHistoryService');
 const {
   getRefreshToken,
   clearRefreshCookie,
@@ -35,6 +36,25 @@ async function getSettings(req, res, next) {
   try {
     const settings = await accountProfileService.getSettings(req.user.id);
     return res.json({ settings });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+/*
+ * The signed-in account's own match history.
+ *
+ * `req.user.id` comes from the verified access token, so a caller can only ever
+ * read its own rows. There is no route that creates a match.
+ */
+async function getMatchHistory(req, res, next) {
+  preventAccountResponseCaching(res);
+  try {
+    const history = await matchHistoryService.listMatchHistory({
+      userId: req.user.id,
+      query: req.query,
+    });
+    return res.json(history);
   } catch (error) {
     return next(error);
   }
@@ -140,6 +160,7 @@ module.exports = {
   checkUsernameAvailability,
   getProfile,
   getSettings,
+  getMatchHistory,
   setUsername,
   updateProfile,
   updateAvatar,

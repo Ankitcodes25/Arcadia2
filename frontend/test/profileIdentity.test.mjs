@@ -50,7 +50,10 @@ function renderPopup(overrides = {}) {
   return renderToStaticMarkup(React.createElement(ProfilePopupModal, {
     user,
     isMyProfileOpen: false,
+    isMatchHistoryOpen: false,
     onClose: () => {},
+    onOpenMyProfile: () => {},
+    onOpenMatchHistory: () => {},
     onLogout: () => {},
     isLoggingOut: false,
     ...overrides,
@@ -65,16 +68,42 @@ test("profile header shows Arcadia username beside the avatar, not Google displa
   assert.match(markup, /profile-popup-avatar/);
 });
 
-test("profile popup contains exactly the five approved menu options", () => {
+test("profile popup contains exactly the six approved menu options in order", () => {
   const markup = renderPopup();
 
-  for (const label of ["My Profile", "Leaderboards", "Settings", "Help &amp; Support", "Logout"]) {
+  for (const label of [
+    "My Profile",
+    "Leaderboards",
+    "Match History",
+    "Settings",
+    "Help &amp; Support",
+    "Logout",
+  ]) {
     assert.match(markup, new RegExp(`>${label}<`));
   }
   for (const label of ["Favorite Games", "Trophies", "Achievements", "Account Settings"]) {
     assert.doesNotMatch(markup, new RegExp(`>${label}<`));
   }
-  assert.equal((markup.match(/class="profile-popup-item/g) || []).length, 5);
+  assert.equal((markup.match(/class="profile-popup-item/g) || []).length, 6);
+});
+
+test("Match History sits immediately after Leaderboards and before Settings", () => {
+  const markup = renderPopup();
+
+  // The rendered order is what matters, so the positions are compared directly.
+  const positions = ["My Profile", "Leaderboards", "Match History", "Settings", "Help &amp; Support", "Logout"]
+    .map((label) => markup.indexOf(`>${label}<`));
+
+  assert.ok(positions.every((position) => position >= 0), "every option is rendered");
+  assert.deepEqual(
+    positions.slice().sort((a, b) => a - b),
+    positions,
+    "the options render in the documented order",
+  );
+  assert.ok(
+    positions[1] < positions[2] && positions[2] < positions[3],
+    "Match History is between Leaderboards and Settings",
+  );
 });
 
 test("the profile popup exposes no email address or verification state", () => {
@@ -100,9 +129,12 @@ test("the profile popup identity leads with the Player ID and copies it", () => 
 
 test("the profile popup badge title comes from the progression payload", () => {
   const markup = renderPopup({
-    user: { ...user, progression: { title: "Arcadia Vanguard", themeKey: "electric-purple" } },
+    user: {
+      ...user,
+      progression: { title: "Arcadia Legend", badgeKey: "crown", themeKey: "crown" },
+    },
   });
 
-  assert.match(markup, /Arcadia Vanguard/);
-  assert.match(markup, /profile-popup-badge--electric-purple/);
+  assert.match(markup, /Arcadia Legend/);
+  assert.match(markup, /profile-popup-badge--crown/);
 });
