@@ -249,6 +249,33 @@ export function getEarliestMonth(createdAt: string | null | undefined): Calendar
   return { year: today.year, month: today.month, day: 1 };
 }
 
+/**
+ * The earliest DAY the calendar may select, from the account creation date.
+ *
+ * This keeps the exact day, unlike `getEarliestMonth`, so the account's start
+ * month can disable the days before the account existed: an account created on
+ * 25 September 2026 cannot select 1–24 September, while 25 September onward is
+ * selectable as those days become current.
+ */
+export function getEarliestDate(createdAt: string | null | undefined): CalendarDate {
+  const created = parseCompletedAt(createdAt);
+  if (created) {
+    return {
+      year: created.getFullYear(),
+      month: created.getMonth() + 1,
+      day: created.getDate(),
+    };
+  }
+
+  /*
+   * No account creation date is available, so the earliest bound falls back to
+   * the current month, exactly as `getEarliestMonth` does: a usable calendar
+   * that cannot scroll back to an older first month.
+   */
+  const today = getToday();
+  return { year: today.year, month: today.month, day: 1 };
+}
+
 /** How the calendar grid is laid out, Monday first. */
 export function getMonthGrid(view: { year: number; month: number }): (CalendarDate | null)[] {
   // getUTCDay is 0 for Sunday, so this is shifted to make Monday index 0. It is
@@ -279,10 +306,11 @@ export function getDayState(
   bounds: { earliest: CalendarDate; latest: CalendarDate; today: CalendarDate },
 ): DayState {
   // Disabled wins over everything, so a day that is out of bounds is never shown
-  // as today or as selected.
-  const isBeforeEarliestMonth = compareCalendarDates(date, bounds.earliest) < 0;
+  // as today or as selected. The earliest bound is the account's exact start
+  // day, so the days before it in the start month are disabled too.
+  const isBeforeEarliest = compareCalendarDates(date, bounds.earliest) < 0;
   const isAfterLatest = compareCalendarDates(date, bounds.latest) > 0;
-  if (isBeforeEarliestMonth || isAfterLatest) return "disabled";
+  if (isBeforeEarliest || isAfterLatest) return "disabled";
 
   if (isSameCalendarDate(date, selected)) return "selected";
   if (isSameCalendarDate(date, bounds.today)) return "today";
@@ -302,9 +330,9 @@ export function getRangeError(
   start: CalendarDate | null,
   end: CalendarDate | null,
 ): string | null {
-  if (!start && !end) return null;
-  if (start && !end) return null;
-  if (!start && end) return null;
+  // One guard covers all three empty cases, and narrows both values to real
+  // dates for the comparison below.
+  if (!start || !end) return null;
 
   if (compareCalendarDates(start, end) > 0) {
     return "Start date must be before or equal to the end date.";
@@ -317,4 +345,28 @@ export function getRangeError(
 export function formatSelectedDateLabel(date: CalendarDate | null): string {
   if (!date) return "All time";
   return `${MONTH_NAMES[date.month - 1].slice(0, 3)} ${date.day}, ${date.year}`;
+}
+
+/* ================================================================
+   THE RANGE LABEL
+
+   The one quiet line above the day grid: the account's start day through
+   today, e.g. `25 Sept 2026 – 28 Sept 2026`. September keeps the four-letter
+   `Sept`, the conventional short form for the one month whose three-letter
+   abbreviation reads as ambiguous.
+   ================================================================ */
+
+const SHORT_MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sept", "Oct", "Nov", "Dec",
+];
+
+/** A compact calendar date, e.g. `25 Sept 2026`. */
+export function formatCalendarDateShort(date: CalendarDate): string {
+  return `${date.day} ${SHORT_MONTH_NAMES[date.month - 1]} ${date.year}`;
+}
+
+/** The available date range, e.g. `25 Sept 2026 – 28 Sept 2026`. */
+export function formatRangeLabel(start: CalendarDate, end: CalendarDate): string {
+  return `${formatCalendarDateShort(start)} – ${formatCalendarDateShort(end)}`;
 }
