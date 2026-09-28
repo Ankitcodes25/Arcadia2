@@ -18,10 +18,9 @@ import matchHistoryRingBg from "../../assets/ArcadionpickBG.png";
 import {
   OPPONENT_TYPE_OPTIONS,
   RESULT_OPTIONS,
-  compareCalendarDates,
   formatCompletedAt,
   formatDuration,
-  getEarliestMonth,
+  getEarliestDate,
   getOpponentTypeLabel,
   getRangeError,
   getResultLabel,
@@ -64,9 +63,9 @@ const NO_FILTERS: FilterState = {
 };
 
 /*
- * A single-day display for the From/To fields. This intentionally does not
- * reuse formatRangeLabel (which formats a whole start–end pair as one
- * string) — each field here shows just its own day.
+ * A single-day display for the Date trigger. This intentionally does not reuse
+ * formatRangeLabel (which formats a whole start–end pair as one string) — the
+ * trigger shows just the chosen day.
  */
 function formatSingleCalendarDate(date: CalendarDate | null): string {
   if (!date) return "Select date";
@@ -310,18 +309,17 @@ function MatchHistory({ returnPath }: MatchHistoryProps) {
   }, []);
 
   /*
-   * The account creation date is the real earliest bound for the calendar. If it
-   * is missing the calendar falls back to the current month, which still works
-   * but cannot scroll back to an older first month.
+   * The account creation date is the real earliest bound for the calendar, down
+   * to the exact start day: the calendar opens on that month and disables every
+   * day before it. If it is missing the calendar falls back to the current
+   * month, which still works but cannot scroll back to an older first month.
    */
   const today = useMemo(() => getToday(), []);
   const accountCreatedAt = user?.createdAt ?? null;
-  const earliestMonth = useMemo(
-    () => getEarliestMonth(accountCreatedAt),
+  const earliest = useMemo(
+    () => getEarliestDate(accountCreatedAt),
     [accountCreatedAt],
   );
-  const isUsingFallbackBound = accountCreatedAt === null
-    || compareCalendarDates(earliestMonth, today) === 0;
 
   const buildFilters = useCallback(
     (state: FilterState, offset: number): MatchHistoryFilters => {
@@ -557,7 +555,7 @@ function MatchHistory({ returnPath }: MatchHistoryProps) {
                 <div className="mhf-calendar-wrap">
                   <MatchHistoryCalendar
                     selected={draft.date}
-                    earliest={earliestMonth}
+                    earliest={earliest}
                     latest={today}
                     today={today}
                     onSelect={(selected) => {
@@ -632,13 +630,6 @@ function MatchHistory({ returnPath }: MatchHistoryProps) {
               </button>
             </div>
           </div>
-
-          {isUsingFallbackBound && (
-            <p className="mhf-note">
-              Calendar range is limited to the current month: this account&apos;s
-              creation date is not available.
-            </p>
-          )}
         </section>
 
         {/* ---------------- Full history ---------------- */}

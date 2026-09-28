@@ -719,9 +719,8 @@ test("month and year navigation moves through the months and respects the bounds
   await click(q("#mh-filter-date"));
 
   const today = format.getToday();
-  assert.equal(q(".mhc-month").textContent, format.MONTH_NAMES[today.month - 1],
-    "it opens on the current month");
-  assert.equal(q(".mhc-year").textContent, String(today.year));
+  assert.equal(q(".mhc-month").textContent, "March", "it opens on the account start month");
+  assert.equal(q(".mhc-year").textContent, "2024");
 
   // Walking back to the earliest month and then past it.
   const totalMonths = (today.year - 2024) * 12 + (today.month - 3);
@@ -734,19 +733,24 @@ test("month and year navigation moves through the months and respects the bounds
   assert.equal(q('.mhc-nav[aria-label="Previous month"]').disabled, true,
     "and cannot go before it");
 
-  // And forward again to the current month, where it stops.
+  // Forward again: the current month is reachable, and it is NOT the last one.
   for (let i = 0; i < totalMonths; i += 1) {
     await click(q('.mhc-nav[aria-label="Next month"]'));
   }
-  assert.equal(q('.mhc-nav[aria-label="Next month"]').disabled, true,
-    "the current month is the last one");
+  assert.equal(q(".mhc-month").textContent, format.MONTH_NAMES[today.month - 1],
+    "it reaches the current month again");
+  assert.equal(q('.mhc-nav[aria-label="Next month"]').disabled, false,
+    "and forward navigation is not clamped there");
   await unmount();
 });
 
-test("year buttons jump a year at a time and are clamped", async () => {
+test("year buttons jump a year at a time and are clamped behind only", async () => {
   const unmount = await renderPage(navbarUser({ createdAt: "2024-03-15T08:00:00.000Z" }));
   await click(q("#mh-filter-date"));
 
+  // The calendar opens on the account start month, where the back controls
+  // are clamped: step forward first so a backward step can be measured.
+  await click(q('.mhc-nav[aria-label="Next year"]'));
   const startYear = Number(q(".mhc-year").textContent);
   await click(q('.mhc-nav[aria-label="Previous year"]'));
   assert.equal(Number(q(".mhc-year").textContent), startYear - 1, "it steps back a year");
@@ -758,6 +762,16 @@ test("year buttons jump a year at a time and are clamped", async () => {
     await click(button);
   }
   assert.equal(q(".mhc-year").textContent, "2024", "it never goes before the account existed");
+
+  // Forward a year is never clamped: future years stay navigable.
+  for (let i = 0; i < 40; i += 1) {
+    const button = q('.mhc-nav[aria-label="Next year"]');
+    if (button.disabled) break;
+    await click(button);
+  }
+  assert.ok(Number(q(".mhc-year").textContent) > 2024, "it steps forward through the years");
+  assert.equal(q('.mhc-nav[aria-label="Next year"]').disabled, false,
+    "and the control stays enabled");
   await unmount();
 });
 
@@ -765,21 +779,32 @@ test("the keyboard can change month from the grid", async () => {
   const unmount = await renderPage();
   await click(q("#mh-filter-date"));
 
-  const before = q(".mhc-month").textContent;
+  // The calendar opens on the account start month, so ArrowLeft is clamped there.
+  const startMonth = q(".mhc-month").textContent;
   await pressKey(q(".mhc-grid"), "ArrowLeft");
-  assert.notEqual(q(".mhc-month").textContent, before, "ArrowLeft moves a month back");
+  assert.equal(q(".mhc-month").textContent, startMonth, "ArrowLeft cannot leave the start month");
 
   await pressKey(q(".mhc-grid"), "ArrowRight");
-  assert.equal(q(".mhc-month").textContent, before, "and ArrowRight returns to it");
+  assert.notEqual(q(".mhc-month").textContent, startMonth, "ArrowRight moves a month forward");
+
+  await pressKey(q(".mhc-grid"), "ArrowLeft");
+  assert.equal(q(".mhc-month").textContent, startMonth, "and ArrowLeft returns to it");
   await unmount();
 });
 
 test("dates before account creation and in the future are disabled", async () => {
-  const unmount = await renderPage();
+  // The account was created earlier this month, so the calendar opens on the
+  // current month and the days before the start day are out of bounds.
+  const now = format.getToday();
+  const unmount = await renderPage(navbarUser({
+    createdAt: new Date(now.year, now.month - 1, 1, 8).toISOString(),
+  }));
   await click(q("#mh-filter-date"));
 
-  const today = format.getToday();
-  const daysInMonth = format.getDaysInMonth(today.year, today.month);
+  assert.equal(q(".mhc-month").textContent, format.MONTH_NAMES[now.month - 1],
+    "it opens on the account start month, which is this one");
+
+  const daysInMonth = format.getDaysInMonth(now.year, now.month);
   const cells = qa(".mhc-day").filter((n) => !n.className.includes("blank"));
 
   // Every real day of the month is rendered exactly once.
@@ -793,7 +818,7 @@ test("dates before account creation and in the future are disabled", async () =>
 
   for (let day = 1; day <= daysInMonth; day += 1) {
     const cell = byDay(day);
-    if (day > today.day) {
+    if (day > now.day) {
       assert.equal(cell.disabled, true, `${day} of this month is in the future`);
     } else {
       assert.equal(cell.disabled, false, `${day} of this month is selectable`);
@@ -817,6 +842,294 @@ test("a month before the account was created cannot be reached at all", async ()
   );
   assert.equal(q(".mhc-month").textContent, format.MONTH_NAMES[now.month - 1],
     "and it opens on the current month");
+  await unmount();
+});
+
+/* ==================================================================
+   Account start bounds, future navigation and the range label
+   ================================================================== */
+
+test("the calendar opens on the account start month and cannot navigate before it", async () => {
+  const unmount = await renderPage(navbarUser({ createdAt: "2024-03-15T08:00:00.000Z" }));
+  await click(q("#mh-filter-date"));
+
+  assert.equal(q(".mhc-month").textContent, "March", "it opens on the account start month");
+  assert.equal(q(".mhc-year").textContent, "2024", "and start year");
+  assert.equal(q('.mhc-nav[aria-label="Previous month"]').disabled, true,
+    "the month before the account existed is unreachable");
+  assert.equal(q('.mhc-nav[aria-label="Previous year"]').disabled, true,
+    "and so is the year before");
+
+  // Days before the exact start day in the start month are disabled too.
+  const cells = qa(".mhc-day").filter((n) => !n.className.includes("blank"));
+  assert.equal(cells.length, 31, "the whole start month is rendered");
+  for (const cell of cells) {
+    const day = Number(cell.textContent);
+    assert.equal(cell.disabled, day < 15,
+      `March ${day} is ${day < 15 ? "before the account existed" : "selectable"}`);
+  }
+  await unmount();
+});
+
+test("the start month disables every day before the exact start day", async () => {
+  // The account was created on the 25th of last month, so days 1–24 of that
+  // month predate the account, while the 25th onward are all in the past.
+  const now = format.getToday();
+  const unmount = await renderPage(navbarUser({
+    createdAt: new Date(now.year, now.month - 2, 25, 12).toISOString(),
+  }));
+  await click(q("#mh-filter-date"));
+
+  const startMonth = new Date(now.year, now.month - 2, 1);
+  const startYear = startMonth.getFullYear();
+  const startMonthNumber = startMonth.getMonth() + 1;
+  assert.equal(q(".mhc-month").textContent, format.MONTH_NAMES[startMonthNumber - 1],
+    "it opens on the account start month");
+  assert.equal(q(".mhc-year").textContent, String(startYear));
+
+  const daysInStartMonth = format.getDaysInMonth(startYear, startMonthNumber);
+  const cells = qa(".mhc-day").filter((n) => !n.className.includes("blank"));
+  assert.equal(cells.length, daysInStartMonth, "the whole start month is rendered");
+  for (const cell of cells) {
+    const day = Number(cell.textContent);
+    assert.equal(cell.disabled, day < 25,
+      `day ${day} is ${day < 25 ? "before the account existed" : "selectable"}`);
+  }
+  await unmount();
+});
+
+test("future months and years stay navigable, with every day disabled until it arrives", async () => {
+  const unmount = await renderPage(navbarUser({ createdAt: "2024-03-15T08:00:00.000Z" }));
+  await click(q("#mh-filter-date"));
+
+  const today = format.getToday();
+
+  // Walk forward past the current month: two months beyond today.
+  const totalMonths = (today.year - 2024) * 12 + (today.month - 3) + 2;
+  for (let i = 0; i < totalMonths; i += 1) {
+    await click(q('.mhc-nav[aria-label="Next month"]'));
+  }
+
+  const viewMonth = today.month + 2 > 12 ? today.month - 10 : today.month + 2;
+  const viewYear = today.month + 2 > 12 ? today.year + 1 : today.year;
+  assert.equal(q(".mhc-month").textContent, format.MONTH_NAMES[viewMonth - 1],
+    "it reached a future month");
+  assert.equal(q(".mhc-year").textContent, String(viewYear));
+  assert.equal(q('.mhc-nav[aria-label="Next month"]').disabled, false,
+    "and forward navigation is never clamped");
+
+  // That future month is fully rendered, with every day disabled.
+  const cells = qa(".mhc-day").filter((n) => !n.className.includes("blank"));
+  assert.equal(cells.length, format.getDaysInMonth(viewYear, viewMonth),
+    "the future month is not hidden");
+  for (const cell of cells) {
+    assert.equal(cell.disabled, true, `${cell.textContent} is in the future`);
+  }
+
+  // Stepping forward a year works too, and is not clamped either.
+  await click(q('.mhc-nav[aria-label="Next year"]'));
+  assert.equal(Number(q(".mhc-year").textContent), viewYear + 1, "it stepped another year ahead");
+  assert.equal(q('.mhc-nav[aria-label="Next year"]').disabled, false, "and stays enabled");
+  await unmount();
+});
+
+test("the range label shows the account start date through today", async () => {
+  const now = format.getToday();
+  const created = new Date(now.year, now.month - 2, 25, 12).toISOString();
+  const unmount = await renderPage(navbarUser({ createdAt: created }));
+  await click(q("#mh-filter-date"));
+
+  const expected = format.formatRangeLabel(format.getEarliestDate(created), now);
+  const label = q(".mhc-range");
+  assert.ok(label, "the range label is rendered");
+  assert.equal(label.textContent, expected, "it runs from the account start day through today");
+
+  // It is a quiet line inside the popover, above the day grid — not a card.
+  assert.equal(label.tagName, "P", "it is a plain paragraph");
+  assert.ok(q(".mhc-popover .mhc-range"), "inside the calendar");
+  const popoverChildren = [...q(".mhc-popover").children].map((n) => n.className);
+  assert.ok(popoverChildren.indexOf("mhc-range") < popoverChildren.indexOf("mhc-grid"),
+    "and it sits above the day grid");
+  await unmount();
+});
+
+test("disabled days show no prohibited cursor and no red indicator", async () => {
+  const calCss = await readFile(
+    new URL("../src/pages/MatchHistory/MatchHistoryCalendar.css", import.meta.url),
+    "utf8",
+  );
+  const rules = calCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  const block = cssBlock(rules, ".mhc-day--disabled");
+
+  // The normal default cursor, on the day itself and therefore on hover too:
+  // no hover rule may apply to a disabled day.
+  assert.match(block, /cursor:\s*default/, "the cursor is the normal default");
+  assert.doesNotMatch(block, /not-allowed/, "never the prohibited cursor");
+  assert.doesNotMatch(block, /rgb\(2\d\d|#e[0-9a-f]{5}|red/i, "and no red indicator");
+
+  assert.match(rules, /\.mhc-day:hover:not\(:disabled\)\s*\{[^}]*background/,
+    "the hover fill rule is scoped to enabled days only");
+});
+
+/* ==================================================================
+   Calendar reveal scroll
+   ================================================================== */
+
+/**
+ * Stubs the layout-dependent APIs the calendar's reveal scroll uses, so a
+ * test can place the popover anywhere in the viewport and record the scroll.
+ *
+ * jsdom neither lays out nor scrolls anything, so the popover's rect is fixed
+ * at the given bottom edge, window.scrollBy is replaced with a recorder and
+ * window.matchMedia (which jsdom does not implement) with a mock.
+ */
+function stubCalendarLayout({ bottom, reducedMotion = false }) {
+  const originalRect = window.Element.prototype.getBoundingClientRect;
+  const originalScrollBy = window.scrollBy;
+  const hadMatchMedia = "matchMedia" in window;
+  const originalMatchMedia = window.matchMedia;
+  const scrollCalls = [];
+
+  window.Element.prototype.getBoundingClientRect = function () {
+    return {
+      x: 0, y: 0, left: 0, right: 0, top: 0,
+      bottom, width: 300, height: bottom,
+      toJSON() { return this; },
+    };
+  };
+  window.scrollBy = (options) => { scrollCalls.push(options); };
+  window.matchMedia = () => ({ matches: reducedMotion });
+
+  return {
+    scrollCalls,
+    restore() {
+      window.Element.prototype.getBoundingClientRect = originalRect;
+      window.scrollBy = originalScrollBy;
+      if (hadMatchMedia) {
+        window.matchMedia = originalMatchMedia;
+      } else {
+        delete window.matchMedia;
+      }
+    },
+  };
+}
+
+test("opening the calendar scrolls it into view when it hangs below the viewport", async () => {
+  const unmount = await renderPage();
+  // The popover bottom sits 100px below the viewport's lower edge.
+  const stub = stubCalendarLayout({ bottom: window.innerHeight + 100 });
+
+  try {
+    await press(q("#mh-filter-date"));
+
+    assert.equal(stub.scrollCalls.length, 1, "it scrolled exactly once");
+    assert.deepEqual(stub.scrollCalls[0], { top: 106, behavior: "smooth" },
+      "by exactly what was needed to leave 6px below the calendar");
+  } finally {
+    stub.restore();
+  }
+  await unmount();
+});
+
+test("a partially clipped calendar scrolls by exactly the clipped amount", async () => {
+  const unmount = await renderPage();
+  const stub = stubCalendarLayout({ bottom: window.innerHeight + 40 });
+
+  try {
+    await press(q("#mh-filter-date"));
+
+    assert.deepEqual(stub.scrollCalls, [{ top: 46, behavior: "smooth" }]);
+  } finally {
+    stub.restore();
+  }
+  await unmount();
+});
+
+test("the calendar does not scroll when it already has 6px of space below it", async () => {
+  const unmount = await renderPage();
+  // Exactly 6px of space below the popover: the reveal margin, so no scroll.
+  const stub = stubCalendarLayout({ bottom: window.innerHeight - 6 });
+
+  try {
+    await press(q("#mh-filter-date"));
+
+    assert.equal(stub.scrollCalls.length, 0, "no scroll was needed");
+  } finally {
+    stub.restore();
+  }
+  await unmount();
+});
+
+test("the reveal scroll is instant when the reader prefers reduced motion", async () => {
+  const unmount = await renderPage();
+  const stub = stubCalendarLayout({ bottom: window.innerHeight + 100, reducedMotion: true });
+
+  try {
+    await press(q("#mh-filter-date"));
+
+    assert.deepEqual(stub.scrollCalls, [{ top: 106, behavior: "instant" }]);
+  } finally {
+    stub.restore();
+  }
+  await unmount();
+});
+
+test("the reveal scroll does not close the calendar or block selection", async () => {
+  const unmount = await renderPage();
+  const stub = stubCalendarLayout({ bottom: window.innerHeight + 100 });
+
+  try {
+    await press(q("#mh-filter-date"));
+    assert.ok(q(".mhc-popover") !== null, "the calendar stayed open");
+
+    // The default account started 15 March 2024, so the 20th is selectable.
+    const before = matchHistoryCalls.length;
+    await press(qa(".mhc-day").find((n) => !n.disabled && n.textContent === "20"));
+    assert.equal(matchHistoryCalls.length, before + 1, "a day can still be chosen");
+    assert.equal(q(".mhc-popover") === null, true, "and choosing it closes the calendar");
+  } finally {
+    stub.restore();
+  }
+  await unmount();
+});
+
+test("a short document is padded so the reveal scroll can reach the calendar", async () => {
+  const unmount = await renderPage();
+  // jsdom's scrollHeight is 0, so the document is always "too short" here:
+  // the reveal must pad the body by the shortfall rather than leave the
+  // calendar clipped.
+  const stub = stubCalendarLayout({ bottom: window.innerHeight + 100 });
+
+  try {
+    await press(q("#mh-filter-date"));
+
+    assert.deepEqual(stub.scrollCalls, [{ top: 106, behavior: "smooth" }]);
+    assert.equal(document.body.style.paddingBottom, `${window.innerHeight + 106}px`,
+      "the body was padded by exactly the shortfall");
+  } finally {
+    stub.restore();
+  }
+  await unmount();
+});
+
+test("the reveal scroll does not pad the document when it can already reach", async () => {
+  const unmount = await renderPage();
+  const stub = stubCalendarLayout({ bottom: window.innerHeight + 100 });
+  // Simulate a document tall enough to scroll the full amount.
+  Object.defineProperty(document.documentElement, "scrollHeight", {
+    value: window.innerHeight * 3,
+    configurable: true,
+  });
+
+  try {
+    await press(q("#mh-filter-date"));
+
+    assert.deepEqual(stub.scrollCalls, [{ top: 106, behavior: "smooth" }]);
+    assert.equal(document.body.style.paddingBottom, "", "no padding was needed");
+  } finally {
+    delete document.documentElement.scrollHeight;
+    stub.restore();
+  }
   await unmount();
 });
 
@@ -1257,6 +1570,38 @@ test("the earliest month comes from the real account creation date", () => {
   assert.equal(fallback.month, today.month);
 });
 
+test("the earliest date keeps the account's exact start day", () => {
+  // Built from a local noon, so the calendar day is the same in any timezone.
+  const fromAccount = format.getEarliestDate(new Date(2026, 8, 25, 12).toISOString());
+  assert.deepEqual(fromAccount, { year: 2026, month: 9, day: 25 },
+    "the exact start day is kept, not clamped to the first");
+
+  // With no creation date the calendar still works, falling back to this month.
+  const fallback = format.getEarliestDate(null);
+  const today = format.getToday();
+  assert.equal(fallback.year, today.year);
+  assert.equal(fallback.month, today.month);
+  assert.equal(fallback.day, 1, "the fallback is still the first of this month");
+});
+
+test("the range label reads the start day through today", () => {
+  assert.equal(
+    format.formatRangeLabel({ year: 2026, month: 9, day: 25 }, { year: 2026, month: 9, day: 28 }),
+    "25 Sept 2026 – 28 Sept 2026",
+    "a same-month range",
+  );
+  assert.equal(
+    format.formatRangeLabel({ year: 2024, month: 3, day: 15 }, { year: 2026, month: 9, day: 28 }),
+    "15 Mar 2024 – 28 Sept 2026",
+    "a range spanning years",
+  );
+  assert.equal(
+    format.formatRangeLabel({ year: 2026, month: 12, day: 31 }, { year: 2027, month: 1, day: 1 }),
+    "31 Dec 2026 – 1 Jan 2027",
+    "a range across the year boundary",
+  );
+});
+
 
 /* ==================================================================
    13. The Profile Popup arrow
@@ -1618,12 +1963,15 @@ test("using the calendar month navigation does not close the calendar", async ()
   await press(q("#mh-filter-date"));
   const before = q(".mhc-month").textContent;
 
-  await press(q('.mhc-nav[aria-label="Previous month"]'));
-  assert.ok(q(".mhc-popover") !== null, "still open after going back a month");
+  // The calendar opens on the account start month, so go forward first: the
+  // back control is clamped there.
+  await press(q('.mhc-nav[aria-label="Next month"]'));
+  assert.ok(q(".mhc-popover") !== null, "still open after going forward a month");
   assert.notEqual(q(".mhc-month").textContent, before, "and the month actually changed");
 
-  await press(q('.mhc-nav[aria-label="Next month"]'));
-  assert.ok(q(".mhc-popover") !== null, "still open after going forward again");
+  await press(q('.mhc-nav[aria-label="Previous month"]'));
+  assert.ok(q(".mhc-popover") !== null, "still open after going back again");
+  assert.equal(q(".mhc-month").textContent, before, "and it returned to the start month");
   await unmount();
 });
 
@@ -2038,10 +2386,24 @@ test("Clear Filters uses the All Games clear button style", async () => {
    SINGLE-DATE SELECTION AND IMMEDIATE FILTERING
    ================================================================== */
 
-/** Opens the calendar and clicks one enabled day. */
+/**
+ * Opens the calendar and clicks one enabled day.
+ *
+ * The calendar opens on the account start month, where the chosen day may be
+ * disabled or absent, so the helper walks forward month by month until the day
+ * is both present and selectable.
+ */
 async function chooseDay(day) {
   await press(q("#mh-filter-date"));
-  await press(qa(".mhc-day").find((n) => n.textContent === String(day) && !n.disabled));
+  for (let attempt = 0; attempt < 300; attempt += 1) {
+    const cell = qa(".mhc-day").find((n) => n.textContent === String(day) && !n.disabled);
+    if (cell) {
+      await press(cell);
+      return;
+    }
+    await press(q('.mhc-nav[aria-label="Next month"]'));
+  }
+  throw new Error(`No enabled day ${day} in the calendar`);
 }
 
 test("the calendar selects one day in a single click", async () => {
@@ -2097,8 +2459,14 @@ test("there is no range, no From/To and no multi-day selection", async () => {
   assert.equal(q("#mh-filter-date-from") === null, true, "no From control");
   assert.equal(q("#mh-filter-date-to") === null, true, "and no To control");
   assert.equal(qa('input[type="date"]').length, 0, "no date inputs at all");
-  assert.doesNotMatch(q(".mhc-popover").textContent, /–|—/,
-    "and nothing in the calendar reads as a range");
+
+  // The only dash in the calendar is the bounds label's separator, which shows
+  // the available range above the grid; nothing else reads as a range to pick.
+  const dashes = q(".mhc-popover").textContent.match(/[–—]/g) || [];
+  assert.equal(dashes.length, 1, "exactly one dash, in the bounds label");
+  assert.equal(q(".mhc-range") === null, false, "and it belongs to the range label");
+  assert.match(q(".mhc-range").textContent, /^\d{1,2} \w{3,4} \d{4} – \d{1,2} \w{3,4} \d{4}$/,
+    "which reads start day through today");
 
   // The range states are gone from the stylesheet too.
   const calCss = await readFile(
@@ -2112,7 +2480,12 @@ test("there is no range, no From/To and no multi-day selection", async () => {
 });
 
 test("today is an outline-only marker, and a selected day is the only filled one", async () => {
-  const unmount = await renderPage();
+  // The account was created this month, so the calendar opens on the current
+  // month and today is in the grid without navigating.
+  const now = format.getToday();
+  const unmount = await renderPage(navbarUser({
+    createdAt: new Date(now.year, now.month - 1, 1, 8).toISOString(),
+  }));
   await press(q("#mh-filter-date"));
 
   const today = format.getToday();
@@ -2171,7 +2544,11 @@ test("getDayState gives four mutually exclusive states", () => {
 });
 
 test("disabled days and the future still cannot be selected", async () => {
-  const unmount = await renderPage();
+  // The account was created this month, so the calendar opens on the current month.
+  const now = format.getToday();
+  const unmount = await renderPage(navbarUser({
+    createdAt: new Date(now.year, now.month - 1, 1, 8).toISOString(),
+  }));
   await press(q("#mh-filter-date"));
 
   const today = format.getToday();
@@ -2191,9 +2568,27 @@ test("disabled days and the future still cannot be selected", async () => {
 
   // A press on a disabled day changes nothing at all.
   const disabled = cells.find((n) => n.disabled);
-  await press(disabled);
+  if (disabled) {
+    await press(disabled);
+    assert.ok(q(".mhc-popover") !== null, "the calendar stays open");
+    assert.equal(matchHistoryCalls.length, 1, "and nothing was fetched");
+  }
+
+  // Every day of next month is disabled too, and equally unselectable.
+  await press(q('.mhc-nav[aria-label="Next month"]'));
+  const nextCells = qa(".mhc-day").filter((n) => !n.className.includes("blank"));
+  const nextMonth = today.month % 12 + 1;
+  const nextYear = today.month === 12 ? today.year + 1 : today.year;
+  assert.equal(nextCells.length, format.getDaysInMonth(nextYear, nextMonth),
+    "the future month is fully rendered");
+  for (const cell of nextCells) {
+    assert.equal(cell.disabled, true, `${cell.textContent} is in the future and disabled`);
+  }
+
+  const before = matchHistoryCalls.length;
+  await press(nextCells[0]);
   assert.ok(q(".mhc-popover") !== null, "the calendar stays open");
-  assert.equal(matchHistoryCalls.length, 1, "and nothing was fetched");
+  assert.equal(matchHistoryCalls.length, before, "and a future day selects nothing");
   await unmount();
 });
 
@@ -2333,16 +2728,21 @@ test("interacting with the calendar never closes it mid-gesture", async () => {
 
   await press(q("#mh-filter-date"));
 
+  // The calendar opens on the account start month, where going back is clamped.
   const before = q(".mhc-month").textContent;
-  await press(q('.mhc-nav[aria-label="Previous month"]'));
-  assert.ok(q(".mhc-popover") !== null, "still open after going back a month");
-  assert.notEqual(q(".mhc-month").textContent, before, "and the month changed");
+  assert.equal(q('.mhc-nav[aria-label="Previous month"]').disabled, true,
+    "the back control is disabled on the start month");
 
   await press(q('.mhc-nav[aria-label="Next month"]'));
   assert.ok(q(".mhc-popover") !== null, "still open after going forward");
+  assert.notEqual(q(".mhc-month").textContent, before, "and the month changed");
 
-  await press(q('.mhc-nav[aria-label="Previous year"]'));
-  assert.ok(q(".mhc-popover") !== null, "still open after stepping back a year");
+  await press(q('.mhc-nav[aria-label="Previous month"]'));
+  assert.ok(q(".mhc-popover") !== null, "still open after going back");
+  assert.equal(q(".mhc-month").textContent, before, "and it returned to the start month");
+
+  await press(q('.mhc-nav[aria-label="Next year"]'));
+  assert.ok(q(".mhc-popover") !== null, "still open after stepping forward a year");
 
   // Only a real choice closes it, because that is the end of the interaction.
   await press(qa(".mhc-day").find((n) => !n.disabled && n.textContent === "6"));
