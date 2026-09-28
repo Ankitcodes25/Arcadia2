@@ -13,6 +13,19 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.035);
 }
 
+/*
+   Hidden but still mounted, for the Match History page.
+
+   `visibility: hidden` rather than `display: none` is deliberate. The bar keeps
+   its box, so nothing that was already laid out shifts, and it stays in the
+   document so the Profile Popup state and the navigation listener that the
+   Match History back button relies on keep working while the bar is not shown.
+*/
+.navbar--hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .navbar-inner {
   width: min(100% - 96px, 1800px);
   height: 100%;

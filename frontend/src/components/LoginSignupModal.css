@@ -13,8 +13,15 @@
 	justify-content: center;
 	/* clamp() se padding chhoti screens pe apne aap simat jaata hai */
 	padding: clamp(8px, 4dvh, 20px) 16px;
-	background: rgba(5, 1, 15, 0.4);
-	backdrop-filter: blur(3px);
+	/*
+	   Matched to the established modal treatment. My Profile uses
+	   rgba(3, 2, 10, 0.65) over a 4px blur, and the Profile Popup is built on
+	   the same purple family. This backdrop used to be lighter (0.4 / 3px),
+	   which made this modal read as a different, flatter surface from the other
+	   two.
+	*/
+	background: rgba(3, 2, 10, 0.65);
+	backdrop-filter: blur(4px);
 	animation: authBackdropIn 180ms ease-out;
 }
 
@@ -32,8 +39,15 @@
 	padding: clamp(16px, 4.5dvh, 30px) clamp(20px, 6vw, 39px) clamp(14px, 3.2dvh, 25px);
 	border: 1px solid rgba(224, 105, 255, 0.85);
 	border-radius: 21px;
-	background: linear-gradient(145deg, rgba(61, 24, 83, 0.88), rgba(22, 10, 43, 0.88) 78%);
-	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 28px rgba(211, 64, 255, 0.48), inset 0 0 30px rgba(180, 59, 238, 0.1);
+	/*
+	   Same surface as My Profile (.mpm-modal) and the Profile Popup: the same
+	   150deg purple gradient, at the same opacity, with the same glow. The 145deg
+	   gradient at 0.88 that was here before was visibly more transparent, so the
+	   page behind showed through and this modal read as a lighter, flatter panel
+	   than the other two. The fit-to-screen clamp() sizing below is unchanged.
+	*/
+	background: linear-gradient(150deg, rgba(63, 25, 86, 0.94), rgba(19, 8, 38, 0.96) 78%);
+	box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75), 0 0 28px rgba(211, 64, 255, 0.42), inset 0 0 30px rgba(180, 59, 238, 0.1);
 	animation: authModalIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 

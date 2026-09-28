@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./pages/Landingpage/Landingpage";
 import Allgames from "./pages/Allgames/Allgames";
-import { onNavigation } from "./lib/navigation";
+import { onNavigation, MATCH_HISTORY_PATH, getMatchHistoryReturnPath } from "./lib/navigation";
+import MatchHistory from "./pages/MatchHistory/MatchHistory";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { shouldShowGlobalAuthNotice } from "./auth/authUtils";
 import { NOTICE_FADING_CLASS, useAutoDismissNotice } from "./auth/authNotice";
@@ -87,17 +88,22 @@ function AppContent() {
   }
 
   const isGamesPage = path.startsWith("/games");
+  const isMatchHistoryPage = path.startsWith(MATCH_HISTORY_PATH);
 
   return (
     <>
-      <Navbar />
+      <Navbar isVisible={!isMatchHistoryPage} />
       <AccountActionPanel />
       <AuthNotice />
       <div
-        key={isGamesPage ? "games-page" : "home-page"}
+        key={isMatchHistoryPage ? "match-history-page" : isGamesPage ? "games-page" : "home-page"}
         className="page-transition"
       >
-        {isGamesPage ? <Allgames /> : <LandingPage />}
+        {isMatchHistoryPage
+          ? <MatchHistory returnPath={getMatchHistoryReturnPath()} />
+          : isGamesPage
+            ? <Allgames />
+            : <LandingPage />}
       </div>
     </>
   );

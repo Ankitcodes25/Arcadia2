@@ -223,3 +223,267 @@ test("the removed identity wrapper has no styles left behind", () => {
     assert.deepEqual(found, [], `${selector} is no longer rendered, so it has no styles`);
   }
 });
+
+/* ==================================================================
+   Avatar Modal stylesheet
+
+   The Avatar Modal is a child of My Profile, so it must stay layered above
+   it, and the grid is now a single continuous run of tiles.
+   ================================================================== */
+
+const avatarsCss = readFileSync(
+  fileURLToPath(new URL("../src/pages/Myprofile/AvatarsModal.css", import.meta.url)),
+  "utf8",
+);
+const avatarsRoot = postcss.parse(avatarsCss);
+
+function avatarDeclarations(selector, prop) {
+  const found = [];
+  avatarsRoot.walkRules((rule) => {
+    if (!rule.selectors.includes(selector)) return;
+    const media = rule.parent.type === "atrule" && rule.parent.name === "media"
+      ? rule.parent.params
+      : null;
+    rule.walkDecls(prop, (decl) => found.push({ value: decl.value.trim(), media }));
+  });
+  return found;
+}
+
+test("the Avatar Modal is layered above the My Profile dialog it sits on", () => {
+  const zOf = (target, selector) => {
+    let value = null;
+    target.walkRules((rule) => {
+      if (rule.selectors.includes(selector)) {
+        rule.walkDecls("z-index", (decl) => {
+          value = Number(decl.value.trim());
+        });
+      }
+    });
+    return value;
+  };
+
+  const backdrop = zOf(avatarsRoot, ".avm-backdrop");
+  const parent = zOf(root, ".mpm-backdrop");
+  assert.ok(backdrop !== null && parent !== null, "both backdrops declare a z-index");
+  assert.ok(
+    backdrop > parent,
+    `the Avatar Modal (${backdrop}) must sit above My Profile (${parent})`,
+  );
+});
+
+test("an unavailable avatar tile never gets the blocking cursor", () => {
+  // A disabled button would be painted with the browser's prohibited cursor, so
+  // the rule that caused it must not exist.
+  assert.deepEqual(
+    avatarDeclarations(".avm-tile:disabled", "cursor"),
+    [],
+    "no disabled-tile cursor rule, so no prohibited cursor is painted",
+  );
+
+  for (const selector of [".avm-tile--locked", ".avm-tile--unavailable"]) {
+    const cursor = avatarDeclarations(selector, "cursor");
+    assert.equal(cursor.length, 1, `${selector} sets a cursor`);
+    assert.equal(cursor[0].value, "default", `${selector} uses a normal cursor`);
+  }
+});
+
+test("an unavailable avatar tile has no hover transition or lift", () => {
+  for (const selector of [".avm-tile--locked", ".avm-tile--unavailable"]) {
+    assert.deepEqual(
+      avatarDeclarations(selector, "transition"),
+      [{ value: "none", media: null }],
+      `${selector} takes part in no hover transition`,
+    );
+    assert.deepEqual(avatarDeclarations(selector, "transform"), [], `${selector} never moves`);
+  }
+
+  // No hover rule anywhere targets an unavailable tile.
+  const hoverRules = [];
+  avatarsRoot.walkRules((rule) => {
+    if (rule.selectors.some((selector) => selector.includes(":hover"))) {
+      hoverRules.push(...rule.selectors);
+    }
+  });
+  for (const selector of hoverRules) {
+    assert.ok(
+      !/avm-tile--locked|avm-tile--unavailable/.test(selector),
+      `${selector} must not react to hover`,
+    );
+  }
+});
+
+test("the section headings and the back control have no styles left behind", () => {
+  for (const selector of [
+    ".avm-section-title",
+    ".avm-section-title--locked",
+    ".avm-back",
+    ".avm-header-icon",
+    ".avm-header-right",
+  ]) {
+    const found = [];
+    avatarsRoot.walkRules((rule) => {
+      if (rule.selectors.includes(selector)) found.push(rule.source.start.line);
+    });
+    assert.deepEqual(found, [], `${selector} is no longer rendered, so it has no styles`);
+  }
+});
+
+test("the Arcadia logo is styled to match the other Arcadia brand marks", () => {
+  // Only the base rule; the small-phone query legitimately shrinks it.
+  const size = avatarDeclarations(".avm-header-logo", "width").filter((e) => e.media === null);
+  assert.equal(size.length, 1, "the logo has an explicit base width");
+  assert.equal(
+    avatarDeclarations(".avm-header-logo", "height").filter((e) => e.media === null)[0].value,
+    size[0].value,
+    "and a square box",
+  );
+  assert.match(
+    avatarDeclarations(".avm-header-logo", "filter")[0].value,
+    /drop-shadow\(0 0 8px rgba\(202, 65, 255, 0\.9\)\)/,
+    "the same purple glow the login modal and Navbar use",
+  );
+  // The logo and the heading share one flex row, so they align.
+  assert.equal(
+    avatarDeclarations(".avm-header-title", "align-items")[0].value,
+    "center",
+    "the logo and heading are centred on one row",
+  );
+});
+
+test("the unlock label is allowed to wrap so the full sentence is readable", () => {
+  assert.deepEqual(
+    avatarDeclarations(".avm-tile-req", "white-space"),
+    [],
+    "the unlock label is never clipped to one line",
+  );
+  assert.deepEqual(
+    avatarDeclarations(".avm-tile-req", "text-overflow"),
+    [],
+    "and never ellipsised",
+  );
+  // Tiles are wide enough for "Unlocks at level 30" to read.
+  const min = avatarDeclarations(".avm-grid", "grid-template-columns")[0].value;
+  const px = Number(min.match(/minmax\((\d+)px/)[1]);
+  assert.ok(px >= 96, `tiles must be at least 96px wide, got ${px}`);
+});
+
+test("the disabled Save Changes button carries no red glow or blocking cursor", () => {
+  // The dimmed gradient alone marks it disabled. The neon halo used to bleed a
+  // red-pink ring around the button, and `not-allowed` painted the browser's
+  // prohibited symbol on top of it.
+  const disabled = avatarDeclarations(".avm-confirm:disabled", "box-shadow");
+  assert.deepEqual(disabled, [{ value: "none", media: null }], "no glow around a disabled button");
+
+  const cursor = avatarDeclarations(".avm-confirm:disabled", "cursor");
+  assert.equal(cursor.length, 1, "the disabled state still sets a cursor");
+  assert.equal(cursor[0].value, "default", "and it is a normal arrow, never a prohibited one");
+
+  // The enabled button keeps the Arcadia purple gradient and its neon glow.
+  const enabled = avatarDeclarations(".avm-confirm", "background");
+  assert.equal(enabled.length, 1, "one background for the button");
+  assert.match(enabled[0].value, /#d83bff/, "the Arcadia purple gradient is untouched");
+  assert.equal(
+    avatarDeclarations(".avm-confirm", "box-shadow")[0].value,
+    "0 6px 20px rgba(224, 105, 255, 0.38)",
+    "and the enabled neon glow is untouched",
+  );
+
+  // A genuine save error is still reported, in its own place.
+  assert.match(
+    avatarDeclarations(".avm-error", "color")[0].value,
+    /#fecdd3/,
+    "the real error message keeps its own styling",
+  );
+});
+
+/* ==================================================================
+   Modal layering and scroll locking
+
+   The hierarchy is Profile Popup -> My Profile -> Username or Avatar Modal, and
+   each child has to be able to sit above its parent without the parent moving.
+   ================================================================== */
+
+function modalZIndex(stylesheetPath) {
+  const tree = postcss.parse(readFileSync(fileURLToPath(new URL(stylesheetPath, import.meta.url)), "utf8"));
+  let value = null;
+  tree.walkRules((rule) => {
+    if (rule.selectors.includes(".unm-backdrop") || rule.selectors.includes(".avm-backdrop")) {
+      rule.walkDecls("z-index", (decl) => {
+        value = Number(decl.value.trim());
+      });
+    }
+  });
+  return value;
+}
+
+test("both child modals are layered above My Profile and below each other", () => {
+  const popup = zIndexOf(root, ".profile-popup");
+  const parent = zIndexOf(root, ".mpm-backdrop");
+  const username = modalZIndex("../src/components/UsernameModal.css");
+  const avatar = zIndexOf(avatarsRoot, ".avm-backdrop");
+
+  assert.ok(popup < parent, `Profile Popup (${popup}) sits below My Profile (${parent})`);
+  assert.ok(
+    username > parent,
+    `the Username Modal (${username}) must sit above My Profile (${parent}), or it opens hidden behind it`,
+  );
+  assert.ok(
+    avatar > parent,
+    `the Avatar Modal (${avatar}) must sit above My Profile (${parent})`,
+  );
+  assert.ok(
+    Math.abs(username - avatar) >= 1,
+    "the two child layers have distinct stacking values so they can never fight",
+  );
+});
+
+function zIndexOf(tree, selector) {
+  let value = null;
+  tree.walkRules((rule) => {
+    if (rule.selectors.includes(selector)) {
+      rule.walkDecls("z-index", (decl) => {
+        value = Number(decl.value.trim());
+      });
+    }
+  });
+  return value;
+}
+
+test("the modal scroll lock reserves the scrollbar gutter so nothing shifts", () => {
+  // Hiding the document overflow removes the scrollbar, which would narrow the
+  // space a fixed, centred dialog sits in and make it jump sideways. The gutter
+  // is reserved for exactly as long as the lock is held, so the width is
+  // identical either side of it.
+  const globalCss = readFileSync(
+    fileURLToPath(new URL("../src/index.css", import.meta.url)),
+    "utf8",
+  );
+  const globalRoot = postcss.parse(globalCss);
+
+  const selectors = [];
+  let gutter = null;
+  globalRoot.walkRules((rule) => {
+    selectors.push(...rule.selectors);
+    if (rule.selectors.includes("html.has-modal-scroll-lock")) {
+      rule.walkDecls("scrollbar-gutter", (decl) => {
+        gutter = decl.value.trim();
+      });
+    }
+  });
+
+  assert.equal(gutter, "stable", "the gutter is held stable while a modal is open");
+  assert.ok(
+    selectors.includes("html.has-modal-scroll-lock"),
+    "and it is scoped to the locked state, so the page layout is untouched otherwise",
+  );
+
+  // Every scrollbar-gutter declaration in the global sheet must live inside that
+  // gated rule, so none of them applies while no modal is open.
+  const ungated = [];
+  globalRoot.walkDecls("scrollbar-gutter", (decl) => {
+    if (decl.parent.type !== "rule" || !decl.parent.selectors.includes("html.has-modal-scroll-lock")) {
+      ungated.push(decl.parent.selector);
+    }
+  });
+  assert.deepEqual(ungated, [], "no ungated scrollbar-gutter rule applies to the page");
+});

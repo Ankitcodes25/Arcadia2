@@ -1,0 +1,235 @@
+/* =========================================================
+   MATCH HISTORY CALENDAR
+
+   The date popover under the Date dropdown. It is positioned against the
+   dropdown rather than the page, so it always opens directly beneath the control
+   that opened it, and it is clamped to the viewport on narrow screens so it can
+   never hang off the right edge.
+
+   One click picks one day. There is no range to complete, so the four day states
+   are: disabled, selected, today, and selectable. Today is an OUTLINE only and
+   never carries a fill, because a fill means "this is the day you picked".
+   ========================================================= */
+
+.mhc-popover {
+	position: absolute;
+	z-index: 40;
+	top: calc(100% + 8px);
+	left: 0;
+
+	/*
+	 * A definite width rather than `max-content`, which sized itself to the widest
+	 * possible child and could push past the viewport when the Date control sits
+	 * near the right edge. 300px is comfortably wider than seven day cells, and it
+	 * is capped against the viewport so it can never exceed the screen.
+	 */
+	width: 300px;
+	max-width: min(94vw, 300px);
+	box-sizing: border-box;
+
+	padding: 12px;
+	border: 1px solid rgba(224, 105, 255, 0.42);
+	border-radius: 16px;
+	background: linear-gradient(150deg, rgba(58, 25, 88, 0.99), rgba(19, 8, 38, 0.99) 80%);
+	box-shadow:
+		0 22px 52px rgba(0, 0, 0, 0.68),
+		0 0 22px rgba(190, 70, 255, 0.28),
+		inset 0 0 24px rgba(180, 59, 238, 0.09);
+	color: white;
+	animation: mhcIn 160ms ease-out;
+}
+
+/* On a narrow screen the popover is pinned to the viewport instead, so a dropdown
+   sitting near the right edge cannot push it off-screen. */
+@media (max-width: 720px) {
+	.mhc-popover {
+		position: fixed;
+		top: auto;
+		left: 8px;
+		right: 8px;
+		bottom: 8px;
+		width: auto;
+		max-width: none;
+	}
+}
+
+/* ---------------- Header: month and year controls ---------------- */
+
+.mhc-header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-bottom: 10px;
+}
+
+.mhc-nav {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	flex: none;
+	padding: 0;
+	border: 1px solid rgba(224, 105, 255, 0.24);
+	border-radius: 8px;
+	background: rgba(38, 16, 66, 0.55);
+	color: rgba(240, 225, 255, 0.85);
+	cursor: pointer;
+	transition: background 0.14s ease, color 0.14s ease;
+}
+
+.mhc-nav svg { width: 15px; height: 15px; }
+
+.mhc-nav:hover:not(:disabled) {
+	background: rgba(224, 105, 255, 0.2);
+	color: white;
+}
+
+.mhc-nav:disabled { cursor: default; opacity: 0.28; }
+
+.mhc-nav:focus-visible,
+.mhc-close:focus-visible,
+.mhc-day:focus-visible {
+	outline: 2px solid rgba(224, 105, 255, 0.85);
+	outline-offset: 1px;
+}
+
+/* The month and year are always visible, never hidden behind a control. */
+.mhc-title {
+	flex: 1;
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 6px;
+	min-width: 0;
+	padding: 0 4px;
+}
+
+.mhc-month {
+	color: white;
+	font-size: 13px;
+	font-weight: 800;
+	letter-spacing: 0.4px;
+	white-space: nowrap;
+}
+
+.mhc-year {
+	color: #d9a9ff;
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.mhc-close {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	flex: none;
+	margin-left: 4px;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: rgba(224, 105, 255, 0.14);
+	color: rgba(255, 255, 255, 0.78);
+	cursor: pointer;
+}
+
+.mhc-close svg { width: 14px; height: 14px; }
+.mhc-close:hover { background: rgba(224, 105, 255, 0.26); color: white; }
+
+/* ---------------- Weekday headings and grid ---------------- */
+
+.mhc-weekdays {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 2px;
+	margin-bottom: 4px;
+}
+
+.mhc-weekday {
+	padding: 3px 0;
+	color: rgba(216, 200, 250, 0.5);
+	font-size: 9.5px;
+	font-weight: 800;
+	letter-spacing: 0.5px;
+	text-align: center;
+}
+
+.mhc-grid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 2px;
+}
+
+.mhc-grid:focus-visible {
+	outline: 2px solid rgba(224, 105, 255, 0.85);
+	outline-offset: 2px;
+	border-radius: 8px;
+}
+
+.mhc-day {
+	display: grid;
+	place-items: center;
+	min-width: 0;
+	aspect-ratio: 1;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	color: rgba(245, 235, 255, 0.92);
+	font: inherit;
+	font-size: 11.5px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.12s ease, color 0.12s ease;
+}
+
+.mhc-day:hover:not(:disabled) { background: rgba(224, 105, 255, 0.24); }
+
+.mhc-day--blank { visibility: hidden; }
+
+/* Before the account existed, and after today. */
+.mhc-day--disabled {
+	color: rgba(216, 200, 250, 0.22);
+	cursor: not-allowed;
+	background: rgba(255, 255, 255, 0.015);
+}
+
+/*
+   Today is an OUTLINE and nothing more: a transparent background with a visible
+   border. It deliberately does not look selected, because today is only the
+   chosen day if the reader actually picked it, and when they have, `--selected`
+   wins because it is a later, equal-specificity rule.
+
+   The two states are therefore distinguishable at a glance and distinguishable
+   by colour alone for a reader who cannot see the border.
+*/
+.mhc-day--today {
+	background: transparent;
+	border-color: rgba(224, 105, 255, 0.85);
+	color: #f0dcff;
+	font-weight: 700;
+}
+
+.mhc-day--today:hover:not(:disabled) { background: rgba(224, 105, 255, 0.2); }
+
+/*
+   The chosen day. This is the ONLY state that carries a fill, so a fill always
+   means "this is the day you picked" and nothing else.
+*/
+.mhc-day--selected {
+	background: linear-gradient(135deg, #b06bff, #6d2fd6);
+	border-color: rgba(226, 190, 255, 0.95);
+	color: #fff;
+	font-weight: 800;
+}
+
+@keyframes mhcIn {
+	from { opacity: 0; transform: translateY(-6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mhc-popover { animation: none; }
+	.mhc-day { transition: none; }
+}

@@ -14,7 +14,7 @@ import type {
 } from "./authTypes";
 import { LOCAL_AVATARS } from "./avatarCatalog";
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "./usernameRules";
-import AvatarPreview from "./AvatarPreview";
+import AvatarPreview from "../pages/Myprofile/AvatarPreview";
 import "./AccountSettingsPanel.css";
 
 type AccountSettingsPanelProps = {
