@@ -205,18 +205,12 @@
 	transition: transform 0.15s ease;
 }
 
-.mpm-avatar-edit:hover:not(:disabled) { transform: scale(1.06); }
+.mpm-avatar-edit:hover { transform: scale(1.06); }
 .mpm-avatar-edit svg { width: 13px; height: 13px; }
 
-/*
-   The avatar pencil is the entry point for the future Avatar Modal. Avatar
-   editing is not implemented yet, so it stays visible but inert rather than
-   opening a picker whose selection there would be no way to persist.
-*/
-.mpm-avatar-edit:disabled {
-	cursor: not-allowed;
-	opacity: 0.45;
-	transform: none;
+.mpm-avatar-edit:focus-visible {
+	outline: 2px solid rgba(224, 105, 255, 0.85);
+	outline-offset: 2px;
 }
 
 .mpm-identity-main {
@@ -616,12 +610,14 @@
 	white-space: nowrap;
 }
 
-.mpm-identity-title--neutral-grey   { border-color: rgba(156, 163, 175, 0.34); background: rgba(156, 163, 175, 0.13); color: #d5dae3; }
-.mpm-identity-title--bright-green  { border-color: rgba(52, 211, 153, 0.36);  background: rgba(52, 211, 153, 0.13);  color: #9df0cd; }
-.mpm-identity-title--deep-cyan     { border-color: rgba(34, 211, 238, 0.36);   background: rgba(34, 211, 238, 0.13);   color: #a5eefc; }
-.mpm-identity-title--crimson-red   { border-color: rgba(248, 113, 133, 0.36); background: rgba(248, 113, 133, 0.13); color: #ffbdbd; }
-.mpm-identity-title--electric-purple { border-color: rgba(192, 132, 252, 0.4); background: rgba(192, 132, 252, 0.15); color: #e9d5ff; }
-.mpm-identity-title--neon-golden   { border-color: rgba(250, 204, 21, 0.36);  background: rgba(250, 204, 21, 0.12);  color: #ffe9a3; }
+/* The badge pill beside the username, using the same six tier themes. */
+.mpm-identity-title--bronze    { border-color: rgba(217, 119, 6, 0.42);  background: rgba(217, 119, 6, 0.15);  color: #f0cfa8; }
+.mpm-identity-title--silver    { border-color: rgba(203, 213, 225, 0.42); background: rgba(203, 213, 225, 0.14); color: #e2e8f0; }
+.mpm-identity-title--gold      { border-color: rgba(234, 179, 8, 0.42);   background: rgba(234, 179, 8, 0.15);   color: #fde68a; }
+.mpm-identity-title--diamond   { border-color: rgba(34, 211, 238, 0.42);  background: rgba(34, 211, 238, 0.14);  color: #a5f3fc; }
+.mpm-identity-title--crown     { border-color: rgba(192, 132, 252, 0.44); background: rgba(192, 132, 252, 0.15); color: #d8b4fe; }
+.mpm-identity-title--flame     { border-color: rgba(249, 115, 22, 0.44);  background: rgba(249, 115, 22, 0.15);  color: #fed7aa; }
+.mpm-identity-title--unearned  { border-color: rgba(156, 163, 175, 0.34); background: rgba(156, 163, 175, 0.12); color: #d5dae3; }
 
 /* ---------------- Account info ----------------
    A compact 2x2 grid that reuses the visual language of the sections above it:
@@ -763,37 +759,49 @@
 	line-height: 1.45;
 }
 
-/* ---------------- Level badge themes ----------------
-   The theme key and badge key come from the backend progression response. The
-   flame tier animates here, which is a frontend presentation concern; the
-   backend only supplies the stable key. */
+/* ---------------- Badge themes ----------------
+   One theme per tier, named after the same material as its badge: bronze,
+   silver, gold, diamond, crown and the animated flame. The keys match the
+   backend tier table, so a theme and its badge can never drift apart.
 
-.mpm-level-card--neutral-grey  { border-color: rgba(156, 163, 175, 0.4); }
-.mpm-level-card--bright-green { border-color: rgba(52, 211, 153, 0.5); }
-.mpm-level-card--deep-cyan    { border-color: rgba(34, 211, 238, 0.5); }
-.mpm-level-card--crimson-red  { border-color: rgba(248, 113, 113, 0.5); }
-.mpm-level-card--electric-purple { border-color: rgba(192, 132, 252, 0.55); }
-.mpm-level-card--neon-golden  { border-color: rgba(250, 204, 21, 0.6); }
+   Each theme is built the same way: a border colour for the level card, a
+   140deg gradient for the badge chip, a light text tint, and a horizontal
+   gradient for the progress fill. The unearned theme is neutral grey, and is
+   used only before a tier has actually been earned. */
 
-.mpm-level-card--neutral-grey .mpm-level-badge-wrap  { background: linear-gradient(140deg, #9ca3af, #4b5563); }
-.mpm-level-card--neutral-grey .mpm-level-sub        { color: #d1d5db; }
-.mpm-level-card--bright-green .mpm-level-badge-wrap { background: linear-gradient(140deg, #34d399, #059669); }
-.mpm-level-card--bright-green .mpm-level-sub       { color: #6ee7b7; }
-.mpm-level-card--bright-green .mpm-progress-fill   { background: linear-gradient(90deg, #34d399, #10b981); }
-.mpm-level-card--deep-cyan .mpm-level-badge-wrap    { background: linear-gradient(140deg, #22d3ee, #0e7490); }
-.mpm-level-card--deep-cyan .mpm-level-sub          { color: #67e8f9; }
-.mpm-level-card--deep-cyan .mpm-progress-fill      { background: linear-gradient(90deg, #22d3ee, #0891b2); }
-.mpm-level-card--crimson-red .mpm-level-badge-wrap  { background: linear-gradient(140deg, #f87171, #b91c1c); }
-.mpm-level-card--crimson-red .mpm-level-sub        { color: #fca5a5; }
-.mpm-level-card--crimson-red .mpm-progress-fill    { background: linear-gradient(90deg, #f87171, #dc2626); }
-.mpm-level-card--electric-purple .mpm-level-badge-wrap { background: linear-gradient(140deg, #c084fc, #7e22ce); }
-.mpm-level-card--electric-purple .mpm-level-sub       { color: #d8b4fe; }
-.mpm-level-card--electric-purple .mpm-progress-fill   { background: linear-gradient(90deg, #c084fc, #9333ea); }
-.mpm-level-card--neon-golden .mpm-level-badge-wrap  { background: linear-gradient(140deg, #fde047, #d97706); }
-.mpm-level-card--neon-golden .mpm-level-sub        { color: #fde68a; }
-.mpm-level-card--neon-golden .mpm-progress-fill    { background: linear-gradient(90deg, #fde047, #f59e0b); }
+.mpm-level-card--bronze { border-color: rgba(217, 119, 6, 0.55); }
+.mpm-level-card--silver { border-color: rgba(203, 213, 225, 0.55); }
+.mpm-level-card--gold { border-color: rgba(234, 179, 8, 0.6); }
+.mpm-level-card--diamond { border-color: rgba(103, 232, 249, 0.55); }
+.mpm-level-card--crown { border-color: rgba(192, 132, 252, 0.6); }
+.mpm-level-card--flame { border-color: rgba(249, 115, 22, 0.6); }
+.mpm-level-card--unearned { border-color: rgba(156, 163, 175, 0.4); }
 
-/* The animated flame badge for the top tier. */
+.mpm-level-card--bronze .mpm-level-badge-wrap { background: linear-gradient(140deg, #d9a066, #8a5a2b); }
+.mpm-level-card--silver .mpm-level-badge-wrap { background: linear-gradient(140deg, #e5e7eb, #8b95a5); }
+.mpm-level-card--gold .mpm-level-badge-wrap { background: linear-gradient(140deg, #fde047, #d97706); }
+.mpm-level-card--diamond .mpm-level-badge-wrap { background: linear-gradient(140deg, #a5f3fc, #0e7490); }
+.mpm-level-card--crown .mpm-level-badge-wrap { background: linear-gradient(140deg, #c084fc, #6b21a8); }
+.mpm-level-card--flame .mpm-level-badge-wrap { background: linear-gradient(140deg, #fde047, #b45309); }
+.mpm-level-card--unearned .mpm-level-badge-wrap { background: linear-gradient(140deg, #9ca3af, #4b5563); }
+
+.mpm-level-card--bronze .mpm-level-sub { color: #f0cfa8; }
+.mpm-level-card--silver .mpm-level-sub { color: #e2e8f0; }
+.mpm-level-card--gold .mpm-level-sub { color: #fde68a; }
+.mpm-level-card--diamond .mpm-level-sub { color: #a5f3fc; }
+.mpm-level-card--crown .mpm-level-sub { color: #d8b4fe; }
+.mpm-level-card--flame .mpm-level-sub { color: #fed7aa; }
+.mpm-level-card--unearned .mpm-level-sub { color: rgba(209, 213, 219, 0.75); }
+
+.mpm-level-card--bronze .mpm-progress-fill { background: linear-gradient(90deg, #e0a866, #a86a30); }
+.mpm-level-card--silver .mpm-progress-fill { background: linear-gradient(90deg, #e2e8f0, #94a3b8); }
+.mpm-level-card--gold .mpm-progress-fill { background: linear-gradient(90deg, #fde047, #f59e0b); }
+.mpm-level-card--diamond .mpm-progress-fill { background: linear-gradient(90deg, #a5f3fc, #22d3ee); }
+.mpm-level-card--crown .mpm-progress-fill { background: linear-gradient(90deg, #c084fc, #9333ea); }
+.mpm-level-card--flame .mpm-progress-fill { background: linear-gradient(90deg, #fde047, #f97316); }
+
+/* The animated flame badge for the top tier. It only runs once the tier has
+   actually been earned. */
 .mpm-level-card--animated .mpm-level-badge-wrap {
 	animation: mpmFlameBadge 2.4s ease-in-out infinite;
 }

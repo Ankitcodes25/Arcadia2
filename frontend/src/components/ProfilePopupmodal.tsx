@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { AuthUser } from "../auth/authTypes";
 import AccountSettingsPanel from "../auth/AccountSettingsPanel";
-import AvatarPreview from "../auth/AvatarPreview";
+import AvatarPreview from "../pages/Myprofile/AvatarPreview";
 import CopyButton from "../auth/CopyButton";
 import { getUserProgressionView } from "../auth/progression";
+import { getBadgeDisplay, getCompletedMatches } from "../auth/tierEligibility";
 import "./ProfilePopupmodal.css";
 
 type ProfilePopupModalProps = {
@@ -20,6 +21,8 @@ type ProfilePopupModalProps = {
   isMyProfileOpen: boolean;
   onClose: () => void;
   onOpenMyProfile: () => void;
+  /** Leaves for the Match History page. The menu closes as the page opens. */
+  onOpenMatchHistory: () => void;
   onLogout: () => void | Promise<unknown>;
   isLoggingOut: boolean;
 };
@@ -27,13 +30,34 @@ type ProfilePopupModalProps = {
 /*
  * The approved menu options. This list is fixed: the identity area above it
  * carries the account details, and nothing else is added to this menu.
+ *
+ * Match History sits immediately after Leaderboards. It is a separate page, not
+ * another layer of this menu, so it leaves through the normal navigation helper
+ * and Return brings this popup back.
  */
 const MENU_ITEMS = [
   { key: "my-profile", label: "My Profile", Icon: UserIcon, action: "my-profile" },
   { key: "leaderboards", label: "Leaderboards", Icon: TrophyIcon, action: "close" },
+  { key: "match-history", label: "Match History", Icon: HistoryIcon, action: "match-history" },
   { key: "settings", label: "Settings", Icon: GearIcon, action: "settings" },
   { key: "help", label: "Help & Support", Icon: HelpIcon, action: "close" },
 ] as const;
+
+function HistoryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M3.6 12a8.4 8.4 0 1 0 2.6-6.1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path d="M3.4 4.2v4.2h4.2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 7.6V12l3 1.8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function UserIcon() {
   return (
@@ -94,6 +118,7 @@ function ProfilePopupModal({
   isMyProfileOpen,
   onClose,
   onOpenMyProfile,
+  onOpenMatchHistory,
   onLogout,
   isLoggingOut,
 }: ProfilePopupModalProps) {
@@ -124,13 +149,34 @@ function ProfilePopupModal({
     };
   }, [isMyProfileOpen, onClose]);
 
-  // The badge and title come from the progression the backend already sent.
+  // The badge and title come from the progression the backend already sent. The
+  // same eligibility rule My Profile and the Avatar Modal use is applied here, so
+  // all three surfaces always show the same tier in the same state.
   const progression = getUserProgressionView(user);
+  /*
+   * The signed-in `AuthUser` carries no gaming stats, so a completed-match count
+   * is never available on this surface. That is safe for the badge: it can only
+   * withhold the Rookie tier, and every other tier is level gated, so an account
+   * above Level 0 still shows its correct badge here. A Level 0 account shows
+   * the neutral unearned state, which is also what it would show with a real
+   * count of zero.
+   */
+  const badge = getBadgeDisplay(progression, getCompletedMatches(undefined));
   const accountStatusLabel = user.status === "ACTIVE" ? "Active" : user.status;
 
   const handleItemClick = (action: (typeof MENU_ITEMS)[number]["action"]) => {
     if (action === "my-profile") onOpenMyProfile();
-    else if (action === "settings") setSettingsOpen(true);
+    else if (action === "match-history") {
+      /*
+        The menu is dismissed FIRST and the navigation happens second. A click
+        that leaves the menu must always end with the menu gone, so the order
+        here is what guarantees that rather than whatever the navigation does
+        next. It also means the Match History page is never rendered behind a
+        still-open Profile Popup, which would be a second copy of the same menu.
+      */
+      onClose();
+      onOpenMatchHistory();
+    } else if (action === "settings") setSettingsOpen(true);
     else onClose();
   };
 
@@ -174,11 +220,12 @@ function ProfilePopupModal({
               {user.username ?? ""}
             </span>
             <span
-              className={`profile-popup-badge profile-popup-badge--${progression.themeKey}`}
+              className={`profile-popup-badge profile-popup-badge--${badge.themeKey}`}
               data-field="progressionTitle"
               data-badge={progression.badgeKey}
+              data-earned={badge.isEarned ? "true" : "false"}
             >
-              {progression.title}
+              {badge.title}
             </span>
           </div>
         </div>

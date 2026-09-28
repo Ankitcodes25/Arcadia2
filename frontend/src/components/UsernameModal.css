@@ -1,7 +1,14 @@
+/*
+   This is a child layer of My Profile, whose own backdrop is z-index 1300, so
+   it has to sit above it or it would open hidden underneath. It stays below the
+   Avatar Modal (1400) because the two are never open at the same time.
+
+   The order is: Profile Popup 1200 -> My Profile 1300 -> Username Modal 1350.
+*/
 .unm-backdrop {
 	position: fixed;
 	inset: 0;
-	z-index: 1250;
+	z-index: 1350;
 	display: flex;
 	align-items: center;
 	justify-content: center;

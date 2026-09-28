@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { AuthUser } from "./authTypes";
-import { getInitials } from "./authUtils";
-import { getLocalAvatarOption } from "./avatarCatalog";
+import type { AuthUser } from "../../auth/authTypes";
+import { getInitials } from "../../auth/authUtils";
+import { getLocalAvatarOption, getSafeGoogleAvatarUrl } from "../../auth/avatarCatalog";
 import "./AvatarPreview.css";
 
 type AvatarPreviewProps = {
@@ -9,23 +9,12 @@ type AvatarPreviewProps = {
   className?: string;
 };
 
-function getSafeGoogleAvatarUrl(value: string | null | undefined) {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    const hostname = url.hostname.toLowerCase();
-    const trusted = ["googleusercontent.com", "gstatic.com"].some(
-      (host) => hostname === host || hostname.endsWith(`.${host}`),
-    );
-    if (url.protocol !== "https:" || !trusted || url.username || url.password || url.port) {
-      return null;
-    }
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
+/*
+ * The Google picture is only rendered when the shared catalogue rules accept the
+ * URL, and a load failure falls back to the safe local avatar rather than
+ * leaving a broken image. The rules themselves live in `avatarCatalog` so every
+ * surface that offers the Google option applies exactly the same validation.
+ */
 function AvatarPreview({ user, className = "" }: AvatarPreviewProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const googleUrl = getSafeGoogleAvatarUrl(user.googleAvatarUrl);

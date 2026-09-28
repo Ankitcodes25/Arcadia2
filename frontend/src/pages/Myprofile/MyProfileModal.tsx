@@ -1,21 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import type { AccountProfileUser, GamingStatsSummary } from "../../auth/authTypes";
-import AvatarPreview from "../../auth/AvatarPreview";
+import type {
+  AccountProfileUser,
+  AuthAvatar,
+  GamingStatsSummary,
+} from "../../auth/authTypes";
+import AvatarPreview from "./AvatarPreview";
 import { getAuthErrorMessage } from "../../auth/authUtils";
 import {
+  getLoginMethodWithEmail,
   formatHoursPlayed,
   formatJoinedDate,
   getAccountStatusLabel,
-  getLoginMethodLabel,
   USERNAME_SAVE_FAILED_MESSAGE,
 } from "../../auth/accountInfo";
+import { readEligibilitySource, getBadgeDisplay } from "../../auth/tierEligibility";
 import {
   checkUsernameAvailable,
   USERNAME_TAKEN_MESSAGE,
 } from "../../auth/usernameAvailability";
 import CopyButton from "../../auth/CopyButton";
-import { getProgressionView } from "../../auth/progression";
+import AvatarsModal from "./AvatarsModal";
 import UsernameModal from "../../components/UsernameModal";
 import { USERNAME_MAX_LENGTH } from "../../auth/usernameRules";
 import "./MyProfileModal.css";
@@ -228,12 +233,13 @@ type ChipTone = (typeof CHIP_TONES)[number];
    value here is a persisted value rather than local state.
 
    My Profile is informational. It has no draft state and no action row: the
-   username is edited and persisted entirely inside the Username Modal, and
-   avatar editing is not implemented yet.
+   username is edited and persisted entirely inside the Username Modal, and the
+   avatar is chosen and persisted entirely inside the Avatar Modal.
 
    `onSaveUsername` persists a username through the existing account profile
-   write. It resolves only once the backend has confirmed the change, and a
-   rejection keeps the Username Modal open with its warning.
+   write, and `onSaveAvatar` does the same for an avatar. Both resolve only
+   once the backend has confirmed the change, and a rejection keeps the child
+   modal open with its warning.
    =========================================================== */
 
 type MyProfileModalProps = {
@@ -246,6 +252,7 @@ type MyProfileModalProps = {
    */
   globalRank?: number | null;
   onSaveUsername: (username: string) => Promise<unknown>;
+  onSaveAvatar: (avatar: AuthAvatar) => Promise<unknown>;
   gameBreakdown?: GameBreakdownRow[];
 };
 
@@ -275,14 +282,24 @@ function MyProfileModal({
   loadError = null,
   globalRank = null,
   onSaveUsername,
+  onSaveAvatar,
   gameBreakdown = DEFAULT_GAME_BREAKDOWN,
 }: MyProfileModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
-  const progression = getProgressionView(profile.progression);
+  /*
+   * The badge and the level avatars are decided from the same authoritative
+   * progression, so they can never disagree. Rookie additionally needs a
+   * completed match, and until the backend records one it is shown in the
+   * neutral unearned state rather than as an earned bronze badge.
+   */
+  const { progression, completedMatches } = readEligibilitySource(profile);
+  const badge = getBadgeDisplay(progression, completedMatches);
+
   const stats = profile.gamingStats ?? DEFAULT_STATS;
 
   /*
@@ -298,17 +315,22 @@ function MyProfileModal({
   const hoursPlayed = formatHoursPlayed(totalMinutesPlayed);
   const joinedDate = formatJoinedDate(profile.createdAt);
   const isGoogleAccount = profile.authProvider === "GOOGLE";
-  const loginMethod = getLoginMethodLabel(profile.authProvider);
+  const loginMethod = getLoginMethodWithEmail(profile.authProvider, profile.email);
   const accountStatus = getAccountStatusLabel(profile.status);
   const accountStatusTone = profile.status === "ACTIVE" ? "active" : "inactive";
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      /*
+       * Escape belongs to the topmost layer only. While a child layer is open
+       * it handles its own Escape, so this must not close My Profile as well.
+       */
+      if (isAvatarModalOpen || isUsernameModalOpen) return;
       if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [isAvatarModalOpen, isUsernameModalOpen, onClose]);
 
   /*
    * The username flow, entirely inside the Username Modal.
@@ -358,7 +380,7 @@ function MyProfileModal({
     >
       <div
         ref={modalRef}
-        className={`mpm-modal${isUsernameModalOpen ? " mpm-modal--blurred" : ""}`}
+        className={`mpm-modal${isUsernameModalOpen || isAvatarModalOpen ? " mpm-modal--blurred" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="mpm-title"
@@ -401,16 +423,16 @@ function MyProfileModal({
           <div className="mpm-avatar-wrap">
             <AvatarPreview user={profile} className="mpm-avatar" />
             {/*
-              The avatar pencil is the entry point for the future Avatar Modal.
-              Avatar editing is not implemented yet, so it stays visible but
-              inert rather than staging a change that could never be saved.
+              The avatar pencil opens the Avatar Modal as a child layer. My
+              Profile stays mounted underneath and is only blurred, so the X and
+              Back of that layer return here rather than leaving the profile.
             */}
             <button
               type="button"
               className="mpm-avatar-edit"
-              aria-label="Change avatar"
-              title="Avatar editing is coming soon"
-              disabled
+              aria-label="Edit avatar"
+              title="Edit avatar"
+              onClick={() => setIsAvatarModalOpen(true)}
             >
               <PencilIcon />
             </button>
@@ -469,12 +491,18 @@ function MyProfileModal({
               </button>
             </div>
 
+            {/*
+              The badge follows the same eligibility rule as the level avatars.
+              Before a tier is earned it renders in the neutral unearned theme,
+              so an unearned Rookie is never presented as an awarded badge.
+            */}
             <span
-              className={`mpm-identity-title mpm-identity-title--${progression.themeKey}`}
+              className={`mpm-identity-title mpm-identity-title--${badge.themeKey}`}
               data-field="progressionTitle"
               data-badge={progression.badgeKey}
+              data-earned={badge.isEarned ? "true" : "false"}
             >
-              {progression.title}
+              {badge.title}
             </span>
 
             {globalRank != null && (
@@ -489,8 +517,9 @@ function MyProfileModal({
 
         {/* Level — every value is derived on the backend from total Arcadion XP. */}
         <div
-          className={`mpm-level-card mpm-level-card--${progression.themeKey}${progression.isAnimated ? " mpm-level-card--animated" : ""}`}
+          className={`mpm-level-card mpm-level-card--${badge.themeKey}${badge.isEarned && progression.isAnimated ? " mpm-level-card--animated" : ""}`}
           data-badge={progression.badgeKey}
+          data-earned={badge.isEarned ? "true" : "false"}
         >
           <div className="mpm-level-badge-wrap">
             <div className="mpm-level-badge">{progression.levelDigits}</div>
@@ -500,7 +529,10 @@ function MyProfileModal({
               <span className="mpm-level-title">{progression.levelLabel}</span>
               <span className="mpm-level-xp">{progression.xpLabel}</span>
             </div>
-            <p className="mpm-level-sub">{progression.title}</p>
+            {/* An unearned tier says so, rather than reading as an award. */}
+            <p className="mpm-level-sub">
+              {badge.isEarned ? badge.title : `${badge.title} — unearned`}
+            </p>
             <div
               className="mpm-progress-track"
               role="progressbar"
@@ -640,6 +672,15 @@ function MyProfileModal({
                 {isGoogleAccount ? <GoogleIcon /> : <PersonIcon />}
               </span>
               <span className="mpm-info-label">Login Method</span>
+              {/*
+                The authentication method and the address that account signs in
+                with, as one field: `Google · ankit@gmail.com` for a Google
+                account and `Email · ankit@example.com` for a password account.
+                Both halves are data the backend already returned. A Google
+                account is never labelled as a password account, the Google
+                display name stays out of the profile, and no OAuth token is
+                exposed anywhere.
+              */}
               <span className="mpm-info-value" data-field="loginMethod">
                 {loginMethod}
               </span>
@@ -675,6 +716,21 @@ function MyProfileModal({
           isSubmitting={isCheckingUsername}
           onClose={() => setIsUsernameModalOpen(false)}
           onSubmit={handleUsernameSubmit}
+        />
+      )}
+
+      {/*
+        The Avatar Modal is a child layer. It is rendered as a sibling while
+        this dialog stays mounted and blurred, so its X and Back return to My
+        Profile instead of closing it. It is rendered after the Username Modal
+        so the two layers are never open at the same time, and its backdrop
+        stops propagation so nothing here can reach this dialog's handlers.
+      */}
+      {isAvatarModalOpen && (
+        <AvatarsModal
+          profile={profile}
+          onClose={() => setIsAvatarModalOpen(false)}
+          onSaveAvatar={onSaveAvatar}
         />
       )}
     </div>,

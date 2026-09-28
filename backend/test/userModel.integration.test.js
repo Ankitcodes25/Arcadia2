@@ -111,6 +111,7 @@ before(async () => {
   createApp = require('../app');
   ({ signAccessToken, verifyAccessToken } = require('../utils/jwt'));
   ({ Session } = require('../models/Session'));
+({ Match, OPPONENT_TYPES, MATCH_RESULTS } = require('../models/Match'));
   ({ generateRefreshToken, hashRefreshToken, verifyRefreshTokenHash, isValidRefreshToken } = require('../utils/refreshToken'));
   ({ hashSecureToken } = require('../utils/secureToken'));
   ({ REFRESH_COOKIE_NAME } = require('../config/refreshCookie'));
@@ -199,6 +200,7 @@ beforeEach(async () => {
   await OAuthHandoff.deleteMany({});
   await OAuthState.deleteMany({});
   await Session.deleteMany({});
+  await Match.deleteMany({});
   await User.deleteMany({});
   emailMessages = [];
   emailService.setEmailTransportForTests(async (message) => {
@@ -4281,7 +4283,7 @@ test('progression is deterministic and never produces NaN or Infinity', () => {
     progressPercent: 40,
     title: 'Arcadia Rookie',
     badgeKey: 'bronze',
-    themeKey: 'neutral-grey',
+    themeKey: 'bronze',
   });
   assert.equal(getProgression(199).progressPercent, 50);
   assert.equal(getProgression(200).progressPercent, 50);
@@ -4293,12 +4295,12 @@ test('progression is deterministic and never produces NaN or Infinity', () => {
 
 test('every level maps to the documented badge, title and theme', () => {
   const expectedTiers = [
-    { maxLevel: 4, title: 'Arcadia Rookie', badgeKey: 'bronze', themeKey: 'neutral-grey' },
-    { maxLevel: 9, title: 'Arcadia Challenger', badgeKey: 'silver', themeKey: 'bright-green' },
-    { maxLevel: 14, title: 'Arcadia Veteran', badgeKey: 'gold', themeKey: 'deep-cyan' },
-    { maxLevel: 19, title: 'Arcadia Master', badgeKey: 'diamond', themeKey: 'crimson-red' },
-    { maxLevel: 29, title: 'Arcadia Legend', badgeKey: 'crown', themeKey: 'electric-purple' },
-    { maxLevel: null, title: 'Arcadia Supreme', badgeKey: 'flame', themeKey: 'neon-golden' },
+    { maxLevel: 4, title: 'Arcadia Rookie', badgeKey: 'bronze', themeKey: 'bronze' },
+    { maxLevel: 9, title: 'Arcadia Challenger', badgeKey: 'silver', themeKey: 'silver' },
+    { maxLevel: 14, title: 'Arcadia Veteran', badgeKey: 'gold', themeKey: 'gold' },
+    { maxLevel: 19, title: 'Arcadia Master', badgeKey: 'diamond', themeKey: 'diamond' },
+    { maxLevel: 29, title: 'Arcadia Legend', badgeKey: 'crown', themeKey: 'crown' },
+    { maxLevel: null, title: 'Arcadia Supreme', badgeKey: 'flame', themeKey: 'flame' },
   ];
 
   assert.equal(LEVEL_BADGE_TIERS.length, expectedTiers.length);
@@ -4377,7 +4379,7 @@ test('the account profile response carries progression and no security fields', 
     assert.equal(profile.body.user.progression.progressPercent, 20);
     assert.equal(profile.body.user.progression.title, 'Arcadia Rookie');
     assert.equal(profile.body.user.progression.badgeKey, 'bronze');
-    assert.equal(profile.body.user.progression.themeKey, 'neutral-grey');
+    assert.equal(profile.body.user.progression.themeKey, 'bronze');
 
     // Gaming statistics are present but neutral: no game data is invented.
     assert.deepEqual(profile.body.user.gamingStats, {
@@ -4731,7 +4733,7 @@ test('XP awards are atomic and keep progression consistent with the stored total
     assert.equal(getLevelBadge(1).title, 'Arcadia Rookie');
     assert.equal(getProgression(1500).title, 'Arcadia Challenger');
     assert.equal(getProgression(1500).badgeKey, 'silver');
-    assert.equal(getProgression(1500).themeKey, 'bright-green');
+    assert.equal(getProgression(1500).themeKey, 'silver');
 
     // The view always matches the stored total, for every awardable amount.
     for (const totalXp of [1500, 2050, 3300, 4750]) {
@@ -5358,4 +5360,824 @@ test('the backfill script reports a configuration failure without a usable .env'
   }
 });
 
+/*
+ * Match history.
+ *
+ * The endpoint is read only and scoped to the signed-in account, so these tests
+ * pin three things: one account can never read another's rows, a client has no way
+ * to create a match, and the filters work against the stored values.
+ *
+ * Rows are written here through the model, which is exactly how a trusted
+ * server-side game system would record one. No test fabricates a result through
+ * the API, because there is no API to fabricate one with.
+ */
+test('the match history is empty for an account with no completed matches', async () => {
+  const server = await startHttpServer();
 
+  try {
+    const { loggedIn } = await registerAndLogin(server, 'matches-empty@example.com');
+
+    const response = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${loggedIn.body.token}` },
+    });
+
+    assert.equal(response.response.status, 200);
+    assert.deepEqual(response.body.matches, [], 'no rows means no fabricated history');
+    assert.equal(response.body.total, 0);
+    assert.equal(response.body.limit, 25);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('match history requires authentication', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const anonymous = await requestJson(server, '/api/v1/account/matches');
+    assert.equal(anonymous.response.status, 401, 'no token is rejected');
+
+    const invalid = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: 'Bearer not-a-real-token' },
+    });
+    assert.equal(invalid.response.status, 401, 'a bad token is rejected');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('a user only ever receives their own match history', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const first = await registerAndLogin(server, 'matches-first@example.com');
+    const second = await registerAndLogin(server, 'matches-second@example.com');
+
+    await Match.create({
+      userId: first.registered.body.user.id,
+      game: 'arcadion',
+      opponentType: OPPONENT_TYPES.ARCADION,
+      result: MATCH_RESULTS.WIN,
+      completedAt: new Date('2026-05-02T12:00:00.000Z'),
+    });
+
+    const own = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${first.loggedIn.body.token}` },
+    });
+    assert.equal(own.body.total, 1, 'the owner sees their own match');
+
+    const other = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${second.loggedIn.body.token}` },
+    });
+    assert.equal(other.body.total, 0, 'another account sees none of it');
+
+    // A caller cannot ask for someone else's history by passing an id.
+    const attempted = await requestJson(
+      server,
+      `/api/v1/account/matches?userId=${first.registered.body.user.id}`,
+      { headers: { authorization: `Bearer ${second.loggedIn.body.token}` } },
+    );
+    assert.equal(attempted.body.total, 0, 'a userId in the query is ignored, not honoured');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('there is no endpoint a client can use to record a match', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { loggedIn } = await registerAndLogin(server, 'matches-nowrite@example.com');
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+    const body = {
+      game: 'arcadion',
+      opponentType: OPPONENT_TYPES.ARCADION,
+      result: MATCH_RESULTS.WIN,
+      completedAt: new Date().toISOString(),
+    };
+
+    for (const [method, path] of [
+      ['POST', '/api/v1/account/matches'],
+      ['PUT', '/api/v1/account/matches'],
+      ['PATCH', '/api/v1/account/matches'],
+    ]) {
+      const response = await requestJson(server, path, { method, headers, body });
+      assert.ok(
+        response.response.status === 404 || response.response.status === 405,
+        `${method} ${path} must not exist, got ${response.response.status}`,
+      );
+    }
+
+    const history = await requestJson(server, '/api/v1/account/matches', { headers });
+    assert.equal(history.body.total, 0, 'and nothing was recorded by any of them');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('match history is returned newest first by completion time', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-order@example.com');
+    const userId = registered.body.user.id;
+
+    // Inserted out of order on purpose.
+    await Match.create([
+      {
+        userId,
+        game: 'ludo',
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date('2026-01-10T09:00:00.000Z'),
+      },
+      {
+        userId,
+        game: 'arcadion',
+        opponentType: OPPONENT_TYPES.ARCADION,
+        result: MATCH_RESULTS.LOSS,
+        completedAt: new Date('2026-06-20T18:30:00.000Z'),
+      },
+      {
+        userId,
+        game: 'memory',
+        opponentType: OPPONENT_TYPES.ONLINE_FRIEND,
+        result: MATCH_RESULTS.DRAW,
+        completedAt: new Date('2026-03-05T20:15:00.000Z'),
+      },
+    ]);
+
+    const response = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${loggedIn.body.token}` },
+    });
+
+    assert.deepEqual(
+      response.body.matches.map((match) => match.completedAt),
+      [
+        '2026-06-20T18:30:00.000Z',
+        '2026-03-05T20:15:00.000Z',
+        '2026-01-10T09:00:00.000Z',
+      ],
+      'newest completed match first, oldest last',
+    );
+    assert.deepEqual(
+      response.body.matches.map((match) => match.game),
+      ['arcadion', 'memory', 'ludo'],
+    );
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('every match exposes only the public match fields', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-shape@example.com');
+    await Match.create({
+      userId: registered.body.user.id,
+      game: 'arcadion',
+      opponentType: OPPONENT_TYPES.ARCADION,
+      opponentName: 'Arcadion',
+      result: MATCH_RESULTS.WIN,
+      completedAt: new Date('2026-04-01T12:00:00.000Z'),
+      durationMinutes: 9,
+    });
+
+    const response = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${loggedIn.body.token}` },
+    });
+
+    const [match] = response.body.matches;
+    assert.deepEqual(Object.keys(match).sort(), [
+      'completedAt',
+      'durationMinutes',
+      'game',
+      'matchId',
+      'opponentName',
+      'opponentType',
+      'result',
+    ]);
+    assert.equal(match.game, 'arcadion');
+    assert.equal(match.opponentType, 'ARCADION');
+    assert.equal(match.result, 'WIN');
+    assert.equal(match.durationMinutes, 9);
+    assert.match(match.matchId, /^[a-f0-9]{24}$/, 'a stable id is exposed for list keys');
+
+    // Nothing internal leaks, and no other account's data is present.
+    const serialised = JSON.stringify(response.body);
+    assert.doesNotMatch(serialised, /_id|__v|userId|password|refreshToken/i);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the date range filter includes the whole selected end date', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-range@example.com');
+    const userId = registered.body.user.id;
+
+    // One match early in the range day, one late in the same day, one outside.
+    await Match.create([
+      {
+        userId,
+        game: 'early',
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date('2026-07-10T00:30:00.000Z'),
+      },
+      {
+        userId,
+        game: 'late',
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.LOSS,
+        completedAt: new Date('2026-07-10T23:45:00.000Z'),
+      },
+      {
+        userId,
+        game: 'outside',
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.DRAW,
+        completedAt: new Date('2026-07-11T12:00:00.000Z'),
+      },
+    ]);
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    // In UTC these fixtures sit where their names say they do, so a single day
+    // must keep the very start AND the very end of it. This is the case that
+    // would drop the 23:45 match if the To date were treated as midnight.
+    const sameDay = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-07-10&to=2026-07-10',
+      { headers },
+    );
+    assert.deepEqual(
+      sameDay.body.matches.map((match) => match.game).sort(),
+      ['early', 'late'],
+      'a single day range keeps both ends of that day',
+    );
+    assert.equal(sameDay.body.total, 2, 'and the next day does not leak in');
+
+    // An explicit zero offset is the same answer, so an absent one is UTC.
+    const explicitUtc = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-07-10&to=2026-07-10&tzOffsetMinutes=0',
+      { headers },
+    );
+    assert.equal(explicitUtc.body.total, 2, 'an explicit zero offset behaves the same');
+
+    // A reader 5 hours behind UTC has a different 10 July: it runs from 05:00 UTC
+    // to 04:59 UTC the next day, so the 00:30 match is already the previous day
+    // for them. That is exactly what they would see on screen.
+    const behindUtc = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-07-10&to=2026-07-10&tzOffsetMinutes=300',
+      { headers },
+    );
+    assert.deepEqual(
+      behindUtc.body.matches.map((match) => match.game),
+      ['late'],
+      'the day boundaries follow the offset the reader sent',
+    );
+
+    // A reader 5 hours ahead of UTC sees the 00:30 match, not the 23:45 one.
+    const aheadUtc = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-07-10&to=2026-07-10&tzOffsetMinutes=-300',
+      { headers },
+    );
+    assert.deepEqual(
+      aheadUtc.body.matches.map((match) => match.game),
+      ['early'],
+      'and the other way round for a reader ahead of UTC',
+    );
+
+    // An implausible offset is refused rather than silently reinterpreted.
+    const badOffset = await requestJson(
+      server,
+      '/api/v1/account/matches?tzOffsetMinutes=99999',
+      { headers },
+    );
+    assert.equal(badOffset.response.status, 400, 'an impossible offset is rejected');
+
+    const week = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-07-01&to=2026-07-31',
+      { headers },
+    );
+    assert.equal(week.body.total, 3, 'a wider range includes every match inside it');
+
+    const openStart = await requestJson(
+      server,
+      '/api/v1/account/matches?to=2026-07-10',
+      { headers },
+    );
+    assert.equal(openStart.body.total, 2, 'an open From is allowed');
+
+    const openEnd = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-07-10',
+      { headers },
+    );
+    assert.equal(openEnd.body.total, 3, 'an open To is allowed');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('an invalid or reversed date range is refused with a safe message', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { loggedIn } = await registerAndLogin(server, 'matches-badrange@example.com');
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    const reversed = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-08-10&to=2026-08-01',
+      { headers },
+    );
+    assert.equal(reversed.response.status, 400, 'a reversed range is rejected');
+    assert.match(reversed.body.error, /From date must not be after/i);
+
+    for (const query of [
+      'from=not-a-date',
+      'to=2026-13-01',
+      'from=2026-02-31',
+      'from=2026-1-1',
+    ]) {
+      const response = await requestJson(server, `/api/v1/account/matches?${query}`, { headers });
+      assert.equal(response.response.status, 400, `${query} is rejected`);
+      assert.doesNotMatch(response.body.error, /Mongo|ObjectId|undefined|NaN/i);
+    }
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the Played with filter uses the stored opponent type', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-opponent@example.com');
+    const userId = registered.body.user.id;
+
+    await Match.create([
+      {
+        userId,
+        game: 'a1',
+        opponentType: OPPONENT_TYPES.ARCADION,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date('2026-09-01T10:00:00.000Z'),
+      },
+      {
+        userId,
+        game: 'o1',
+        opponentType: OPPONENT_TYPES.ONLINE_FRIEND,
+        opponentName: 'Ravi',
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date('2026-09-02T10:00:00.000Z'),
+      },
+      {
+        userId,
+        game: 'l1',
+        opponentType: OPPONENT_TYPES.LOCAL,
+        opponentName: 'Guest',
+        result: MATCH_RESULTS.DRAW,
+        completedAt: new Date('2026-09-03T10:00:00.000Z'),
+      },
+    ]);
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    for (const [value, expected] of [
+      ['ARCADION', 'a1'],
+      ['ONLINE_FRIEND', 'o1'],
+      ['LOCAL', 'l1'],
+    ]) {
+      const response = await requestJson(
+        server,
+        `/api/v1/account/matches?opponentType=${value}`,
+        { headers },
+      );
+      assert.equal(response.body.total, 1, `${value} matches one row`);
+      assert.equal(response.body.matches[0].game, expected);
+      assert.equal(
+        response.body.filters.opponentType,
+        value,
+        'the applied filter is echoed back',
+      );
+    }
+
+    // An unknown opponent type can never widen the query.
+    const bogus = await requestJson(
+      server,
+      '/api/v1/account/matches?opponentType=ROBOT',
+      { headers },
+    );
+    assert.equal(bogus.response.status, 400, 'an unknown opponent type is rejected');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the date and opponent filters combine', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-combined@example.com');
+    const userId = registered.body.user.id;
+
+    await Match.create([
+      {
+        userId,
+        game: 'in-both',
+        opponentType: OPPONENT_TYPES.ARCADION,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date('2026-05-10T12:00:00.000Z'),
+      },
+      {
+        userId,
+        game: 'wrong-opponent',
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date('2026-05-11T12:00:00.000Z'),
+      },
+      {
+        userId,
+        game: 'wrong-date',
+        opponentType: OPPONENT_TYPES.ARCADION,
+        result: MATCH_RESULTS.LOSS,
+        completedAt: new Date('2026-06-11T12:00:00.000Z'),
+      },
+    ]);
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    const response = await requestJson(
+      server,
+      '/api/v1/account/matches?from=2026-05-01&to=2026-05-31&opponentType=ARCADION',
+      { headers },
+    );
+    assert.equal(response.body.total, 1, 'both filters apply together');
+    assert.equal(response.body.matches[0].game, 'in-both');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('a human or local match is never recorded as Arcadion', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-human@example.com');
+    await Match.create({
+      userId: registered.body.user.id,
+      game: 'ludo',
+      opponentType: OPPONENT_TYPES.ONLINE_FRIEND,
+      opponentName: 'Sam',
+      result: MATCH_RESULTS.WIN,
+      completedAt: new Date('2026-02-02T12:00:00.000Z'),
+    });
+
+    const response = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${loggedIn.body.token}` },
+    });
+
+    const [match] = response.body.matches;
+    assert.equal(match.opponentType, 'ONLINE_FRIEND', 'the stored type is reported as recorded');
+    assert.notEqual(
+      match.opponentType,
+      OPPONENT_TYPES.ARCADION,
+      'never reported as Arcadion',
+    );
+    // The opponent name is the public label only, never account data.
+    assert.equal(match.opponentName, 'Sam');
+    assert.doesNotMatch(JSON.stringify(response.body), /@|password|email/i);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('an unsupported opponent type or result cannot be stored at all', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered } = await registerAndLogin(server, 'matches-invalid@example.com');
+    const userId = registered.body.user.id;
+
+    // The enum is the guarantee, so an invalid value fails to persist.
+    await assert.rejects(
+      Match.create({
+        userId,
+        game: 'ludo',
+        opponentType: 'ROBOT',
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date(),
+      }),
+      /opponentType/,
+      'an unknown opponent type is refused',
+    );
+
+    await assert.rejects(
+      Match.create({
+        userId,
+        game: 'ludo',
+        opponentType: OPPONENT_TYPES.ARCADION,
+        result: 'VICTORY',
+        completedAt: new Date(),
+      }),
+      /result/,
+      'an unknown result is refused',
+    );
+
+    const count = await Match.countDocuments({ userId });
+    assert.equal(count, 0, 'neither invalid row was stored');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('match history never awards XP or changes progression', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'matches-noxp@example.com');
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    const before = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(before.body.user.progression.totalXp, 0, 'a new account starts at zero');
+
+    // Recording and then reading a win must not move XP.
+    await Match.create({
+      userId: registered.body.user.id,
+      game: 'arcadion',
+      opponentType: OPPONENT_TYPES.ARCADION,
+      result: MATCH_RESULTS.WIN,
+      completedAt: new Date(),
+    });
+    await requestJson(server, '/api/v1/account/matches', { headers });
+
+    const after = await requestJson(server, '/api/v1/account/profile', { headers });
+    assert.equal(after.body.user.progression.totalXp, 0, 'displaying a row awards nothing');
+    assert.equal(after.body.user.progression.level, 0);
+    assert.equal(after.body.user.progression.title, 'Arcadia Rookie');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the match history response is never cached', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { loggedIn } = await registerAndLogin(server, 'matches-nocache@example.com');
+    const response = await requestJson(server, '/api/v1/account/matches', {
+      headers: { authorization: `Bearer ${loggedIn.body.token}` },
+    });
+    assert.equal(response.response.headers.get('cache-control'), 'no-store');
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+/*
+ * Match history: the Result filter and paged retrieval.
+ *
+ * Both were added so the Match History page can show a complete, honest history
+ * rather than one silent page of it. These tests pin that the result filter
+ * matches the STORED result, that all three filters combine, and that paging
+ * neither repeats nor skips a row and never reports a page as the whole list.
+ */
+test('the Result filter matches the stored result and is echoed back', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'mh-result@example.com');
+    const userId = registered.body.user.id;
+
+    await Match.create([
+      { userId, game: 'w', opponentType: OPPONENT_TYPES.ARCADION, result: MATCH_RESULTS.WIN, completedAt: new Date('2026-03-01T10:00:00.000Z') },
+      { userId, game: 'l', opponentType: OPPONENT_TYPES.ARCADION, result: MATCH_RESULTS.LOSS, completedAt: new Date('2026-03-02T10:00:00.000Z') },
+      { userId, game: 'd', opponentType: OPPONENT_TYPES.ARCADION, result: MATCH_RESULTS.DRAW, completedAt: new Date('2026-03-03T10:00:00.000Z') },
+    ]);
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    // The stored value is what is filtered on. The page renames DRAW to "Tie"
+    // for the reader, but the value behind the label never changes.
+    for (const [value, expected] of [
+      ['WIN', 'w'],
+      ['LOSS', 'l'],
+      ['DRAW', 'd'],
+    ]) {
+      const response = await requestJson(
+        server,
+        `/api/v1/account/matches?result=${value}`,
+        { headers },
+      );
+      assert.equal(response.response.status, 200);
+      assert.equal(response.body.total, 1, `${value} matches one row`);
+      assert.equal(response.body.matches[0].game, expected);
+      assert.equal(response.body.filters.result, value, 'the applied result is echoed back');
+    }
+
+    const all = await requestJson(server, '/api/v1/account/matches', { headers });
+    assert.equal(all.body.filters.result, null, 'no result filter by default');
+    assert.equal(all.body.total, 3, 'and all three are still reachable');
+
+    // An unknown result can never widen the query.
+    const bogus = await requestJson(
+      server,
+      '/api/v1/account/matches?result=VICTORY',
+      { headers },
+    );
+    assert.equal(bogus.response.status, 400, 'an unknown result is rejected');
+    assert.doesNotMatch(bogus.body.error, /Mongo|ObjectId|undefined|NaN/i);
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('all three filters combine, including the result', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'mh-all3@example.com');
+    const userId = registered.body.user.id;
+
+    await Match.create([
+      { userId, game: 'hit', opponentType: OPPONENT_TYPES.ARCADION, result: MATCH_RESULTS.WIN, completedAt: new Date('2026-05-10T12:00:00.000Z') },
+      { userId, game: 'wrong-result', opponentType: OPPONENT_TYPES.ARCADION, result: MATCH_RESULTS.LOSS, completedAt: new Date('2026-05-11T12:00:00.000Z') },
+      { userId, game: 'wrong-opponent', opponentType: OPPONENT_TYPES.LOCAL, result: MATCH_RESULTS.WIN, completedAt: new Date('2026-05-12T12:00:00.000Z') },
+      { userId, game: 'wrong-date', opponentType: OPPONENT_TYPES.ARCADION, result: MATCH_RESULTS.WIN, completedAt: new Date('2026-06-12T12:00:00.000Z') },
+    ]);
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    const response = await requestJson(
+      server,
+      '/api/v1/account/matches'
+        + '?from=2026-05-01&to=2026-05-31&opponentType=ARCADION&result=WIN',
+      { headers },
+    );
+
+    assert.equal(response.response.status, 200);
+    assert.equal(response.body.total, 1, 'only the row matching all three survives');
+    assert.equal(response.body.matches[0].game, 'hit');
+    assert.deepEqual(response.body.filters, {
+      from: '2026-05-01',
+      to: '2026-05-31',
+      opponentType: 'ARCADION',
+      result: 'WIN',
+    });
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('paging walks the whole history without repeating or skipping a match', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { registered, loggedIn } = await registerAndLogin(server, 'mh-page@example.com');
+    const userId = registered.body.user.id;
+
+    // Seven matches, newest last, so the expected pages can be written out.
+    await Match.create(
+      Array.from({ length: 7 }, (_, index) => ({
+        userId,
+        game: `m${index}`,
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date(`2026-01-0${index + 1}T12:00:00.000Z`),
+      })),
+    );
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    const seen = [];
+    let offset = 0;
+    let pages = 0;
+
+    // Walk the pages exactly as the page's "load more" does.
+    for (;;) {
+      const response = await requestJson(
+        server,
+        `/api/v1/account/matches?limit=3&offset=${offset}`,
+        { headers },
+      );
+      assert.equal(response.response.status, 200);
+      assert.equal(response.body.total, 7, 'total counts every match, not the page');
+      assert.equal(response.body.offset, offset, 'the applied offset is echoed back');
+
+      seen.push(...response.body.matches.map((match) => match.game));
+      pages += 1;
+
+      if (!response.body.hasMore) break;
+      assert.ok(pages < 10, 'paging terminates rather than looping');
+      offset += response.body.limit;
+    }
+
+    assert.equal(pages, 3, 'seven rows at three per page is three pages');
+    assert.deepEqual(seen, ['m6', 'm5', 'm4', 'm3', 'm2', 'm1', 'm0'], 'newest first, nothing repeated or skipped');
+    assert.equal(new Set(seen).size, 7, 'every match appears exactly once');
+
+    // The last page is never described as having more.
+    const last = await requestJson(
+      server,
+      '/api/v1/account/matches?limit=3&offset=6',
+      { headers },
+    );
+    assert.equal(last.body.matches.length, 1, 'the final page holds the remainder');
+    assert.equal(last.body.hasMore, false, 'and reports there is nothing after it');
+
+    // An offset past the end is an empty page, not an error and not a wrap-around.
+    const past = await requestJson(
+      server,
+      '/api/v1/account/matches?limit=3&offset=99',
+      { headers },
+    );
+    assert.equal(past.response.status, 200);
+    assert.deepEqual(past.body.matches, []);
+    assert.equal(past.body.total, 7, 'total still describes the whole history');
+    assert.equal(past.body.hasMore, false);
+
+    for (const query of ['offset=-1', 'offset=1.5', 'limit=0', 'limit=-3']) {
+      const response = await requestJson(server, `/api/v1/account/matches?${query}`, { headers });
+      assert.equal(response.response.status, 400, `${query} is rejected`);
+    }
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('paging stays inside the one account and does not leak across accounts', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const first = await registerAndLogin(server, 'mh-page-a@example.com');
+    const second = await registerAndLogin(server, 'mh-page-b@example.com');
+
+    for (let index = 0; index < 4; index += 1) {
+      await Match.create({
+        userId: first.registered.body.user.id,
+        game: `a${index}`,
+        opponentType: OPPONENT_TYPES.LOCAL,
+        result: MATCH_RESULTS.WIN,
+        completedAt: new Date(`2026-04-0${index + 1}T12:00:00.000Z`),
+      });
+    }
+    await Match.create({
+      userId: second.registered.body.user.id,
+      game: 'b0',
+      opponentType: OPPONENT_TYPES.LOCAL,
+      result: MATCH_RESULTS.WIN,
+      completedAt: new Date('2026-04-05T12:00:00.000Z'),
+    });
+
+    const headers = { authorization: `Bearer ${second.loggedIn.body.token}` };
+    const response = await requestJson(
+      server,
+      '/api/v1/account/matches?limit=100&offset=0',
+      { headers },
+    );
+
+    assert.equal(response.body.total, 1, 'the second account sees only its own single match');
+    assert.equal(response.body.matches[0].game, 'b0');
+    assert.equal(response.body.hasMore, false);
+    // Checked against the game names, not the whole body: a matchId is hex and
+    // can contain anything, so a blanket pattern would match by chance.
+    assert.deepEqual(
+      response.body.matches.map((match) => match.game),
+      ['b0'],
+      'no page of another account appears in the response',
+    );
+    assert.doesNotMatch(
+      JSON.stringify(response.body.filters),
+      /a[0-3]/,
+      'and the echoed filters carry nothing from the other account',
+    );
+  } finally {
+    await stopHttpServer(server);
+  }
+});
+
+test('the account creation date is not a server-side filter input', async () => {
+  const server = await startHttpServer();
+
+  try {
+    const { loggedIn } = await registerAndLogin(server, 'mh-createdate@example.com');
+    const headers = { authorization: `Bearer ${loggedIn.body.token}` };
+
+    // The page uses the account creation date to bound its own calendar, which
+    // is a presentation concern. It must not become a query the server honours,
+    // because a caller could otherwise narrow another surface by passing it.
+    const response = await requestJson(
+      server,
+      '/api/v1/account/matches?createdAfter=2020-01-01&createdBefore=2030-01-01',
+      { headers },
+    );
+    assert.equal(response.response.status, 200, 'an unknown parameter is simply ignored');
+    assert.equal(response.body.total, 0, 'and it does not filter anything');
+  } finally {
+    await stopHttpServer(server);
+  }
+});

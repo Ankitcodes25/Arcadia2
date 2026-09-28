@@ -7,6 +7,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { NOTICE_FADING_CLASS, useAutoDismissNotice } from "../auth/authNotice";
+import { acquireModalScrollLock } from "../auth/modalScrollLock";
 import { getUsernameLengthWarning, USERNAME_SAVE_FAILED_MESSAGE } from "../auth/usernameAvailability";
 import {
   getUsernameLength,
@@ -120,11 +121,14 @@ function UsernameModal({
 
   useEffect(() => {
     inputRef.current?.focus();
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
+    /*
+     * The shared, reference counted lock. It keeps this layer from being
+     * scrolled behind, and because it is counted, opening it on top of a parent
+     * dialog that already holds the lock neither locks nor unlocks the document
+     * again, so the centred parent stays exactly where it is.
+     */
+    const release = acquireModalScrollLock();
+    return release;
   }, []);
 
   useEffect(() => {

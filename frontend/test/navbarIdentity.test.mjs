@@ -485,7 +485,7 @@ test("My Profile no longer shows the Google name in the identity block", async (
   assert.doesNotMatch(fields, /Joined/, "the joined date is not in the identity block");
 
   // Google identity is still surfaced, under Account Info, so OAuth is untouched.
-  assert.equal(q('[data-field="loginMethod"]').textContent, "Google");
+  assert.equal(q('[data-field="loginMethod"]').textContent, "Google \u00B7 user@example.com");
   assert.equal(q(".mpm-provider-pill"), null, "the old header badge is not rendered");
   await unmount();
 });
@@ -719,7 +719,13 @@ test("the Profile Popup shows no email address or verification state", async () 
 
 test("the Profile Popup leads with the Player ID, then the username and badge title", async () => {
   const unmount = await renderNavbar(navbarUser({
-    progression: progression({ level: 4, title: "Arcadia Vanguard", themeKey: "electric-purple" }),
+    // The Legend tier exactly as the backend tier table describes it.
+    progression: progression({
+      level: 20,
+      title: "Arcadia Legend",
+      badgeKey: "crown",
+      themeKey: "crown",
+    }),
   }));
 
   await click(q(".avatar-button"));
@@ -734,12 +740,12 @@ test("the Profile Popup leads with the Player ID, then the username and badge ti
   assert.equal(q('.profile-popup [data-field="username"]').textContent, "Ankit10");
   assert.equal(
     q('.profile-popup [data-field="progressionTitle"]').textContent,
-    "Arcadia Vanguard",
+    "Arcadia Legend",
     "the badge title comes from the progression, not a hardcoded string",
   );
   assert.equal(
     q('.profile-popup [data-field="progressionTitle"]').className,
-    "profile-popup-badge profile-popup-badge--electric-purple",
+    "profile-popup-badge profile-popup-badge--crown",
     "the badge is tinted by the progression theme",
   );
   // The avatar keeps its own class but now sits inside the ring wrapper.
@@ -768,12 +774,16 @@ test("the Profile Popup copies the exact Player ID", async () => {
   await unmount();
 });
 
-test("the Profile Popup still offers exactly the five approved options", async () => {
+test("the Profile Popup still offers exactly the six approved options in order", async () => {
   const unmount = await renderNavbar(navbarUser());
 
   await click(q(".avatar-button"));
   const labels = qa(".profile-popup-item").map((node) => node.textContent.replace("Logging out…", "Logout"));
-  assert.deepEqual(labels, ["My Profile", "Leaderboards", "Settings", "Help & Support", "Logout"]);
+  assert.deepEqual(
+    labels,
+    ["My Profile", "Leaderboards", "Match History", "Settings", "Help & Support", "Logout"],
+    "Match History sits immediately after Leaderboards and before Settings",
+  );
 
   // Every item has a real icon rather than a bare glyph.
   for (const item of qa(".profile-popup-item")) {
@@ -874,12 +884,15 @@ test("playtime formatting is safe for every unusable value", () => {
 });
 
 test("the login method reflects the account's real authentication method", async () => {
-  assert.equal(accountInfo.getLoginMethodLabel("GOOGLE"), "Google");
-  assert.equal(accountInfo.getLoginMethodLabel("PASSWORD"), "Email & Password");
-  assert.equal(accountInfo.getLoginMethodLabel("SOMETHING_ELSE"), "—");
+  assert.equal(accountInfo.getLoginMethodWithEmail("GOOGLE", "a@gmail.com"), "Google · a@gmail.com");
+  assert.equal(
+    accountInfo.getLoginMethodWithEmail("PASSWORD", "a@example.com"),
+    "Email · a@example.com",
+  );
+  assert.equal(accountInfo.getLoginMethodWithEmail("SOMETHING_ELSE", "a@b.com"), "— · a@b.com");
 
   const password = await renderProfile(profileFixture());
-  assert.equal(q('[data-field="loginMethod"]').textContent, "Email & Password");
+  assert.equal(q('[data-field="loginMethod"]').textContent, "Email \u00B7 user@example.com");
   await password();
 
   const google = await renderProfile(profileFixture({
@@ -889,7 +902,7 @@ test("the login method reflects the account's real authentication method", async
     googleAvatarAvailable: true,
     googleAvatarUrl: "https://lh3.googleusercontent.com/a/test-avatar",
   }));
-  assert.equal(q('[data-field="loginMethod"]').textContent, "Google");
+  assert.equal(q('[data-field="loginMethod"]').textContent, "Google \u00B7 user@example.com");
   await google();
 });
 
@@ -925,7 +938,7 @@ test("the Google badge moved into Account Info and is not duplicated", async () 
   assert.doesNotMatch(q(".mpm-header").textContent, /Signed in with Google/);
 
   // Present exactly once, inside Account Info.
-  assert.equal(q('[data-field="loginMethod"]').textContent, "Google");
+  assert.equal(q('[data-field="loginMethod"]').textContent, "Google \u00B7 user@example.com");
   assert.equal(
     (document.body.textContent.match(/Google/g) || []).length >= 1,
     true,
@@ -991,7 +1004,7 @@ test("My Profile is read-only apart from the contextual controls", async () => {
   assert.ok(q('button[aria-label="Copy username"]'), "the username copy");
   assert.ok(q('button[aria-label="Edit username"]'), "the username pencil");
   assert.ok(q('button[aria-label="Copy player ID"]'), "the Player ID copy");
-  assert.ok(q('button[aria-label="Change avatar"]'), "the avatar pencil");
+  assert.ok(q('button[aria-label="Edit avatar"]'), "the avatar pencil");
   await unmount();
 });
 
@@ -1033,7 +1046,7 @@ test("Account Info renders neutral values when the profile fields are missing", 
 
   assert.equal(q('[data-field="joinedDate"]').textContent, "—");
   assert.equal(q('[data-field="hoursPlayed"]').textContent, "—");
-  assert.equal(q('[data-field="loginMethod"]').textContent, "Email & Password");
+  assert.equal(q('[data-field="loginMethod"]').textContent, "Email \u00B7 user@example.com");
   assert.equal(q('[data-field="accountStatus"]').textContent, "Active");
   assert.doesNotMatch(q(".mpm-section--account").textContent, /NaN|Invalid Date|undefined/);
   await unmount();

@@ -9,7 +9,8 @@ import type { AuthProvider, AuthStatus } from "./authTypes";
  *   Total hours played -> gamingStats.totalMinutesPlayed, which the backend does
  *                         not provide yet, so it renders the neutral placeholder.
  *   Joined date        -> createdAt, the account creation timestamp.
- *   Login method       -> authProvider, the account's authentication method.
+ *   Login method       -> authProvider and the verified account email, combined
+ *                         into the one Login Method field.
  *   Account status     -> status, the account's existing status.
  *
  * The month names are a fixed English table rather than `toLocaleDateString`, so
@@ -39,10 +40,45 @@ const MONTH_NAMES = [
   "December",
 ];
 
+/**
+ * The account email, or the neutral placeholder when the backend has none.
+ *
+ * This is the address already stored on the account record. For a Google
+ * account it is the OIDC email Google returned, which the backend only accepts
+ * once `email_verified` is true, so it is a verified address. It is display only:
+ * the Google identity key is the stable `sub`, never the email address, and no
+ * token of any kind is read or shown here.
+ */
+export function formatAccountEmail(email: string | null | undefined): string {
+  const value = typeof email === "string" ? email.trim() : "";
+  return value || ACCOUNT_INFO_EMPTY;
+}
+
 const LOGIN_METHOD_LABELS = Object.freeze({
   GOOGLE: "Google",
-  PASSWORD: "Email & Password",
+  PASSWORD: "Email",
 });
+
+/**
+ * The Login Method value: the authentication method, then the address that
+ * account signs in with, as one field.
+ *
+ *   Google account  -> `Google · ankit@gmail.com`
+ *   Password account-> `Email · ankit@example.com`
+ *
+ * Both halves come from data the backend already returned: `authProvider` and
+ * the verified account `email`. A Google account is never labelled as a password
+ * account or the reverse, and a missing address becomes the neutral placeholder
+ * rather than `undefined`, `null` or a broken value.
+ */
+export function getLoginMethodWithEmail(
+  authProvider: AuthProvider | string,
+  email: string | null | undefined,
+): string {
+  const method = LOGIN_METHOD_LABELS[authProvider as keyof typeof LOGIN_METHOD_LABELS]
+    ?? ACCOUNT_INFO_EMPTY;
+  return `${method} · ${formatAccountEmail(email)}`;
+}
 
 const ACCOUNT_STATUS_LABELS = Object.freeze({
   ACTIVE: "Active",
@@ -84,12 +120,6 @@ export function formatHoursPlayed(totalMinutes: number | null | undefined): stri
   const minutes = wholeMinutes % 60;
 
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-}
-
-/** The account's authentication method, as a public label only. */
-export function getLoginMethodLabel(authProvider: AuthProvider | string): string {
-  return LOGIN_METHOD_LABELS[authProvider as keyof typeof LOGIN_METHOD_LABELS]
-    ?? ACCOUNT_INFO_EMPTY;
 }
 
 /** The account's current status, as a public label only. */

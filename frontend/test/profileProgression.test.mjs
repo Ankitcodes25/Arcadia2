@@ -27,16 +27,33 @@ let originalCheckUsernameAvailability;
    frontend never computes a level, a title or a badge itself.
    ------------------------------------------------------------------ */
 
+/*
+ * The backend tier table, reproduced so a fixture can never claim a title,
+ * badge or theme that does not belong to its level. The tier is resolved from
+ * the requested level, so a boundary test cannot accidentally disagree with the
+ * real mapping.
+ */
+const BACKEND_TIERS = [
+  { maxLevel: 4, title: "Arcadia Rookie", badgeKey: "bronze", themeKey: "bronze" },
+  { maxLevel: 9, title: "Arcadia Challenger", badgeKey: "silver", themeKey: "silver" },
+  { maxLevel: 14, title: "Arcadia Veteran", badgeKey: "gold", themeKey: "gold" },
+  { maxLevel: 19, title: "Arcadia Master", badgeKey: "diamond", themeKey: "diamond" },
+  { maxLevel: 29, title: "Arcadia Legend", badgeKey: "crown", themeKey: "crown" },
+  { maxLevel: null, title: "Arcadia Supreme", badgeKey: "flame", themeKey: "flame" },
+];
+
 function progression(overrides = {}) {
+  const level = Number(overrides.level ?? 0);
+  const tier = BACKEND_TIERS.find((t) => t.maxLevel === null || level <= t.maxLevel);
   return {
     totalXp: 0,
-    level: 0,
+    level,
     currentLevelXp: 0,
     nextLevelXp: 100,
     progressPercent: 0,
-    title: "Arcadia Rookie",
-    badgeKey: "bronze",
-    themeKey: "neutral-grey",
+    title: tier.title,
+    badgeKey: tier.badgeKey,
+    themeKey: tier.themeKey,
     ...overrides,
   };
 }
@@ -248,7 +265,7 @@ test("the progression view renders Level 0 from the backend payload", () => {
   assert.equal(view.levelLabel, "LEVEL 00");
   assert.equal(view.title, "Arcadia Rookie");
   assert.equal(view.badgeKey, "bronze");
-  assert.equal(view.themeKey, "neutral-grey");
+  assert.equal(view.themeKey, "bronze");
   assert.equal(view.isAnimated, false);
   assert.equal(view.currentLevelXp, 0);
   assert.equal(view.nextLevelXp, 100);
@@ -266,7 +283,7 @@ test("the progression view renders the documented mid-level example", () => {
     progressPercent: 90,
     title: "Arcadia Rookie",
     badgeKey: "bronze",
-    themeKey: "neutral-grey",
+    themeKey: "bronze",
   }));
 
   assert.equal(view.levelLabel, "LEVEL 01");
@@ -309,13 +326,15 @@ test("the progression view never renders NaN, Infinity or an out of range bar", 
 });
 
 test("only the backend badge key decides the animated flame tier", () => {
+  // The six tier themes from the backend tier table, each paired with the
+  // material it is named after. Only `flame` is the animated top tier.
   const tiers = [
-    ["bronze", "neutral-grey", false],
-    ["silver", "bright-green", false],
-    ["gold", "deep-cyan", false],
-    ["diamond", "crimson-red", false],
-    ["crown", "electric-purple", false],
-    ["flame", "neon-golden", true],
+    ["bronze", "bronze", false],
+    ["silver", "silver", false],
+    ["gold", "gold", false],
+    ["diamond", "diamond", false],
+    ["crown", "crown", false],
+    ["flame", "flame", true],
   ];
 
   for (const [badgeKey, themeKey, isAnimated] of tiers) {
@@ -338,7 +357,8 @@ test("only the backend badge key decides the animated flame tier", () => {
 test("My Profile leads with the Player ID, then the username, then the badge title", async () => {
   const unmount = await renderRoot(React.createElement(MyProfileModal, {
     profile: accountProfile({
-      progression: progression({ level: 4, title: "Arcadia Vanguard", themeKey: "electric-purple" }),
+      // The Legend tier exactly as the backend tier table describes it.
+    progression: progression({ level: 20, title: "Arcadia Legend", badgeKey: "crown", themeKey: "crown" }),
     }),
     onClose: () => {},
     onSaveUsername: async () => {},
@@ -364,12 +384,12 @@ test("My Profile leads with the Player ID, then the username, then the badge tit
   assert.equal(playerIdText(), "ARC-7K4M2P9Q");
   assert.equal(
     q('[data-field="progressionTitle"]').textContent,
-    "Arcadia Vanguard",
+    "Arcadia Legend",
     "the title comes from the progression, not a hardcoded string",
   );
   assert.equal(
     q('[data-field="progressionTitle"]').className,
-    "mpm-identity-title mpm-identity-title--electric-purple",
+    "mpm-identity-title mpm-identity-title--crown",
     "the title pill is tinted by the progression theme",
   );
 
@@ -449,7 +469,10 @@ test("My Profile shows the username and Player ID, and no Google name in the ide
   }));
 
   // Google identity is still represented, under Account Info instead.
-  assert.equal(q('[data-field="loginMethod"]').textContent, "Google");
+  assert.equal(
+    q('[data-field="loginMethod"]').textContent,
+    "Google · user@example.com",
+  );
   assert.equal(playerIdText(), "ARC-7K4M2P9Q", "the Player ID is the same on a Google account");
   assert.doesNotMatch(q(".mpm-identity").textContent, /Ankit Das/);
   await googleUnmount();
@@ -484,7 +507,7 @@ test("My Profile renders the backend level, title and XP progress", async () => 
         progressPercent: 0,
         title: "Arcadia Challenger",
         badgeKey: "silver",
-        themeKey: "bright-green",
+        themeKey: "silver",
       }),
     }),
     onClose: () => {},
@@ -496,7 +519,7 @@ test("My Profile renders the backend level, title and XP progress", async () => 
   assert.equal(q(".mpm-level-sub").textContent, "Arcadia Challenger");
   assert.equal(q(".mpm-level-xp").textContent, "0 / 550 XP");
   assert.equal(q(".mpm-level-card").dataset.badge, "silver");
-  assert.ok(q(".mpm-level-card").classList.contains("mpm-level-card--bright-green"));
+  assert.ok(q(".mpm-level-card").classList.contains("mpm-level-card--silver"));
   assert.equal(q(".mpm-progress-fill").style.width, "0%");
   assert.equal(q(".mpm-progress-track").getAttribute("aria-valuemax"), "550");
   await unmount();
@@ -560,7 +583,7 @@ test("My Profile is informational and carries no generic action row", async () =
   assert.ok(q('button[aria-label="Edit username"]'), "the username pencil remains");
   assert.ok(q('button[aria-label="Copy username"]'), "the username copy remains");
   assert.ok(q('button[aria-label="Copy player ID"]'), "the Player ID copy remains");
-  assert.ok(q('button[aria-label="Change avatar"]'), "the avatar pencil remains");
+  assert.ok(q('button[aria-label="Edit avatar"]'), "the avatar pencil remains");
 
   // No generic action label was reintroduced anywhere in the dialog.
   const labels = qa(".mpm-modal button")
@@ -1137,38 +1160,801 @@ test("a failed write keeps the modal open, the name and a visible warning", asyn
   await unmount();
 });
 
-test("the avatar pencil stays visible but cannot stage an unsavable change", async () => {
-  const saves = [];
-  const profile = accountProfile({
-    googleAvatarAvailable: true,
-    googleAvatarUrl: "https://lh3.googleusercontent.com/a/test-avatar",
-  });
-  const unmount = await renderRoot(React.createElement(MyProfileModal, {
+/* ==================================================================
+   Avatar Modal as a child layer of My Profile
+
+   The hierarchy is Profile Popup -> My Profile -> Avatar Modal. My Profile
+   stays mounted and blurred while the Avatar Modal is open, and both the X and
+   Back of the child return to it rather than closing it.
+   ================================================================== */
+
+function renderProfileModal(profile, overrides = {}) {
+  return renderRoot(React.createElement(MyProfileModal, {
     profile,
     onClose: () => {},
-    onSaveUsername: async (username) => {
-      saves.push(username);
+    onSaveUsername: async () => {},
+    onSaveAvatar: async () => {},
+    ...overrides,
+  }));
+}
+
+function avatarPencil() {
+  return q('button[aria-label="Edit avatar"]');
+}
+
+async function openAvatarModal(profile, overrides = {}) {
+  const unmount = await renderProfileModal(profile, overrides);
+  click(avatarPencil());
+  return unmount;
+}
+
+test("the avatar pencil opens the Avatar Modal as a child of My Profile", async () => {
+  const saves = [];
+  const unmount = await openAvatarModal(accountProfile(), {
+    onSaveAvatar: async (avatar) => {
+      saves.push(avatar);
     },
+  });
+
+  // The child layer opened, and My Profile is still mounted behind it.
+  assert.ok(q(".avm-backdrop"), "the Avatar Modal opened");
+  assert.ok(q(".avm-modal"), "the avatar dialog is present");
+  assert.ok(q(".mpm-modal"), "My Profile is still mounted underneath");
+  assert.equal(q("#avm-title").textContent, "Choose Your Avatar");
+
+  // The parent is blurred, but not unmounted.
+  assert.ok(
+    q(".mpm-modal").classList.contains("mpm-modal--blurred"),
+    "My Profile is blurred behind the Avatar Modal",
+  );
+
+  // The X is the only way out of this layer, and there is no Back control.
+  assert.ok(q('button[aria-label="Close avatar selection"]'), "an X in the top right");
+  assert.equal(q(".avm-header .avm-back"), null, "the back button is gone");
+  assert.equal(
+    qa(".avm-header button").length,
+    1,
+    "the header holds exactly one control, the X",
+  );
+
+  // The existing Arcadia brand mark sits immediately before the heading.
+  const logo = q(".avm-header-logo");
+  assert.ok(logo, "the Arcadia logo is in the header");
+  assert.match(logo.getAttribute("src"), /ArcadialogoA\.[a-z0-9]+$/i, "and is the existing asset");
+  const titleRow = q(".avm-header-title");
+  assert.equal(
+    logo.nextElementSibling,
+    q("#avm-title"),
+    "the logo sits immediately before the heading, in one row",
+  );
+  assert.equal(titleRow.children.length, 2, "the row is just the logo and the heading");
+
+  assert.equal(saves.length, 0, "opening the layer writes nothing");
+  await unmount();
+});
+
+test("every avatar lives in one continuous grid with no section headings", async () => {
+  const unmount = await openAvatarModal(accountProfile({
+    authProvider: "GOOGLE",
+    googleAvatarAvailable: true,
+    googleAvatarUrl: "https://lh3.googleusercontent.com/a/test-avatar",
   }));
 
-  // The pencil is the entry point for the future Avatar Modal, so it is still
-  // rendered in the same place.
-  const pencil = q('button[aria-label="Change avatar"]');
-  assert.ok(pencil, "the avatar pencil is still visible");
-  assert.equal(pencil.disabled, true, "it is inert until avatar editing exists");
-  assert.match(pencil.getAttribute("title"), /coming soon/i);
+  // The old per-section headings are gone, so nothing splits the grid.
+  assert.equal(q(".avm-section-title"), null, "no section headings remain");
+  for (const label of ["Your Avatars", "Level Tiers", "Free Avatars", "Locked Avatars"]) {
+    assert.doesNotMatch(q(".avm-body").textContent, new RegExp(label), `${label} is gone`);
+  }
+  assert.equal(qa(".avm-grid").length, 1, "exactly one grid");
 
-  // Avatar editing is not implemented, so it opens no picker at all. A staged
-  // selection with no way to persist it would be a broken state.
-  click(pencil);
-  assert.equal(q(".mpm-avatar-picker"), null, "no avatar picker is opened");
-  assert.equal(qa(".mpm-avatar-option").length, 0, "no avatar choices are offered");
-  assert.equal(q(".mpm-save"), null, "and there is no save button to strand a choice on");
+  // Level 0 with no completed match: Rookie is still gated on play, so the
+  // order is Google, the six free avatars, then every level tier.
+  const names = qa(".avm-grid .avm-tile-name").map((node) => node.textContent);
+  assert.deepEqual(names, [
+    "Google Photo",
+    "Nebula", "Aurora", "Nova", "Eclipse", "Comet", "Pulse",
+    "Rookie", "Challenger", "Veteran", "Master", "Legend", "Supreme",
+  ]);
+  await unmount();
+});
 
-  // The stored avatar is untouched and no username write was triggered by it.
-  assert.equal(profile.avatar.type, "local", "the stored avatar is unchanged");
-  assert.equal(profile.avatar.value, "avatar-01", "and so is the chosen one");
-  assert.equal(saves.length, 0, "nothing was written");
+test("level avatars always follow the free avatars, unlocked or not", async () => {
+  const freeNames = ["Nebula", "Aurora", "Nova", "Eclipse", "Comet", "Pulse"];
+  const tierNames = ["Rookie", "Challenger", "Veteran", "Master", "Legend", "Supreme"];
+
+  for (const [level, played] of [[0, 0], [5, 0], [10, 0], [0, 1], [30, 0]]) {
+    const unmount = await openAvatarModal(accountProfile({
+      progression: progression({ level }),
+      gamingStats: { ...accountProfile().gamingStats, gamesPlayed: played },
+    }));
+
+    const names = qa(".avm-grid .avm-tile-name").map((node) => node.textContent);
+
+    // The free catalogue is contiguous and always first, straight after Google.
+    assert.deepEqual(
+      names.slice(0, freeNames.length),
+      freeNames,
+      `level ${level}, ${played} played: the free avatars come first`,
+    );
+
+    // Every tier sits after the last free avatar; none precedes one.
+    const firstTier = names.findIndex((name) => tierNames.includes(name));
+    assert.ok(firstTier >= freeNames.length, `level ${level}: no tier precedes a free avatar`);
+    assert.deepEqual(
+      names.slice(0, firstTier),
+      freeNames,
+      `level ${level}: nothing but free avatars before the first tier`,
+    );
+
+    // Unlocked tiers come first inside the tier block, then the locked ones.
+    const unlocked = qa(".avm-tile--unavailable .avm-tile-name").map((node) => node.textContent);
+    const locked = qa(".avm-tile--locked .avm-tile-name").map((node) => node.textContent);
+    assert.deepEqual(
+      names.slice(firstTier, firstTier + unlocked.length),
+      unlocked,
+      `level ${level}: unlocked tiers start the tier block`,
+    );
+    assert.deepEqual(
+      names.slice(firstTier + unlocked.length, firstTier + unlocked.length + locked.length),
+      locked,
+      `level ${level}: locked tiers follow unlocked ones`,
+    );
+    assert.equal(
+      unlocked.length + locked.length,
+      tierNames.length,
+      `level ${level}: every tier is still shown exactly once`,
+    );
+    await unmount();
+  }
+});
+
+test("a tier moves from the locked group to the unlocked group once it is reached", async () => {
+  // Challenger is level gated, so raising the level relocates it.
+  const atFive = await openAvatarModal(accountProfile({
+    progression: progression({ level: 5 }),
+  }));
+  assert.equal(
+    q(".avm-tile--locked .avm-tile-name").textContent,
+    "Rookie",
+    "at level 5 with no match, Rookie is still the first locked tier",
+  );
+  const unlockedAtFive = qa(".avm-tile--unavailable .avm-tile-name").map((node) => node.textContent);
+  assert.deepEqual(unlockedAtFive, ["Challenger"], "Challenger is unlocked at level 5");
+  const fiveNames = qa(".avm-grid .avm-tile-name").map((node) => node.textContent);
+  assert.ok(
+    fiveNames.indexOf("Challenger") > fiveNames.indexOf("Pulse"),
+    "and it still sits after every free avatar",
+  );
+  await atFive();
+
+  const atFour = await openAvatarModal(accountProfile({
+    progression: progression({ level: 4 }),
+  }));
+  assert.equal(
+    qa(".avm-tile--unavailable").length,
+    0,
+    "at level 4 no level tier is unlocked yet",
+  );
+  assert.ok(
+    qa(".avm-tile--locked .avm-tile-name").some((node) => node.textContent === "Challenger"),
+    "Challenger is still locked",
+  );
+  await atFour();
+});
+
+test("the Avatar Modal X closes only the Avatar Modal", async () => {
+  const unmount = await openAvatarModal(accountProfile());
+
+  click(q('button[aria-label="Close avatar selection"]'));
+
+  assert.equal(q(".avm-backdrop"), null, "the Avatar Modal closed");
+  assert.ok(q(".mpm-modal"), "My Profile is still open");
+  assert.equal(
+    q(".mpm-modal").classList.contains("mpm-modal--blurred"),
+    false,
+    "and it is no longer blurred",
+  );
+  await unmount();
+});
+
+test("the Avatar Modal offers no navigation control other than the X", async () => {
+  const unmount = await openAvatarModal(accountProfile());
+
+  // Nothing to go "back" to that the X does not already do, and nothing that
+  // could reach the layers underneath.
+  assert.equal(qa(".avm-back").length, 0, "no back button is rendered");
+  assert.equal(q('button[aria-label="Back to profile"]'), null, "and no back control at all");
+  assert.deepEqual(
+    qa(".avm-header button").map((node) => node.getAttribute("aria-label")),
+    ["Close avatar selection"],
+    "the X is the only header control",
+  );
+  await unmount();
+});
+
+test("Escape closes only the Avatar Modal", async () => {
+  const unmount = await openAvatarModal(accountProfile());
+
+  await act(async () => {
+    document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+
+  assert.equal(q(".avm-backdrop"), null, "the Avatar Modal closed");
+  assert.ok(q(".mpm-modal"), "My Profile survived the Escape");
+  await unmount();
+});
+
+test("My Profile's own X still closes My Profile while no child layer is open", async () => {
+  let closed = 0;
+  const unmount = await renderProfileModal(accountProfile(), {
+    onClose: () => {
+      closed += 1;
+    },
+  });
+
+  click(q(".mpm-close"));
+  assert.equal(closed, 1, "the back action still fires");
+  await unmount();
+});
+
+test("the Avatar Modal opens with the persisted avatar selected", async () => {
+  const unmount = await openAvatarModal(accountProfile({
+    avatar: { type: "local", value: "avatar-04" },
+  }));
+
+  const selected = qa(".avm-tile--selected");
+  assert.equal(selected.length, 1, "exactly one tile is selected");
+  assert.equal(
+    selected[0].querySelector(".avm-tile-name").textContent,
+    "Eclipse",
+    "and it is the avatar the profile already stores",
+  );
+  assert.equal(selected[0].getAttribute("aria-pressed"), "true", "the state is exposed");
+  await unmount();
+});
+
+test("choosing a catalog avatar persists it and returns to My Profile", async () => {
+  const writes = [];
+  const unmount = await openAvatarModal(accountProfile(), {
+    onSaveAvatar: async (avatar) => {
+      writes.push(avatar);
+    },
+  });
+
+  // The profile already stores avatar-01, so pick a genuinely different one.
+  const pulse = qa(".avm-tile").find((node) => node.textContent.includes("Pulse"));
+  click(pulse);
+  assert.ok(
+    pulse.classList.contains("avm-tile--selected"),
+    "the choice is staged inside the Avatar Modal",
+  );
+  assert.equal(writes.length, 0, "staging writes nothing");
+  assert.equal(q(".avm-confirm").disabled, false, "a real change enables the save");
+
+  await act(async () => {
+    q(".avm-confirm").dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  });
+
+  assert.deepEqual(writes, [{ type: "local", value: "avatar-06" }], "the exact avatar was sent");
+  assert.equal(q(".avm-backdrop"), null, "a successful save closes the Avatar Modal");
+  assert.ok(q(".mpm-modal"), "and My Profile is still open");
+  await unmount();
+});
+
+test("a failed avatar save keeps the Avatar Modal open and reports the reason", async () => {
+  const unmount = await openAvatarModal(accountProfile(), {
+    onSaveAvatar: async () => {
+      throw new AuthApiError("Google profile picture is unavailable", 400);
+    },
+  });
+
+  click(qa(".avm-tile").find((node) => node.textContent.includes("Aurora")));
+  await act(async () => {
+    q(".avm-confirm").dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  });
+
+  assert.ok(q(".avm-modal"), "the Avatar Modal stays open on a failure");
+  assert.equal(
+    q(".avm-error").textContent,
+    "Google profile picture is unavailable",
+    "the backend's safe message is shown, not a false success",
+  );
+  assert.ok(q(".mpm-modal"), "My Profile is untouched behind it");
+  await unmount();
+});
+
+/* ==================================================================
+   The badge and the level avatars are one state
+
+   My Profile's badge and the Avatar Modal's tiers both read the shared rule in
+   `auth/tierEligibility.ts`, so they cannot disagree about whether a tier has
+   been earned. These tests drive the real My Profile modal and compare the two.
+   ================================================================== */
+
+/** Opens the Avatar Modal on top of My Profile and returns both teardowns. */
+async function openAvatarLayer(profile) {
+  const writes = [];
+  const unmount = await renderProfileModal(profile, {
+    onSaveAvatar: async (avatar) => {
+      writes.push(avatar);
+    },
+  });
+  click(avatarPencil());
+  return { unmount, writes };
+}
+
+function badgeEarned() {
+  return q('[data-field="progressionTitle"]').dataset.earned === "true";
+}
+
+test("the Rookie badge and the Rookie avatar unlock together", async () => {
+  const before = await renderProfileModal(accountProfile({
+    progression: progression({ level: 0, badgeKey: "bronze", themeKey: "bronze" }),
+    gamingStats: { ...accountProfile().gamingStats, gamesPlayed: 0 },
+  }));
+
+  // No completed match: the badge is unearned and carries the neutral treatment.
+  assert.equal(badgeEarned(), false, "the Rookie badge is not earned without a match");
+  assert.match(
+    q('[data-field="progressionTitle"]').className,
+    /--unearned$/,
+    "and it uses the neutral unearned theme, not the earned bronze one",
+  );
+  await before();
+
+  // One completed match: the badge is earned in the bronze theme.
+  const after = await renderProfileModal(accountProfile({
+    progression: progression({ level: 0, badgeKey: "bronze", themeKey: "bronze" }),
+    gamingStats: { ...accountProfile().gamingStats, gamesPlayed: 1 },
+  }));
+  assert.equal(badgeEarned(), true, "one completed match earns the Rookie badge");
+  assert.match(q('[data-field="progressionTitle"]').className, /--bronze$/);
+  await after();
+});
+
+test("a level 5 account earns the Challenger badge and the Challenger avatar together", async () => {
+  const { unmount } = await openAvatarLayer(accountProfile({
+    progression: progression({ level: 5, title: "Arcadia Challenger", badgeKey: "silver", themeKey: "silver" }),
+    gamingStats: { ...accountProfile().gamingStats, gamesPlayed: 1 },
+  }));
+
+  // The badge in My Profile, behind the Avatar Modal.
+  assert.equal(badgeEarned(), true, "the Challenger badge is earned at level 5");
+  assert.equal(
+    q('[data-field="progressionTitle"]').textContent,
+    "Arcadia Challenger",
+    "and it is the title the backend sent for that tier",
+  );
+  assert.match(q('[data-field="progressionTitle"]').className, /--silver$/);
+
+  // The avatar in the Avatar Modal, at the same moment.
+  const challenger = qa(".avm-tile").find((node) => node.textContent.startsWith("Challenger"));
+  assert.ok(
+    challenger.classList.contains("avm-tile--unavailable"),
+    "the Challenger avatar is unlocked, so it has no lock",
+  );
+  assert.equal(challenger.querySelector(".avm-tile-lock"), null, "the lock indicator is gone");
+  assert.equal(challenger.querySelector(".avm-tile-req"), null, "the unlock label is gone");
+
+  // And it still sits after every free avatar.
+  const names = qa(".avm-grid .avm-tile-name").map((node) => node.textContent);
+  assert.ok(
+    names.indexOf("Challenger") > names.indexOf("Pulse"),
+    "Challenger remains after all free avatars",
+  );
+  await unmount();
+});
+
+test("one level below a boundary keeps both the badge and the avatar unearned", async () => {
+  for (const [level, tierName] of [[4, "Challenger"], [9, "Veteran"], [14, "Master"]]) {
+    const { unmount } = await openAvatarLayer(accountProfile({
+      progression: progression({ level }),
+      gamingStats: { ...accountProfile().gamingStats, gamesPlayed: 1 },
+    }));
+
+    const tile = qa(".avm-tile").find((node) => node.textContent.startsWith(tierName));
+    assert.ok(
+      tile.classList.contains("avm-tile--locked"),
+      `level ${level}: ${tierName} is still locked`,
+    );
+    assert.ok(
+      tile.querySelector(".avm-tile-req").textContent.startsWith("Unlocks at "),
+      `level ${level}: it still states its requirement`,
+    );
+
+    // The badge for that level is a different, lower tier.
+    assert.equal(
+      q('[data-field="progressionTitle"]').textContent.startsWith(tierName),
+      false,
+      `level ${level}: the badge has not moved to ${tierName}`,
+    );
+    await unmount();
+  }
+});
+
+test("the badge and the avatar never disagree across every tier boundary", async () => {
+  const boundaries = [
+    [0, "Arcadia Rookie", "Rookie"],
+    [5, "Arcadia Challenger", "Challenger"],
+    [10, "Arcadia Veteran", "Veteran"],
+    [15, "Arcadia Master", "Master"],
+    [20, "Arcadia Legend", "Legend"],
+    [30, "Arcadia Supreme", "Supreme"],
+  ];
+
+  for (const [level, badgeTitle, avatarTier] of boundaries) {
+    const { unmount } = await openAvatarLayer(accountProfile({
+      progression: progression({ level }),
+      gamingStats: { ...accountProfile().gamingStats, gamesPlayed: 1 },
+    }));
+
+    assert.equal(
+      q('[data-field="progressionTitle"]').textContent,
+      badgeTitle,
+      `level ${level}: the badge title`,
+    );
+    assert.equal(badgeEarned(), true, `level ${level}: the badge is earned`);
+
+    const unlocked = qa(".avm-tile--unavailable .avm-tile-name").map((node) => node.textContent);
+    const locked = qa(".avm-tile--locked .avm-tile-name").map((node) => node.textContent);
+
+    // This account has a completed match, so Rookie is unlocked at every level
+    // and each tier at or below the boundary is unlocked too. The two lists
+    // together must always account for all six tiers.
+    assert.ok(
+      unlocked.includes("Rookie"),
+      `level ${level}: Rookie is unlocked with a completed match on record`,
+    );
+    assert.ok(
+      unlocked.includes(avatarTier),
+      `level ${level}: ${avatarTier} is unlocked at its own boundary`,
+    );
+    assert.ok(
+      !locked.includes(avatarTier),
+      `level ${level}: ${avatarTier} is not among the locked tiers`,
+    );
+    assert.equal(
+      unlocked.length + locked.length,
+      6,
+      `level ${level}: all six tiers are still shown`,
+    );
+    await unmount();
+  }
+});
+
+test("a locked tier states its full unlock level and can never be chosen", async () => {
+  const writes = [];
+  const unmount = await openAvatarModal(accountProfile({
+    progression: progression({ level: 3 }),
+  }), {
+    onSaveAvatar: async (avatar) => {
+      writes.push(avatar);
+    },
+  });
+
+  const locked = qa(".avm-tile--locked");
+  // Rookie is gated on a completed match rather than on a level, so at level 3
+  // with no match on record all six tiers are still locked.
+  assert.equal(locked.length, 6, "every level tier is locked without the required progress");
+
+  for (const tile of locked) {
+    // A locked tier is not a button, so it cannot be focused or activated and
+    // the browser never paints a prohibited cursor over it.
+    assert.equal(tile.tagName, "SPAN", "a locked tier is not an activatable control");
+    assert.equal(tile.disabled, undefined, "and carries no disabled state to style");
+    assert.match(
+      tile.getAttribute("aria-label"),
+      /— locked, unlocks at /,
+      "the state is still announced",
+    );
+  }
+
+  // The label is the full sentence naming the real requirement, never a
+  // shortened form. Rookie states the match requirement, not a level.
+  const labels = qa(".avm-tile--locked .avm-tile-req").map((node) => node.textContent);
+  assert.deepEqual(
+    labels,
+    [
+      "Unlocks at 1 completed match",
+      "Unlocks at level 5",
+      "Unlocks at level 10",
+      "Unlocks at level 15",
+      "Unlocks at level 20",
+      "Unlocks at level 30",
+    ],
+    "each locked tier states its actual requirement",
+  );
+  for (const shortened of [/^Level \d+$/, /Unlock at \d+/]) {
+    assert.doesNotMatch(q(".avm-body").textContent, shortened, `no shortened form ${shortened}`);
+  }
+
+  // Clicking a locked tile does nothing, not even a staged selection.
+  const before = q(".avm-tile--selected");
+  locked[0].dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  assert.equal(q(".avm-tile--selected"), before, "the selection did not move");
+  assert.equal(writes.length, 0, "and nothing was written");
+  await unmount();
+});
+
+test("Rookie stays locked until one completed match is on record", async () => {
+  // A high level alone must not unlock Rookie: it is gated on real play.
+  for (const level of [0, 5, 10, 30, 99]) {
+    const unmount = await openAvatarModal(accountProfile({
+      progression: progression({ level }),
+      gamingStats: { ...accountProfile().gamingStats, gamesPlayed: 0 },
+    }));
+
+    const rookie = qa(".avm-tile").find((node) => node.textContent.startsWith("Rookie"));
+    assert.ok(
+      rookie.classList.contains("avm-tile--locked"),
+      `level ${level} with no completed match: Rookie stays locked`,
+    );
+    assert.ok(
+      rookie.querySelector(".avm-tile-lock"),
+      `level ${level}: Rookie keeps its lock indicator`,
+    );
+    assert.equal(
+      rookie.querySelector(".avm-tile-req").textContent,
+      "Unlocks at 1 completed match",
+      `level ${level}: Rookie states the match requirement, not a level`,
+    );
+    await unmount();
+  }
+});
+
+test("Rookie unlocks once a completed match is recorded, and lands after the free avatars", async () => {
+  const played = (n) => ({ ...accountProfile().gamingStats, gamesPlayed: n });
+
+  const stillLocked = await openAvatarModal(accountProfile({
+    progression: progression({ level: 0 }),
+    gamingStats: played(0),
+  }));
+  assert.ok(
+    qa(".avm-tile").find((n) => n.textContent.startsWith("Rookie")).classList.contains("avm-tile--locked"),
+    "zero completed matches leaves Rookie locked",
+  );
+  await stillLocked();
+
+  const unlocked = await openAvatarModal(accountProfile({
+    progression: progression({ level: 0 }),
+    gamingStats: played(1),
+  }));
+  const rookie = qa(".avm-tile").find((n) => n.textContent.startsWith("Rookie"));
+  assert.ok(
+    rookie.classList.contains("avm-tile--unavailable"),
+    "one completed match unlocks Rookie",
+  );
+  assert.equal(rookie.querySelector(".avm-tile-lock"), null, "the lock indicator is gone");
+  assert.equal(rookie.querySelector(".avm-tile-req"), null, "the unlock label is gone");
+
+  // It moved into the unlocked group, which still follows every free avatar.
+  const names = qa(".avm-grid .avm-tile-name").map((node) => node.textContent);
+  assert.ok(names.indexOf("Rookie") > names.indexOf("Pulse"), "Rookie sits after the free avatars");
+  assert.equal(
+    names[names.indexOf("Rookie") + 1],
+    "Challenger",
+    "and the still-locked tiers follow it",
+  );
+  await unlocked();
+});
+
+test("a missing gamesPlayed never unlocks Rookie", async () => {
+  // Absent, null and non-numeric values all mean "no match on record".
+  for (const gamesPlayed of [null, undefined, Number.NaN, -3]) {
+    const unmount = await openAvatarModal(accountProfile({
+      gamingStats: { ...accountProfile().gamingStats, gamesPlayed },
+    }));
+    assert.ok(
+      qa(".avm-tile").find((n) => n.textContent.startsWith("Rookie")).classList.contains("avm-tile--locked"),
+      `gamesPlayed=${String(gamesPlayed)}: Rookie stays locked`,
+    );
+    await unmount();
+  }
+});
+
+test("the username edit pencil opens the Username Modal over My Profile", async () => {
+  const unmount = await renderProfileModal(accountProfile());
+
+  assert.equal(q(".unm-modal"), null, "no username editor to begin with");
+  click(q('button[aria-label="Edit username"]'));
+
+  // The editor is a child layer: it opened, and My Profile is still behind it.
+  assert.ok(q(".unm-modal"), "the Username Modal opened");
+  assert.equal(q(".unm-input").value, "ankitbuilds", "it shows the current username");
+  assert.ok(
+    q(".mpm-modal").classList.contains("mpm-modal--blurred"),
+    "My Profile is blurred behind it",
+  );
+
+  // The editor keeps the existing controls: the code-point counter, the save
+  // action and a close control (which edit mode has and onboarding does not).
+  assert.equal(q(".unm-continue").textContent.trim(), "Save Changes");
+  assert.ok(q(".unm-counter"), "the code-point counter is present");
+  assert.ok(q(".unm-close"), "it can be closed again");
+  assert.equal(q(".unm-input").getAttribute("maxlength"), null, "no native maxlength cap");
+  await unmount();
+});
+
+test("closing the Username Modal returns to My Profile without closing its parents", async () => {
+  const unmount = await renderProfileModal(accountProfile());
+  click(q('button[aria-label="Edit username"]'));
+  assert.ok(q(".unm-modal"), "the editor is open");
+
+  click(q(".unm-close"));
+
+  assert.equal(q(".unm-modal"), null, "only the Username Modal closed");
+  assert.ok(q(".mpm-modal"), "My Profile is still open");
+  assert.equal(
+    q(".mpm-modal").classList.contains("mpm-modal--blurred"),
+    false,
+    "and no longer blurred",
+  );
+  await unmount();
+});
+
+test("opening a child layer does not rewrite the parent dialog's geometry", async () => {
+  // The parent is a fixed, centred dialog. Hiding the document overflow removes
+  // the scrollbar, which narrows the space it is centred in and would nudge it
+  // sideways. The shared lock reserves the gutter, so the width is identical
+  // either side of the lock, and it is reference counted so a child never locks
+  // or unlocks the document a second time.
+  const unmount = await renderProfileModal(accountProfile());
+  assert.equal(
+    document.documentElement.classList.contains("has-modal-scroll-lock"),
+    false,
+    "no modal is locking the document yet",
+  );
+  assert.equal(document.body.style.overflow, "", "and the document is free to scroll");
+
+  click(q('button[aria-label="Edit username"]'));
+  assert.ok(q(".unm-modal"), "the child layer opened");
+
+  // The lock is engaged and the gutter reserved, which is what keeps the width
+  // (and therefore the centred parent) identical.
+  assert.equal(
+    document.documentElement.classList.contains("has-modal-scroll-lock"),
+    true,
+    "the scrollbar gutter is reserved while a layer holds the lock",
+  );
+  assert.equal(document.body.style.overflow, "hidden", "the page behind cannot scroll");
+
+  // No geometry-affecting inline style is ever written to the parent.
+  const modal = q(".mpm-modal");
+  assert.equal(modal.style.transform, "", "the parent is not transformed");
+  assert.equal(modal.style.width, "", "the parent's width is not rewritten");
+  assert.equal(modal.style.left, "", "the parent's position is not rewritten");
+  assert.equal(modal.style.marginLeft, "", "and it is not nudged with a margin");
+
+  // Closing releases the lock and the gutter in one step.
+  click(q(".unm-close"));
+  assert.equal(
+    document.documentElement.classList.contains("has-modal-scroll-lock"),
+    false,
+    "the gutter is released",
+  );
+  assert.equal(document.body.style.overflow, "", "and the document scrolls again");
+  await unmount();
+});
+
+test("the scroll lock is released exactly once when the hierarchy unwinds", async () => {
+  const unmount = await renderProfileModal(accountProfile());
+
+  click(q('button[aria-label="Edit username"]'));
+  assert.equal(document.body.style.overflow, "hidden", "the child layer holds the lock");
+
+  // Closing the child must not leave the document locked, and must not unlock
+  // and immediately re-lock it either.
+  click(q(".unm-close"));
+  assert.equal(document.body.style.overflow, "", "released when the last holder closed");
+  assert.equal(
+    document.documentElement.classList.contains("has-modal-scroll-lock"),
+    false,
+    "and the gutter went with it",
+  );
+  await unmount();
+});
+
+test("a locked or unreached tier never takes the blocking cursor", async () => {
+  const unmount = await openAvatarModal(accountProfile({
+    progression: progression({ level: 3 }),
+  }));
+
+  // Both kinds of unavailable tile are plain spans, so there is no disabled
+  // button for the browser to mark as prohibited.
+  for (const tile of qa(".avm-tile--locked, .avm-tile--unavailable")) {
+    assert.equal(tile.tagName, "SPAN", "unavailable tiles are not buttons");
+    assert.equal(tile.getAttribute("aria-disabled"), null, "no disabled styling hook");
+  }
+  await unmount();
+});
+
+test("a Google account is offered its trusted picture", async () => {
+  const unmount = await openAvatarModal(accountProfile({
+    authProvider: "GOOGLE",
+    avatar: { type: "google", value: "google" },
+    avatarSource: "google",
+    googleAvatarAvailable: true,
+    googleAvatarUrl: "https://lh3.googleusercontent.com/a/test-avatar",
+  }));
+
+  const googleTile = qa(".avm-tile").find((node) => node.textContent.includes("Google Photo"));
+  assert.ok(googleTile, "the Google option is offered to a Google account");
+  assert.ok(
+    googleTile.classList.contains("avm-tile--selected"),
+    "and it is selected because the account already uses it",
+  );
+
+  // The tile renders the real, already trusted picture through AvatarPreview.
+  const image = googleTile.querySelector("img.avatar-preview-image");
+  assert.ok(image, "the Google tile renders the trusted picture");
+  assert.equal(image.getAttribute("src"), "https://lh3.googleusercontent.com/a/test-avatar");
+  assert.equal(image.getAttribute("referrerpolicy"), "no-referrer");
+  await unmount();
+});
+
+test("a password account is never offered a Google avatar", async () => {
+  const unmount = await openAvatarModal(accountProfile({
+    authProvider: "PASSWORD",
+    googleAvatarAvailable: false,
+    googleAvatarUrl: null,
+  }));
+
+  assert.equal(
+    qa(".avm-tile").some((node) => node.textContent.includes("Google Photo")),
+    false,
+    "a password account is not offered a Google avatar",
+  );
+  await unmount();
+});
+
+test("a Google account with an untrusted picture URL gets no Google option", async () => {
+  // The shared catalogue rules reject a non-Google host or a non-https scheme,
+  // so no untrusted image can reach an <img> and no Google tile is invented.
+  for (const url of [
+    "http://lh3.googleusercontent.com/a/insecure",
+    "https://evil.example.com/a/forged",
+    "not a url",
+    null,
+  ]) {
+    const unmount = await openAvatarModal(accountProfile({
+      authProvider: "GOOGLE",
+      googleAvatarAvailable: true,
+      googleAvatarUrl: url,
+    }));
+
+    assert.equal(
+      qa(".avm-tile").some((node) => node.textContent.includes("Google Photo")),
+      false,
+      `no Google option for ${JSON.stringify(url)}`,
+    );
+    // The safe local avatar fallback is what renders instead.
+    assert.ok(q(".avm-tile .avatar-preview-placeholder"), "the safe fallback avatar is used");
+    assert.equal(q("img.avatar-preview-image"), null, "no broken or untrusted image is rendered");
+    await unmount();
+  }
+});
+
+test("the Avatar Modal offers the six catalogue ids the backend accepts", async () => {
+  const unmount = await openAvatarModal(accountProfile());
+
+  for (const label of ["Nebula", "Aurora", "Nova", "Eclipse", "Comet", "Pulse"]) {
+    assert.ok(
+      qa(".avm-tile").some((node) => node.textContent.includes(label)),
+      `${label} is offered`,
+    );
+  }
+
+  // The only activatable tiles are the six catalogue avatars. A tier is never a
+  // button, reached or not, because the backend has no id to store one under.
+  const activatable = qa(".avm-grid button.avm-tile");
+  assert.equal(activatable.length, 6, "exactly the six catalogue avatars are choosable");
+  for (const tile of activatable) {
+    assert.ok(
+      ["Nebula", "Aurora", "Nova", "Eclipse", "Comet", "Pulse"]
+        .some((label) => tile.textContent.includes(label)),
+      "and each is a catalogue avatar",
+    );
+  }
   await unmount();
 });
 
@@ -1190,8 +1976,8 @@ test("a Google account reports its login method in Account Info", async () => {
   assert.ok(q(".mpm-avatar"), "the avatar is rendered");
   assert.equal(
     q('[data-field="loginMethod"]').textContent,
-    "Google",
-    "the Google identity is reported in Account Info",
+    "Google · user@example.com",
+    "the Google identity and its verified address are reported in Account Info",
   );
   assert.equal(
     q(".mpm-info-grid").textContent.includes("Signed in with Google"),
@@ -1208,8 +1994,8 @@ test("a Google account reports its login method in Account Info", async () => {
   }));
   assert.equal(
     q('[data-field="loginMethod"]').textContent,
-    "Email & Password",
-    "a password account reports its own method",
+    "Email · user@example.com",
+    "a password account reports its own method and address",
   );
   await withoutGoogle();
 });
