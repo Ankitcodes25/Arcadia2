@@ -23,6 +23,8 @@ type ProfilePopupModalProps = {
   onOpenMyProfile: () => void;
   /** Leaves for the Match History page. The menu closes as the page opens. */
   onOpenMatchHistory: () => void;
+  /** Leaves for the Leaderboard page. The menu closes as the page opens. */
+  onOpenLeaderboard: () => void;
   onLogout: () => void | Promise<unknown>;
   isLoggingOut: boolean;
 };
@@ -31,13 +33,13 @@ type ProfilePopupModalProps = {
  * The approved menu options. This list is fixed: the identity area above it
  * carries the account details, and nothing else is added to this menu.
  *
- * Match History sits immediately after Leaderboards. It is a separate page, not
- * another layer of this menu, so it leaves through the normal navigation helper
- * and Return brings this popup back.
+ * Match History and Leaderboards are separate pages, not another layer of this
+ * menu, so each leaves through the normal navigation helper and Return brings
+ * this popup back.
  */
 const MENU_ITEMS = [
   { key: "my-profile", label: "My Profile", Icon: UserIcon, action: "my-profile" },
-  { key: "leaderboards", label: "Leaderboards", Icon: TrophyIcon, action: "close" },
+  { key: "leaderboards", label: "Leaderboards", Icon: TrophyIcon, action: "leaderboard" },
   { key: "match-history", label: "Match History", Icon: HistoryIcon, action: "match-history" },
   { key: "settings", label: "Settings", Icon: GearIcon, action: "settings" },
   { key: "help", label: "Help & Support", Icon: HelpIcon, action: "close" },
@@ -119,6 +121,7 @@ function ProfilePopupModal({
   onClose,
   onOpenMyProfile,
   onOpenMatchHistory,
+  onOpenLeaderboard,
   onLogout,
   isLoggingOut,
 }: ProfilePopupModalProps) {
@@ -166,16 +169,18 @@ function ProfilePopupModal({
 
   const handleItemClick = (action: (typeof MENU_ITEMS)[number]["action"]) => {
     if (action === "my-profile") onOpenMyProfile();
-    else if (action === "match-history") {
+    else if (action === "match-history" || action === "leaderboard") {
       /*
         The menu is dismissed FIRST and the navigation happens second. A click
         that leaves the menu must always end with the menu gone, so the order
         here is what guarantees that rather than whatever the navigation does
-        next. It also means the Match History page is never rendered behind a
-        still-open Profile Popup, which would be a second copy of the same menu.
+        next. It also means the Match History and Leaderboard pages are never
+        rendered behind a still-open Profile Popup, which would be a second
+        copy of the same menu.
       */
       onClose();
-      onOpenMatchHistory();
+      if (action === "match-history") onOpenMatchHistory();
+      else onOpenLeaderboard();
     } else if (action === "settings") setSettingsOpen(true);
     else onClose();
   };

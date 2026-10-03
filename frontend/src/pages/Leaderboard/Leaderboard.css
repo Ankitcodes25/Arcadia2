@@ -1,0 +1,1455 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Caveat:wght@600;700&display=swap");
+
+/* =========================================================
+   ARCADIA — LEADERBOARD
+   Hero = Match History jaisa | filter = patla box |
+   podium = landing cards | list = top 10, "You" pinned
+   ========================================================= */
+
+@property --lbp-ring-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.leaderboard-page {
+  /* Landing Page / All Games wala gutter: 48px a side (96px total).
+     Tablet (<=1100px) 28px, mobile (<=720px) 16px — neeche. */
+  --lbp-gutter: 48px;
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* clip (hidden nahi) taaki position: sticky chalta rahe */
+  overflow-x: clip;
+  max-width: 100%;
+  padding: 26px var(--lbp-gutter) 90px;
+  color: white;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(103, 31, 211, 0.22), transparent 31%),
+    radial-gradient(circle at 92% 65%, rgba(96, 25, 202, 0.16), transparent 30%),
+    radial-gradient(circle at 5% 60%, rgba(76, 22, 145, 0.14), transparent 34%),
+    linear-gradient(135deg, #05010b 0%, #0c0218 40%, #140326 75%, #140326 100%);
+}
+
+.leaderboard-page *,
+.leaderboard-page *::before,
+.leaderboard-page *::after {
+  box-sizing: border-box;
+}
+
+/* Is page par navbar nahi chahiye */
+body:has(.leaderboard-page) .navbar {
+  display: none !important;
+}
+
+/* PAGE TRANSITION  (shared: index.css -> .page-transition { animation: pageEnter })
+   ------------------------------------------------------------------
+   Ye page wahi pageEnter animation use karta hai jo baaki pages (Match
+   History, All Games, Landing) use karte hain — wrapper App.tsx ka hai,
+   keyframes wahi, timing/easing wahi. Yahan sirf ek cheez hatayi gayi hai:
+
+   .page-transition par `will-change: transform` HAMESHA laga rehta hai.
+   Ye transform ki tarah ancestor state hai jo poore page (yaani ranking
+   table) ke upar baitha rehta hai — aur table ke kisi bhi ancestor par
+   transform / filter / will-change / overflow nahi hona chahiye, warna
+   pinned "You" row (.leaderboard-row--pinned, position: sticky) toot
+   sakti hai.
+
+   `will-change` sirf ek compositing hint hai, animation ko rokti nahi —
+   isliye hint hata kar animation bilkul waisi hi chal rahi hai: same
+   keyframes, same 0.5s, same cubic-bezier, wahi doosre pages. Sticky ke
+   liye permanent khatra gaya. Animation ke 0.5s ke dauraan wrapper par
+   transform aata-jata hai (har page ki tarah), uske baad value `none`
+   ho jati hai kyunki koi fill-mode nahi hai. */
+body:has(.leaderboard-page) .page-transition {
+  will-change: auto;
+}
+
+.leaderboard-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+.leaderboard-inner {
+  position: relative;
+  z-index: 2;
+  width: min(1300px, 100%);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   BACK BUTTON + HERO  (Match History jaisa hi)
+   ========================================================= */
+.leaderboard-return {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-top: 4px;
+  border: 1px solid rgba(224, 105, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(38, 16, 66, 0.5);
+  color: rgba(236, 216, 247, 0.88);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.leaderboard-return-icon { display: grid; place-items: center; transition: transform 0.2s ease; }
+.leaderboard-return-icon svg { width: 16px; height: 16px; }
+
+.leaderboard-return:hover {
+  background: rgba(224, 105, 255, 0.24);
+  border-color: rgba(237, 170, 255, 0.85);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(224, 105, 255, 0.35),
+    0 0 14px rgba(224, 105, 255, 0.55),
+    0 0 30px rgba(160, 70, 255, 0.4);
+}
+
+.leaderboard-return:hover .leaderboard-return-icon {
+  transform: translateX(-2px);
+  filter: drop-shadow(0 0 5px rgba(240, 190, 255, 0.9));
+}
+
+.leaderboard-return:focus-visible {
+  outline: 2px solid rgba(224, 105, 255, 0.85);
+  outline-offset: 2px;
+}
+
+/* ===========================================================
+   HERO  (mirrors .arcadion-picks in All games)
+   =========================================================== */
+
+.leaderboard-hero {
+  --lb-char-h: 240px;
+
+  /* peeche ke #1/#2/#3 cards ka size (Arcadion height ka multiple) */
+  --card1-h: 0.58;
+  --card2-h: 0.44;
+  --card3-h: 0.42;
+
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 6px 0 0;
+  isolation: isolate;
+}
+
+/* soft full-bleed glow, melts into the page bg */
+.leaderboard-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -3;
+  top: -60px;
+  bottom: -30px;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 34% 60% at 76% 40%, rgba(128, 52, 226, 0.32), transparent 70%),
+    radial-gradient(ellipse 30% 50% at 16% 62%, rgba(88, 30, 170, 0.16), transparent 70%);
+  -webkit-mask-image:
+    linear-gradient(180deg, transparent 0, #000 30%, #000 70%, transparent 100%),
+    linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(180deg, transparent 0, #000 30%, #000 70%, transparent 100%),
+    linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* ---------- Stage: #1/#2/#3 cards (behind) + Arcadion (front) ---------- */
+
+.leaderboard-hero-stage {
+  --glow-pad: 60px;
+  --char-mask:
+    linear-gradient(
+      180deg,
+      #000 0,
+      #000 calc(var(--glow-pad) + var(--lb-char-h) * 0.95),
+      transparent calc(var(--glow-pad) + var(--lb-char-h))
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0,
+      #000 calc(var(--glow-pad) * 0.9),
+      #000 calc(100% - var(--glow-pad) * 0.9),
+      transparent 100%
+    );
+
+  position: absolute;
+  z-index: 1;
+  top: calc(250px + 16px- var(--lb-char-h)); /* filter bar ke peeche tak, taaki Arcadion bar se touch kare */
+  right: 6%;
+  height: var(--lb-char-h);
+  pointer-events: none;
+  animation: lbpCharFloat 6s ease-in-out infinite;
+}
+
+/* Rank cards: Arcadion ke peeche fan jaisa -> #2 left, #1 beech (upar), #3 right.
+   Positions stage ke % me hain, isliye cards hamesha Arcadion ke center se symmetric rahenge. */
+.leaderboard-hero-card {
+  position: absolute;
+  z-index: 0;
+  width: auto;
+  max-width: none;
+  translate: -50% 0;
+  user-select: none;
+  filter: brightness(1.12) drop-shadow(0 0 16px rgba(150, 60, 245, 0.4));
+  animation: lbpHeroCardFloat 7s ease-in-out infinite;
+}
+
+.leaderboard-hero-card-1 {
+  height: calc(var(--lb-char-h) * var(--card1-h));
+  left: 60%;
+  top: -22%;
+  rotate: 26deg;
+}
+
+.leaderboard-hero-card-2 {
+  height: calc(var(--lb-char-h) * var(--card2-h));
+  left: 23%;
+  top: 1%;
+  rotate: -15deg;
+  animation-delay: -2.3s;
+}
+
+.leaderboard-hero-card-3 {
+  height: calc(var(--lb-char-h) * var(--card3-h));
+  left: 84%;
+  top: 16%;
+  rotate: 41deg;
+  animation-delay: -4.6s;
+}
+
+@keyframes lbpHeroCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+
+.leaderboard-hero-character-glow {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 34%;
+  width: 240px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180, 91, 255, 0.4), transparent 70%);
+  filter: blur(24px);
+}
+
+.leaderboard-hero-character-shadow {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--glow-pad) * -1);
+  left: calc(var(--glow-pad) * -1);
+  box-sizing: content-box;
+  height: var(--lb-char-h);
+  width: auto;
+  max-width: none;
+  padding: var(--glow-pad);
+  filter: brightness(0.1) saturate(1.4);
+  opacity: 0.94;
+  -webkit-mask-image: var(--char-mask);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--char-mask);
+  mask-composite: intersect;
+}
+
+.leaderboard-hero-character {
+  position: relative;
+  z-index: 2;
+  display: block;
+  box-sizing: content-box;
+  height: var(--lb-char-h);
+  width: auto;
+  max-width: none;
+  padding: var(--glow-pad);
+  margin: calc(var(--glow-pad) * -1);
+  filter:
+    brightness(1.02)hue-rotate(4deg) saturate(1.0)
+    contrast(1.12)
+    drop-shadow(0 0 8px rgba(200, 130, 255, 0.3))
+    drop-shadow(0 0 26px rgba(150, 60, 245, 0.25))
+    drop-shadow(0 0 46px rgba(120, 40, 220, 0.15));
+  -webkit-mask-image: var(--char-mask);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--char-mask);
+  mask-composite: intersect;
+}
+
+@keyframes lbpCharFloat {
+  0%, 100% { transform: translateY(3px); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* ---------- Handwritten note ---------- */
+
+.leaderboard-hero-note {
+  position: absolute;
+  z-index: 4;
+  top: -39px;
+  right: -16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #c98bff;
+  transform: rotate(-9deg);
+  text-shadow: 0 0 14px rgba(170, 80, 255, 0.7);
+  pointer-events: none;
+}
+
+.leaderboard-hero-note-crown {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 4px;
+}
+
+.leaderboard-hero-note span {
+  font-family: "Caveat", "Segoe Script", "Bradley Hand", cursive;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.05;
+  text-align: left;
+}
+
+.leaderboard-hero-note-arrow {
+  width: 44px;
+  height: 44px;
+  margin-top: 6px;
+  transform: rotate(8deg);
+}
+
+/* ---------- Heading (same style as ARCADION PICKS) ---------- */
+
+.leaderboard-hero-heading {
+  position: relative;
+  z-index: 3;
+  width: min(600px, 52%);
+min-height: 238px;  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
+
+.leaderboard-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  color: #bd62ff;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+.leaderboard-hero-kicker::before {
+  content: "";
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(189, 98, 255, 0.9));
+  box-shadow: 0 0 8px rgba(165, 87, 255, 0.6);
+}
+
+.leaderboard-hero-heading h1 {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 14px 0 0;
+  /* Match History ke heading se thoda chhota: "LEADERBOARD" ek lamba uppercase
+     word hai, isliye wahi clamp size par wo bada dikhta tha. */
+  font-size: clamp(34px, 3.2vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  text-shadow: 0 0 22px rgba(174, 69, 255, 0.28);
+}
+
+.leaderboard-hero-heading h1 span {
+  position: relative;
+  display: inline-block;
+  color: #c46aff;
+  -webkit-text-fill-color: #c46aff;
+  text-shadow:
+    0 0 8px rgba(191, 75, 255, 0.55),
+    0 0 24px rgba(159, 43, 255, 0.4);
+}
+
+.leaderboard-hero-heading h1 span::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 2px;
+  top: 0;
+  color: #8b3eff;
+  -webkit-text-fill-color: #8b3eff;
+  opacity: 0;
+  text-shadow: none;
+  clip-path: inset(0 0 48% 0);
+  animation: lbpTextGlitch 3.7s steps(1) infinite;
+}
+
+@keyframes lbpTextGlitch {
+  0%, 72%, 100% { opacity: 0;   transform: translateX(0); }
+  73%           { opacity: 0.8; transform: translateX(-4px); }
+  74%           { opacity: 0;   transform: translateX(5px); }
+  75%           { opacity: 0.55; transform: translateX(-2px); }
+  76%           { opacity: 0; }
+}
+
+.leaderboard-hero-heading p {
+  max-width: 560px;
+  margin: 12px 0 0;
+  color: #b7a0c9;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+/* =========================================================
+   PATLA FILTER BOX  (sirf search + game + clear)
+   ========================================================= */
+
+.leaderboard-filters {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
+  margin: -23px auto;
+  padding: 11px 14px;
+  border: 1px solid rgba(190, 130, 255, 0.3);
+  border-radius: 20px;
+  background: linear-gradient(150deg, rgba(58, 20, 96, 0.78), rgba(20, 6, 40, 0.92));
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.4),
+    0 0 28px rgba(140, 55, 235, 0.12),
+    inset 0 1px rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(6px);
+}
+
+.leaderboard-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 280px;
+  max-width: 420px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(224, 105, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(38, 16, 66, 0.66);
+  color: #d9a9ff;
+  cursor: text;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.leaderboard-clear:focus-visible,
+.leaderboard-select-trigger:focus-visible,
+.leaderboard-select-option:focus-visible,
+.leaderboard-search-clear:focus-visible {
+  outline: 2px solid rgba(224, 105, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.leaderboard-search:hover,
+.leaderboard-search:focus-within {
+  border-color: rgba(224, 105, 255, 0.62);
+  box-shadow: 0 0 0 1px rgba(224, 105, 255, 0.3), 0 0 16px rgba(224, 105, 255, 0.2);
+}
+
+.leaderboard-search > svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+}
+
+.leaderboard-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.leaderboard-search input::placeholder {
+  color: rgba(216, 200, 250, 0.55);
+  font-weight: 500;
+}
+
+.leaderboard-search-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(190, 120, 255, 0.2);
+  color: #ead7ff;
+  cursor: pointer;
+}
+
+.leaderboard-search-clear:hover { background: rgba(190, 120, 255, 0.4); }
+.leaderboard-search-clear svg { width: 14px; height: 14px; }
+
+/* dropdown */
+
+.leaderboard-select {
+  position: relative;
+  min-width: 0;
+  /* Search left rahe, dropdown + Clear filters right side me. */
+  margin-left: auto;
+}
+
+.leaderboard-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 230px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(224, 105, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(38, 16, 66, 0.66);
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.leaderboard-select-trigger:hover,
+.leaderboard-select-trigger--open {
+  border-color: rgba(224, 105, 255, 0.62);
+  box-shadow: 0 0 0 1px rgba(224, 105, 255, 0.3), 0 0 16px rgba(224, 105, 255, 0.2);
+}
+
+.leaderboard-select-icon,
+.leaderboard-select-chevron {
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: #d9a9ff;
+}
+
+.leaderboard-select-icon svg { width: 17px; height: 17px; }
+
+.leaderboard-select-chevron {
+  margin-left: auto;
+  color: rgba(216, 200, 250, 0.72);
+  transition: transform 0.18s ease;
+}
+
+.leaderboard-select-chevron svg { width: 16px; height: 16px; }
+.leaderboard-select-trigger--open .leaderboard-select-chevron { transform: rotate(180deg); }
+
+.leaderboard-select-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-select-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 100%;
+  max-height: 300px;
+  margin: 0;
+  padding: 5px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid rgba(224, 105, 255, 0.42);
+  border-radius: 12px;
+  background: linear-gradient(150deg, rgba(56, 24, 86, 0.99), rgba(20, 9, 40, 0.99));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.6), 0 0 20px rgba(190, 70, 255, 0.24);
+  animation: lbpMenuIn 140ms ease-out;
+}
+
+@keyframes lbpMenuIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.leaderboard-select-option {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(245, 235, 255, 0.9);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.leaderboard-select-option:hover,
+.leaderboard-select-option:focus-visible {
+  background: rgba(224, 105, 255, 0.18);
+  color: white;
+}
+
+.leaderboard-select-option--selected {
+  background: rgba(216, 59, 255, 0.24);
+  color: white;
+  font-weight: 700;
+}
+
+/* gap + clear */
+
+.leaderboard-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid rgba(197, 104, 255, 0.5);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(167, 67, 242, 0.2), rgba(88, 34, 158, 0.16));
+  color: #ead7ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.leaderboard-clear svg { width: 15px; height: 15px; transition: transform 0.3s ease; }
+
+.leaderboard-clear:hover:not(:disabled) {
+  transform: translateY(-2px);
+  color: #ffffff;
+  background: linear-gradient(135deg, #c46aff, #7c35df);
+  box-shadow: 0 10px 26px rgba(174, 69, 255, 0.42);
+}
+
+.leaderboard-clear:hover:not(:disabled) svg { transform: rotate(-180deg); }
+
+.leaderboard-clear:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* =========================================================
+   PODIUM  (cards = landing page, positions = 4th image)
+   ========================================================= */
+
+.leaderboard-podium {
+  display: grid;
+  /* Cards thode bade: 210px -> 232px (space na ho to tracks khud shrink ho jaate hain) */
+  grid-template-columns: repeat(3, minmax(0, 232px));
+  justify-content: center;
+  align-items: end;
+  gap: 18px;
+  width: 100%;
+  padding: 50px 0 14px;
+}
+
+.leaderboard-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.leaderboard-card {
+  --tier: #b986ff;
+  --tier-bright: #e7cbff;
+  --tier-deep: #6a2fc2;
+  --tier-ink: #f6ecff;
+  --tier-soft: rgba(150, 80, 255, 0.16);
+  --tier-fill: rgba(190, 130, 255, 0.22);
+  --tier-line: rgba(160, 92, 255, 0.36);
+  --tier-glow: rgba(150, 70, 255, 0.4);
+  --tier-ring: rgba(190, 120, 255, 0.95);
+  --tier-core: #ffffff;
+  --card-top: rgba(40, 15, 76, 0.92);
+  --card-bottom: rgba(15, 6, 32, 0.97);
+  --card-radius: 18px;
+  --card-glow: 18px;
+
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* Cards lambe: min-height + zyada padding/spacing */
+  min-height: 262px;
+  padding: 14px 12px 18px;
+
+  border: 1px solid var(--tier-line);
+  border-radius: var(--card-radius);
+  background:
+    radial-gradient(120% 62% at 50% 0%, var(--tier-soft), transparent 64%),
+    linear-gradient(180deg, var(--card-top), var(--card-bottom));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(0, 0, 0, 0.32);
+
+  animation: lbpCardIn 0.75s cubic-bezier(0.2, 0.85, 0.25, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms);
+
+  transition:
+    transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.leaderboard-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(214, 150, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 16px 28px rgba(0, 0, 0, 0.4),
+    0 0 26px rgba(150, 70, 255, 0.3);
+}
+
+@keyframes lbpCardIn {
+  from { opacity: 0; transform: translateY(36px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* tiers */
+
+.leaderboard-card.is-first {
+  --tier: #ffd45c;
+  --tier-bright: #fff3bd;
+  --tier-deep: #b57a12;
+  --tier-ink: #3a2200;
+  --tier-soft: rgba(255, 200, 70, 0.2);
+  --tier-fill: rgba(255, 212, 92, 0.3);
+  --tier-line: rgba(255, 207, 82, 0.55);
+  --tier-glow: rgba(255, 190, 50, 0.6);
+  --tier-ring: rgba(255, 196, 60, 0.95);
+  --tier-core: #fff6d0;
+  --card-top: rgba(74, 47, 12, 0.94);
+  --card-bottom: rgba(24, 11, 32, 0.98);
+}
+
+.leaderboard-card.is-second {
+  --tier: #dfe7f5;
+  --tier-bright: #ffffff;
+  --tier-deep: #8391a8;
+  --tier-ink: #1c2436;
+  --tier-soft: rgba(205, 220, 245, 0.16);
+  --tier-fill: rgba(210, 222, 245, 0.26);
+  --tier-line: rgba(205, 218, 240, 0.5);
+  --tier-glow: rgba(200, 215, 240, 0.45);
+  --tier-ring: rgba(190, 206, 235, 0.95);
+  --tier-core: #ffffff;
+  --card-top: rgba(46, 52, 74, 0.94);
+  --card-bottom: rgba(17, 12, 34, 0.98);
+}
+
+.leaderboard-card.is-third {
+  --tier: #ec9a5f;
+  --tier-bright: #ffd3ab;
+  --tier-deep: #9c5525;
+  --tier-ink: #3a1a08;
+  --tier-soft: rgba(232, 150, 90, 0.18);
+  --tier-fill: rgba(236, 154, 95, 0.28);
+  --tier-line: rgba(232, 150, 90, 0.5);
+  --tier-glow: rgba(224, 130, 60, 0.5);
+  --tier-ring: rgba(236, 140, 70, 0.95);
+  --tier-core: #ffe3c8;
+  --card-top: rgba(66, 33, 19, 0.94);
+  --card-bottom: rgba(24, 11, 28, 0.98);
+}
+
+/* outer glow */
+.leaderboard-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 var(--card-glow) var(--tier-glow);
+  opacity: 0.6;
+}
+
+.leaderboard-card.is-first::after {
+  animation: lbpGoldGlow 2.8s ease-in-out infinite alternate;
+}
+
+/* edge pe ghoomti light */
+.leaderboard-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 2px;
+  border-radius: calc(var(--card-radius) + 1px);
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--lbp-ring-angle),
+    transparent 0deg 200deg,
+    var(--tier-ring) 285deg,
+    var(--tier-core) 335deg,
+    var(--tier-ring) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  filter: drop-shadow(0 0 7px var(--tier-glow));
+  animation: lbpRing 4.2s linear infinite;
+}
+
+.leaderboard-card.is-first::before {
+  background: conic-gradient(
+    from var(--lbp-ring-angle),
+    transparent 0deg 20deg,
+    var(--tier-ring) 70deg,
+    var(--tier-core) 100deg,
+    var(--tier-ring) 112deg,
+    transparent 125deg 200deg,
+    var(--tier-ring) 250deg,
+    var(--tier-core) 280deg,
+    var(--tier-ring) 292deg,
+    transparent 305deg 360deg
+  );
+  animation-duration: 3.2s;
+}
+
+.leaderboard-card.is-second::before { animation-delay: -1.2s; }
+.leaderboard-card.is-third::before { animation-duration: 4.8s; animation-delay: -2.4s; }
+
+@keyframes lbpRing { to { --lbp-ring-angle: 360deg; } }
+@keyframes lbpGoldGlow { from { opacity: 0.45; } to { opacity: 1; } }
+
+/* crown + avatar + rank */
+
+.leaderboard-card-badge {
+  position: relative;
+  margin-top: 34px;
+}
+
+.leaderboard-card-crown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% - 18px);
+  z-index: 2;
+  width: clamp(28px, 24cqw, 38px);
+  height: auto;
+  margin-inline: auto;
+  color: var(--tier);
+  fill: var(--tier-fill);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 8px var(--tier-glow)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  animation: lbpCrownBob 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.7s);
+}
+
+.leaderboard-card.is-first .leaderboard-card-crown {
+  width: clamp(34px, 28cqw, 46px);
+}
+
+@keyframes lbpCrownBob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-4px) rotate(4deg); }
+}
+
+.leaderboard-card-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(54px, 42cqw, 84px);
+  aspect-ratio: 1;
+  border: 2px solid var(--tier-line);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 26%,
+    rgba(196, 128, 255, 0.5),
+    rgba(76, 26, 146, 0.92) 62%,
+    rgba(30, 10, 64, 1)
+  );
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.38), 0 0 22px var(--tier-glow);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 1st ka avatar thoda bada */
+.leaderboard-card.is-first .leaderboard-card-avatar {
+  width: clamp(64px, 50cqw, 94px);
+}
+
+.leaderboard-card-avatar::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 1.5px dashed var(--tier);
+  border-radius: 50%;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: lbpOrbit 16s linear infinite;
+}
+
+.leaderboard-card:hover .leaderboard-card-avatar { transform: scale(1.06); }
+
+@keyframes lbpOrbit { to { transform: rotate(360deg); } }
+
+.leaderboard-card-avatar-face {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.leaderboard-initials {
+  color: #ffffff;
+  font: 900 clamp(18px, 17cqw, 28px) / 1 "Orbitron", Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.leaderboard-card-rank {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: fit-content;
+  min-width: 48px;
+  height: 25px;
+  margin-inline: auto;
+  padding: 0 12px;
+  overflow: hidden;
+  border: 1px solid var(--tier-bright);
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--tier-bright), var(--tier) 48%, var(--tier-deep));
+  color: var(--tier-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 0 16px var(--tier-glow),
+    0 6px 12px rgba(0, 0, 0, 0.45);
+  font: 900 13px / 1 "Orbitron", Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-card-rank::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-130%);
+  animation: lbpSheen 3.8s ease-in-out infinite;
+}
+
+.leaderboard-card-player {
+  max-width: 100%;
+  margin-top: 28px;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 0 14px var(--tier-glow);
+}
+
+.leaderboard-card-score {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 12px;
+  padding: 5px 8px;
+  overflow: hidden;
+  border: 1px solid var(--tier-line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--tier-soft), rgba(10, 4, 24, 0.55));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 18px var(--tier-soft),
+    0 0 16px rgba(0, 0, 0, 0.25);
+}
+
+.leaderboard-card-score > svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--tier);
+  fill: var(--tier-fill);
+  filter: drop-shadow(0 0 6px var(--tier-glow));
+}
+
+.leaderboard-card-count {
+  position: relative;
+  display: inline-grid;
+  color: #ffffff;
+  font: 900 clamp(12px, 8.5cqw, 15px) / 1 "Orbitron", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px var(--tier-glow);
+}
+
+.leaderboard-card-count > span:not(.leaderboard-sr-only) { grid-area: 1 / 1; }
+.leaderboard-card-count-ghost { visibility: hidden; }
+.leaderboard-card-count-live { text-align: right; }
+
+.leaderboard-card-score em {
+  color: var(--tier-bright);
+  opacity: 0.85;
+  font: 800 10px / 1 Inter, ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  letter-spacing: 2px;
+}
+
+.leaderboard-card.is-first .leaderboard-card-score::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%);
+  transform: translateX(-130%);
+  animation: lbpSheen 3.8s ease-in-out 1.2s infinite;
+}
+
+@keyframes lbpSheen {
+  0%, 30% { transform: translateX(-130%); }
+  65%, 100% { transform: translateX(130%); }
+}
+
+/* 1st bada: thoda extra upar/neeche jagah, taaki beech wala ooncha dikhe */
+.leaderboard-slot-1 .leaderboard-card {
+  min-height: 274px;
+  padding-top: 22px;
+  padding-bottom: 20px;
+}
+
+.leaderboard-card--you {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
+}
+
+/* neeche ka platform: tier-colour ka lit pedestal + floor glow + sweep light */
+.leaderboard-slot {
+  --base: 185, 134, 255;
+  position: relative;
+}
+.leaderboard-slot-1 { --base: 255, 201, 74; }
+.leaderboard-slot-2 { --base: 205, 218, 240; }
+.leaderboard-slot-3 { --base: 236, 154, 95; }
+
+/* zameen par padti roshni */
+.leaderboard-slot::after {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -16px;
+  height: 30px;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(var(--base), 0.6), transparent 70%);
+  filter: blur(7px);
+  animation: lbpFloorPulse 3s ease-in-out infinite alternate;
+}
+.leaderboard-slot-1::after { height: 38px; bottom: -20px; }
+
+.leaderboard-base {
+  position: relative;
+  width: 92%;
+  height: 34px;
+  margin-top: -1px;
+  background:
+    linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.5) 50%, transparent 62%) -120% 0 / 55% 100% no-repeat,
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95) 50%, transparent) 0 0 / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(var(--base), 0.7), rgba(var(--base), 0.22) 45%, rgba(var(--base), 0));
+  clip-path: polygon(3% 0, 97% 0, 100% 100%, 0 100%);
+  /* neeche se background me blend (hard edge nahi) */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
+  animation: lbpBaseSweep 3.6s ease-in-out infinite;
+}
+
+.leaderboard-slot-1 .leaderboard-base {
+  height: 42px;
+  animation-duration: 2.8s;
+}
+
+@keyframes lbpBaseSweep {
+  0%, 25%   { background-position: -120% 0, 0 0, 0 0; }
+  75%, 100% { background-position: 220% 0, 0 0, 0 0; }
+}
+@keyframes lbpFloorPulse {
+  from { opacity: 0.45; transform: scaleX(0.92); }
+  to   { opacity: 1;    transform: scaleX(1.04); }
+}
+
+/* =========================================================
+   RANKING LIST
+   ========================================================= */
+
+.leaderboard-table {
+  position: relative;
+  width: 100%;
+  margin: 22px auto 0;
+  padding: 4px 10px 10px;
+  /* overflow yahan kabhi mat lagana: sticky tut jayega */
+  border: 1px solid rgba(190, 130, 255, 0.24);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(36, 12, 64, 0.6), rgba(12, 4, 26, 0.92));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1.5fr) 110px minmax(0, 1fr) 100px;
+  align-items: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  text-align: center;
+}
+
+.leaderboard-row-head {
+  min-height: 40px;
+  color: rgba(216, 200, 250, 0.72);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+/* Player column left (header + data dono), baaki columns center.
+   `.leaderboard-row` ke baad isliye taaki wahi cascade jite. */
+.leaderboard-col-player {
+  justify-self: center;
+  text-align: center;
+}
+
+
+.leaderboard-head-wins {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.leaderboard-head-wins svg { width: 14px; height: 14px; color: #d9a9ff; }
+
+.leaderboard-row-body {
+  min-height: 46px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: rgba(245, 235, 255, 0.94);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.14s ease;
+}
+
+.leaderboard-row-body + .leaderboard-row-body { margin-top: 3px; }
+.leaderboard-row-body:hover { background: rgba(224, 105, 255, 0.09); }
+
+/* ----- "You": baaki rows se alag highlight ----- */
+
+.leaderboard-row--you,
+.leaderboard-row--you:hover {
+  border-color: rgba(224, 130, 255, 0.85);
+  /* solid #1b0a33 neeche taaki pinned hone par peeche ke rows jhalakein nahi */
+  background:
+    linear-gradient(90deg, rgba(168, 72, 250, 0.42), rgba(110, 40, 190, 0.28)),
+    #1b0a33;
+  box-shadow:
+    0 0 24px rgba(170, 70, 255, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Rank 10 ya usse neeche: screen ke neeche freeze, asli jagah par dock.
+   Asli jagah aate hi sticky apne aap normal flow me aa jata hai aur
+   uske baad rows ke saath hi scroll karta hai. */
+.leaderboard-row--pinned {
+  position: sticky;
+  bottom: 14px;
+  z-index: 6;
+  box-shadow:
+    0 -14px 28px rgba(5, 1, 12, 0.7),
+    0 0 26px rgba(170, 70, 255, 0.4),
+    inset 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-cell-rank { display: flex; align-items: center; justify-content: center; }
+
+.leaderboard-rank-number {
+  color: rgba(226, 212, 255, 0.88);
+  font-weight: 800;
+}
+
+.leaderboard-rank-crown {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+}
+
+.leaderboard-rank-crown svg { width: 20px; height: 20px; fill: currentColor; fill-opacity: 0.18; }
+.leaderboard-rank-crown-1 { color: #ffc94a; filter: drop-shadow(0 0 6px rgba(255, 201, 74, 0.6)); }
+.leaderboard-rank-crown-2 { color: #d4d6ec; }
+.leaderboard-rank-crown-3 { color: #ff8a5b; }
+
+.leaderboard-cell-player {
+  /* column ke beech me ek fixed-width block: avatar+naam left-aligned, har row ka left edge same */
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: min(100%, 150px);
+  min-width: 0;
+  text-align: left;
+}
+
+.leaderboard-row-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(216, 159, 255, 0.55);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.leaderboard-row-avatar.leaderboard-initials {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-cell-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-level-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid rgba(216, 159, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(70, 28, 130, 0.55);
+  color: #f0defd;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.leaderboard-cell-value,
+.leaderboard-cell-wins {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.leaderboard-cell-value-icon,
+.leaderboard-cell-wins-icon {
+  display: grid;
+  place-items: center;
+  color: #c98bff;
+}
+
+.leaderboard-cell-value-icon svg { width: 15px; height: 15px; }
+.leaderboard-cell-value-icon svg:not([viewBox="0 0 24 24"]) { fill: none; }
+.leaderboard-cell-wins-icon svg { width: 14px; height: 14px; }
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.leaderboard-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(560px, 100%);
+  margin: 48px auto 0;
+  padding: 52px 20px;
+  border: 1px solid rgba(190, 130, 255, 0.22);
+  border-radius: 20px;
+  background: rgba(14, 5, 30, 0.55);
+  text-align: center;
+}
+
+.leaderboard-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(216, 159, 255, 0.34);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(120, 44, 190, 0.5), rgba(34, 10, 62, 0.7));
+  color: #e6c3ff;
+}
+
+.leaderboard-empty-icon svg { width: 28px; height: 28px; }
+
+.leaderboard-empty h3 {
+  margin: 0;
+  color: #f4e6ff;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.leaderboard-empty p {
+  max-width: 44ch;
+  margin: 0;
+  color: #b7a0c9;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .leaderboard-hero { --lb-char-h: 210px; }
+}
+
+@media (max-width: 1100px) {
+  .leaderboard-hero-note { display: none; }
+  .leaderboard-page { --lbp-gutter: 28px; }
+  .leaderboard-row { grid-template-columns: 70px minmax(0, 1.4fr) 100px minmax(0, 1fr) 90px; }
+}
+
+@media (max-width: 980px) {
+  .leaderboard-hero-heading { width: 62%; }
+  .leaderboard-podium { gap: 14px; }
+}
+
+@media (max-width: 720px) {
+  .leaderboard-page { --lbp-gutter: 16px; }
+  .leaderboard-inner { width: min(100%, calc(100% - 10px)); }
+
+  .leaderboard-hero { --lb-char-h: 190px; }
+  .leaderboard-hero-heading { width: 100%; min-height: 0; padding-bottom: 150px; }
+  .leaderboard-hero-kicker { font-size: 13px; }
+  .leaderboard-hero-heading h1 { font-size: 30px; }
+  .leaderboard-hero-heading p { font-size: 13px; }
+  .leaderboard-hero-stage { top: auto; bottom: 0; right: -6%; opacity: 0.55; }
+  .leaderboard-hero-note { display: none; }
+
+  .leaderboard-filters { gap: 8px; }
+  .leaderboard-search { flex: 1 1 100%; max-width: none; }
+  .leaderboard-select { flex: 1 1 100%; margin-left: 0; }
+  .leaderboard-select-trigger { width: 100%; min-width: 0; }
+  .leaderboard-clear { width: 100%; justify-content: center; }
+
+  .leaderboard-podium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 28px;
+  }
+
+  .leaderboard-card { min-height: 0; padding: 8px 5px 10px; --card-radius: 14px; }
+  .leaderboard-slot-1 .leaderboard-card { min-height: 0; padding-top: 14px; padding-bottom: 10px; }
+  .leaderboard-base { height: 22px; }
+  .leaderboard-slot-1 .leaderboard-base { height: 28px; }
+  .leaderboard-card-badge { margin-top: 22px; }
+  .leaderboard-card-player { margin-top: 18px; font-size: 12px; }
+  .leaderboard-card-score { min-height: 38px; margin-top: 8px; padding: 6px; gap: 4px; }
+  .leaderboard-card-score > svg { width: 13px; height: 13px; }
+  .leaderboard-card-score em { display: none; }
+  .leaderboard-card-rank { min-width: 44px; height: 26px; font-size: 13px; }
+
+  .leaderboard-table { padding: 6px 8px 10px; }
+  .leaderboard-row { grid-template-columns: 44px minmax(0, 1fr) minmax(80px, auto); padding: 0 6px; }
+  .leaderboard-col-level,
+  .leaderboard-col-wins { display: none; }
+  .leaderboard-row-body { font-size: 13px; min-height: 44px; }
+  .leaderboard-row-avatar { width: 30px; height: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-hero-stage,
+  .leaderboard-hero-card,
+  .leaderboard-hero-heading h1 span::after,
+  .leaderboard-select-menu,
+  .leaderboard-card,
+  .leaderboard-card::before,
+  .leaderboard-card::after,
+  .leaderboard-card-crown,
+  .leaderboard-card-avatar::before,
+  .leaderboard-card-rank::after,
+  .leaderboard-card-score::after,
+  .leaderboard-slot::after,
+  .leaderboard-base {
+    animation: none !important;
+  }
+
+  .leaderboard-return,
+  .leaderboard-return-icon,
+  .leaderboard-clear,
+  .leaderboard-card,
+  .leaderboard-card-avatar,
+  .leaderboard-select-trigger,
+  .leaderboard-select-chevron,
+  .leaderboard-row-body {
+    transition: none;
+  }
+}

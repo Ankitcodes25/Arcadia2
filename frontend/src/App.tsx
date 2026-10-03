@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./pages/Landingpage/Landingpage";
 import Allgames from "./pages/Allgames/Allgames";
-import { onNavigation, MATCH_HISTORY_PATH, getMatchHistoryReturnPath } from "./lib/navigation";
+import {
+  onNavigation,
+  MATCH_HISTORY_PATH,
+  LEADERBOARD_PATH,
+  getMatchHistoryReturnPath,
+  getLeaderboardReturnPath,
+} from "./lib/navigation";
 import MatchHistory from "./pages/MatchHistory/MatchHistory";
+import Leaderboard from "./pages/Leaderboard/Leaderboard";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { shouldShowGlobalAuthNotice } from "./auth/authUtils";
 import { NOTICE_FADING_CLASS, useAutoDismissNotice } from "./auth/authNotice";
@@ -89,6 +96,7 @@ function AppContent() {
 
   const isGamesPage = path.startsWith("/games");
   const isMatchHistoryPage = path.startsWith(MATCH_HISTORY_PATH);
+  const isLeaderboardPage = path.startsWith(LEADERBOARD_PATH);
 
   return (
     <>
@@ -96,14 +104,22 @@ function AppContent() {
       <AccountActionPanel />
       <AuthNotice />
       <div
-        key={isMatchHistoryPage ? "match-history-page" : isGamesPage ? "games-page" : "home-page"}
+        key={isMatchHistoryPage
+          ? "match-history-page"
+          : isLeaderboardPage
+            ? "leaderboard-page"
+            : isGamesPage
+              ? "games-page"
+              : "home-page"}
         className="page-transition"
       >
         {isMatchHistoryPage
           ? <MatchHistory returnPath={getMatchHistoryReturnPath()} />
-          : isGamesPage
-            ? <Allgames />
-            : <LandingPage />}
+          : isLeaderboardPage
+            ? <Leaderboard returnPath={getLeaderboardReturnPath()} />
+            : isGamesPage
+              ? <Allgames />
+              : <LandingPage />}
       </div>
     </>
   );

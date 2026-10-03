@@ -7,6 +7,12 @@ import {
 } from "react";
 import { ArrowLeft, ArrowRight, Crown, Star } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
+import {
+  LEADERBOARD_PATH,
+  navigateTo,
+  rememberLeaderboardOrigin,
+  rememberLeaderboardReturnPath,
+} from "../../../lib/navigation";
 
 type Player = {
   name: string;
@@ -218,7 +224,21 @@ export default function LeaderboardHome() {
       return;
     }
 
-    // TODO: Open the full leaderboard modal when it is implemented.
+    /*
+     * Leaderboard is its own page now, so the button opens it directly.
+     * The return path is parked first, exactly the way the Navbar does it, so
+     * the page's back arrow lands here again instead of wherever it was last
+     * opened from.
+     *
+     * The origin is written as "landing" on purpose: this visit did not come
+     * from the Profile Popup, so coming back must just land here without
+     * reopening it. That also overwrites anything an earlier popup visit left.
+     */
+    rememberLeaderboardReturnPath(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`
+    );
+    rememberLeaderboardOrigin("landing");
+    navigateTo(LEADERBOARD_PATH);
   };
 
   const handlePlayerProfile = (_player: Player) => {
