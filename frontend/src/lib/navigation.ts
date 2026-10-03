@@ -5,6 +5,9 @@ const NAVIGATION_EVENT = "arcadia:navigate";
 /** The Match History page, reached from the Profile Popup. */
 export const MATCH_HISTORY_PATH = "/match-history";
 
+/** The Leaderboard page, reached from the Profile Popup. */
+export const LEADERBOARD_PATH = "/leaderboard";
+
 function scrollToSection(targetId: string) {
   const targetElement = document.getElementById(targetId);
   if (!targetElement) return;
@@ -67,12 +70,19 @@ export function navigateTo(
   if (!url.hash) {
     /* -----------------------------------------
        Home / normal page navigation
+
+       This jump has to be instant. `html` carries `scroll-behavior: smooth`
+       (Landingpage.css), and "auto" means "use that CSS value" — so "auto"
+       starts a smooth scroll that is still running when the page swaps. The new
+       page then mounts part-way down and scrolls up through its own entry
+       animation, which buries the shared `.page-transition` and reads as a
+       missing transition. "instant" lands the swap at scrollY 0 instead.
     ----------------------------------------- */
 
     window.scrollTo({
       top: 0,
       left: 0,
-      behavior: "auto",
+      behavior: "instant",
     });
 
     requestAnimationFrame(() => {
@@ -110,12 +120,12 @@ export function onNavigation(callback: () => void) {
 }
 
 /* -----------------------------------------
-   Match History and the Profile Popup
+   Match History, Leaderboard and the Profile Popup
 
-   Match History is a separate page, so the Profile Popup is unmounted while it
-   is open. Coming back has to put that popup back, and the popup cannot do it
-   itself because it is not mounted at the time. So the intent is parked here for
-   the length of one navigation.
+   Match History and the Leaderboard are separate pages, so the Profile Popup is
+   unmounted while either is open. Coming back has to put that popup back, and the
+   popup cannot do it itself because it is not mounted at the time. So the intent
+   is parked here for the length of one navigation.
 
    These are transient values held in memory only. They are deliberately NOT in
    localStorage or sessionStorage: they describe a single click in a single
@@ -151,4 +161,52 @@ export function rememberMatchHistoryReturnPath(path: string) {
 
 export function getMatchHistoryReturnPath(): string {
   return matchHistoryReturnPath;
+}
+
+let leaderboardReturnPath = "/";
+
+/**
+ * Records the page the reader was on when they left for the Leaderboard, so
+ * Return sends them back to exactly that page rather than to a hard-coded guess.
+ */
+export function rememberLeaderboardReturnPath(path: string) {
+  leaderboardReturnPath = path || "/";
+}
+
+export function getLeaderboardReturnPath(): string {
+  return leaderboardReturnPath;
+}
+
+/* -----------------------------------------
+   Leaderboard ka origin — Profile Popup se, ya Landing ke Top 10 se?
+
+   Profile Popup ke "Leaderboards" wale option se aate hi "profile" likha
+   jata hai, aur Landing ke Top 10 wale "View more" se "landing". Navbar ise
+   agli navigation par padh kar tay karta hai ki Leaderboard chhodne par
+   Profile Popup wapas khulna chahiye ya nahi — uski wajah yahi hai ki reader
+   kahan se aaya tha.
+
+   Padhte hi wapas "landing" ho jata hai, taaki ek visit ka marker doosri
+   visit me khela na jaye. Ye value sirf memory me rehti hai — uske liye
+   koi persistent store nahi.
+   ----------------------------------------- */
+
+/** Jahan se reader Leaderboard page par aaya. */
+export type LeaderboardOrigin = "profile" | "landing";
+
+let leaderboardOrigin: LeaderboardOrigin = "landing";
+
+/** Records where the reader opened the Leaderboard from. */
+export function rememberLeaderboardOrigin(origin: LeaderboardOrigin) {
+  leaderboardOrigin = origin === "profile" ? "profile" : "landing";
+}
+
+/**
+ * Reads the origin once and resets it in the same step, so it can decide the
+ * return behaviour at most once and can never leak into a later visit.
+ */
+export function consumeLeaderboardOrigin(): LeaderboardOrigin {
+  const origin = leaderboardOrigin;
+  leaderboardOrigin = "landing";
+  return origin;
 }
