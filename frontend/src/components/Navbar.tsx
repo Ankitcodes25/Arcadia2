@@ -3,10 +3,15 @@ import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "r
 import logo from "../assets/ArcadialogoA.png";
 import {
   MATCH_HISTORY_PATH,
+  LEADERBOARD_PATH,
   consumeProfilePopupReopenRequest,
+  consumeLeaderboardOrigin,
   navigateTo,
   onNavigation,
   rememberMatchHistoryReturnPath,
+  rememberLeaderboardReturnPath,
+  rememberLeaderboardOrigin,
+  rememberReturningToProfilePopup,
 } from "../lib/navigation";
 import { useAuth } from "../auth/AuthContext";
 import AvatarPreview from "../pages/Myprofile/AvatarPreview";
@@ -286,6 +291,20 @@ function Navbar({ isVisible = true }: NavbarProps = {}) {
     navigateTo(MATCH_HISTORY_PATH);
   };
 
+  /* The Leaderboard leaves for its separate page the same way. */
+  const openLeaderboard = () => {
+    // Where Return should go back to, so the reader lands where they were.
+    rememberLeaderboardReturnPath(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    );
+    // This visit came from the popup, so coming back may bring the popup with
+    // it. The Landing page's Top 10 "View more" records "landing" instead, and
+    // that visit lands back on the page alone. The Navbar reads this on the
+    // navigation that opens the page.
+    rememberLeaderboardOrigin("profile");
+    navigateTo(LEADERBOARD_PATH);
+  };
+
   /*
    * Return from Match History restores this popup.
    *
@@ -294,10 +313,30 @@ function Navbar({ isVisible = true }: NavbarProps = {}) {
    * that swapped the page, is what makes this work without a timer: the popup is
    * opened because the reader asked to come back, not because enough time
    * passed. A later unrelated navigation finds the flag already cleared.
+   *
+   * The Leaderboard restores this popup on the very same flag, but whether it
+   * may do so is decided by the ORIGIN and parked when the page opens: the
+   * navigation that arrives here from the Profile Popup arms the flag for the
+   * length of this visit, so the FIRST navigation away — the page's own arrow
+   * or the browser's back button, whichever it is — puts the popup back. The
+   * visit from the Landing page's Top 10 "View more" recorded "landing", so
+   * nothing is armed and that return is just the page.
+   *
+   * The origin is consumed on every navigation, whatever it was, so no visit
+   * can inherit the answer of an earlier one.
    */
   useEffect(() => onNavigation(() => {
+    const origin = consumeLeaderboardOrigin();
+
     if (consumeProfilePopupReopenRequest()) {
       setIsProfileOpen(true);
+    }
+
+    if (
+      window.location.pathname.startsWith(LEADERBOARD_PATH) &&
+      origin === "profile"
+    ) {
+      rememberReturningToProfilePopup();
     }
   }), []);
 
@@ -501,11 +540,13 @@ function Navbar({ isVisible = true }: NavbarProps = {}) {
                     setIsMyProfileOpen(true)
                   }
                   /*
-                    Match History is a separate page, so this leaves through the
-                    normal navigation helper. The page it opens records where the
-                    reader was, and its Return button brings this popup back.
+                    Match History and the Leaderboard are separate pages, so each
+                    leaves through the normal navigation helper. The page it
+                    opens records where the reader was, and its Return button
+                    brings this popup back.
                   */
                   onOpenMatchHistory={openMatchHistory}
+                  onOpenLeaderboard={openLeaderboard}
                   onLogout={handleLogout}
                   isLoggingOut={isSubmitting}
                 />

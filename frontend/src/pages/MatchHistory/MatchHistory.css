@@ -5,7 +5,9 @@
 	overflow: visible;
 	overflow-x: clip;
 	max-width: 100%;
-	padding: 26px 14px 90px;
+	/* Same horizontal gutter as the Landing Page / All Games containers
+	   (min(1400px, 100% - 96px) => 48px a side on desktop). */
+	padding: 26px 48px 90px;
 	box-sizing: border-box;
 	color: white;
 	background:
@@ -825,6 +827,18 @@
 	to { transform: rotate(360deg); }
 }
 
+/* ===========================================================
+   GUTTERS  (Landing Page / All Games jaisa spacing)
+   Page padding: desktop 48px a side (96px total — wahi token jo
+   `.section` / `.games-browser` use karte hain), tablet 28px.
+   Mobile (<= 720px) 16px, inner column ke extra inset ke saath,
+   neeche existing small-screen block me.
+   =========================================================== */
+
+@media (max-width: 1100px) {
+	.mh-page { padding-left: 28px; padding-right: 28px; }
+}
+
 @media (max-width: 1200px) {
 	.mh-hero { --mh-char-h: 210px; }
 }
@@ -834,6 +848,7 @@
 }
 
 @media (max-width: 720px) {
+	.mh-page { padding-left: 16px; padding-right: 16px; }
 	.mh-page-inner { width: min(100%, calc(100% - 24px)); }
 	.mhf { padding: 13px 14px 15px; }
 	.mhf-field { flex: 1 1 100%; }
